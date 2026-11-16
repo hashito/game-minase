@@ -14,7 +14,7 @@ npm run sync-kit   # copy the newest kit parts (kit.json lists them)
 
 ## This game
 
-水無瀬病院 ― 七番の瓶（key `minase`, β）. One rule: *あれは、水のある所しか進めない。止水弁を回して水を抜けば、そこで止まる。*
+水無瀬病院 ― 七番の瓶（key `minase`, β）. One rule: *あれは、水のある所しか進めない。止水弁を回して水を抜けば、そこで止まる。* あれ is a chimera: 葛城's 合成標本 (specimens of many patients sewn into one) with 浅井早苗 taken into it in the 1999 flood.
 Turning a valve (止水弁) in the passage drains a dry band across the floor; she stops at its edge until the rain water seeps back.
 
 - Data: `tools/gen-data.mjs` writes every `data/*.json` (edit it, not the JSON). Images: `tools/gen-images.mjs` (prompts in

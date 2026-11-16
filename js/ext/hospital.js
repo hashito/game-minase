@@ -269,7 +269,7 @@ export function installHospital(ext, G) {
       const hb = box(s.room, lx, lz, 0.4, 0.1, 0.18, M.emergOff, 2.82, false, alongZ ? Math.PI / 2 : 0);
       const glow = box(s.room, lx, lz, 0.32, 0.03, 0.12, M.emerg, 2.79, false, alongZ ? Math.PI / 2 : 0); glow.visible = false;
       void hb; G.lampFlame[id] = glow;
-      const e = { room: s.room, floor: 0, x: lx, y: fy(s.room) + 2.4, z: lz, i: 0, d: 12 }; lamps.push(e); G.lampEntry[id] = e;
+      const e = { room: s.room, floor: 0, x: lx, y: fy(s.room) + 2.4, z: lz, i: 0, d: 17 }; lamps.push(e); G.lampEntry[id] = e;
     }
     G.hyoGlow = { room: 'HYOHON', floor: 0, x: 9, y: 2.4, z: -104, i: 0, d: 9 }; lamps.push(G.hyoGlow);
     G.tankGlow = { room: 'HYOHON', floor: 0, x: 6.9, y: 0.6, z: -104, i: 0, d: 4 }; lamps.push(G.tankGlow);

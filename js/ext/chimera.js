@@ -115,7 +115,7 @@ export function installChimera(ext, G) {
     G.routeLen = cum[cum.length - 1];
     G.gateS = project(-4, -81.8).s;
     G.mouthS = project(2.6, -1.2).s;
-    glow = new THREE.PointLight(0x9ccab0, 0, 4.5, 2); ctx.scene.add(glow);
+    glow = new THREE.PointLight(0xc2c48a, 0, 5.5, 2); ctx.scene.add(glow);
     fig = buildChimera(); fig.root.visible = false; ctx.world.group.add(fig.root); G.chimera = fig;
     // warm-up: her materials compiled before play
     const warm = new THREE.Group(); warm.visible = false; warm.add(buildChimera().root); ctx.scene.add(warm); ctx.warmObjects = [...(ctx.warmObjects || []), warm];

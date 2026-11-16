@@ -74,7 +74,7 @@ export default async (api) => {
   } else { await sleep(2500); await H.idle(); await H.walkTo(9, -106.6); }
   // ---- L4: the jar and the chase ----
   await use(9, -107.5, 1.2, 'T_JAR'); await sleep(800); await H.idle(); await must('T_JAR'); await shot('rise');
-  await shot('rise-tank');
+  await H.face(6.9, -104, 1.1); await sleep(2200); await shot('rise-tank');   // a player turns to see what rises
   // run back like a player told 「うしろに来たら、止水弁に [E]」: past each valve, if she is within 12 m, turn round to the wheel and [E]
   const VALVES = [[9, -98.8], [9, -84.0], [-9.0, -81.8], [-17.6, -78.6], [-17.6, -60.0], [-17.6, -45.0], [2.6, -28.0], [2.6, -10.0]];
   let valvesUsed = 0;
@@ -92,9 +92,10 @@ export default async (api) => {
   const runTo = (x, z, o = {}) => H.walkTo(x, z, { run: true, onStep, ...o });
   // the way back as waypoints [x, z, crouch, tag]; after a death the run goes on from the waypoint nearest the checkpoint
   const WAY = [[9, -100.2, 0], [9, -82.2, 0, 'P5'], [-17.6, -81.8, 0, 'P4'], [-17.6, -46.0, 0], [-17.6, -41.8, 0, 'P3'], [-5.0, -41.8, 1], [2.6, -41.8, 1, 'P2'], [2.6, -30, 0], [2.6, -1.8, 0], [2.6, 1.2, 0, 'P1']];
-  let wi = 0, deaths0 = await G('mn.deaths || 0');
+  let pressedF = false, wi = 0, deaths0 = await G('mn.deaths || 0');
   for (let guard = 0; wi < WAY.length && guard < 60; guard++) {
     const [x, z, low, tag] = WAY[wi];
+    if (wi === 2 && !pressedF) { pressedF = true; await shot('chase-dark'); await p.key('KeyF'); await sleep(200); }   // 「[F] で、叩いてつけ直せる」
     await crouch(!!low);
     const ok = low ? await H.walkTo(x, z, { near: 0.5 }) : await runTo(x, z);
     const d = await G('mn.deaths || 0');
@@ -125,7 +126,7 @@ export default async (api) => {
   } else {
     await H.route([[3.0, 10.4], [3.0, 7.5], [9.0, 7.5]]); await H.door(9, 9, 9, 10.4);
     await H.walkTo(10.9, 13.4); await use(10.9, 14.5, 1.0, 'T_LEDGER'); await must('T_LEDGER'); await H.idle(); await shot('ledger');
-    await H.walkTo(8.0, 13.4); await pre(['ren', 'father', 'father', 'katsuragi', 'father']); await use(7.2, 14.5, 0.75, 'T_THINK'); await sleep(800);
+    await H.walkTo(8.0, 13.4); await pre(['ren', 'father', 'father', 'katsuragi', 'stitched', 'father']); await use(7.2, 14.5, 0.75, 'T_THINK'); await sleep(800);
     await H.idle(1500); await H.idle(1500); log('  think answers left', await G('window.__gfQ.length'), 'wrong', await G('mn.wrong'));
     await H.idle(); await must('T_THINK'); await shot('think-done');
     if (PAGES) {

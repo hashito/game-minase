@@ -1,5 +1,5 @@
 {
-  "kit": "9638d82",
+  "kit": "8e20d97",
   "dest": "js/kit",
   "modules": [
     "game-core",
@@ -131,7 +131,7 @@
     "perf-probe.mjs"
   ],
   "hashes": {
-    "js\\kit\\game-core.js": "19544ff99eaa",
+    "js\\kit\\game-core.js": "5a25e44b9424",
     "js\\kit\\item-kinds.js": "9b67d808c2f3",
     "js\\kit\\item-models.js": "5cc334f5801e",
     "js\\kit\\prop-geo.js": "89b9dabf8cf4",
@@ -157,7 +157,7 @@
     "js\\kit\\inventory-ui.js": "8fe3da2d1a4d",
     "js\\kit\\release-notes.js": "e4e611c4c130",
     "js\\kit\\store.js": "07393043c4c5",
-    "js\\kit\\audio.js": "474da02bffe4",
+    "js\\kit\\audio.js": "7e7ec47f4feb",
     "js\\kit\\audio-at.js": "a428ea521924",
     "js\\kit\\task-minigames.js": "52a2184c2c63",
     "js\\kit\\world-from-plan.js": "1907eb07be9d",

@@ -2,6 +2,7 @@
 // the scripted moments of the passage (one every few metres on the way in), the window of the second watertight door and the valve
 // lesson, the jar and the chase back, the first watertight door, the pump room, the questions under the rising water, and the three
 // endings. Shares G with water.js (the valves), chimera.js (あれ) and hospital.js (the things).
+import * as THREE from 'three';
 import { W } from './words.js';
 
 const ROOM_SURFACE = { P3: 'water', P4B: 'water', B_ROKA: 'water', B_STAIR: 'water', MOUTH: 'water', P1: 'concrete', P2: 'concrete', P5: 'concrete', PUMP: 'concrete' };
@@ -47,7 +48,7 @@ export function installStory(ext, G) {
   function apply() {
     if (!ctx || !G.water) return;
     G.genOn = done('T_GEN'); G.b1Light(done('T_GEN'));
-    for (const n of [1, 2, 3, 4]) { const id = `S_LAMP${n}`, on = done(`T_LAMP${n}`) && !G.lampsOut.includes(id); G.lampEntry[id].i = on ? 2.6 : 0; G.lampFlame[id].visible = on; }
+    for (const n of [1, 2, 3, 4]) { const id = `S_LAMP${n}`, on = done(`T_LAMP${n}`) && !G.lampsOut.includes(id); G.lampEntry[id].i = on ? 3.4 : 0; G.lampFlame[id].visible = on; }
     G.hyoGlow.i = done('T_HYOHON') ? 1.4 : 0; G.tankGlow.i = done('T_HYOHON') ? 0.7 : 0;
     G.jar7.visible = !done('T_JAR');
     // the water
@@ -80,7 +81,7 @@ export function installStory(ext, G) {
   }
 
   // ---------------- the emergency lights ----------------
-  G.lampOn = (id) => { G.lampEntry[id].i = 2.6; G.lampFlame[id].visible = true; const k = G.lampsOut.indexOf(id); if (k >= 0) G.lampsOut.splice(k, 1); ctx.world.setLampFloor(ctx.floor, true); };
+  G.lampOn = (id) => { G.lampEntry[id].i = 3.4; G.lampFlame[id].visible = true; const k = G.lampsOut.indexOf(id); if (k >= 0) G.lampsOut.splice(k, 1); ctx.world.setLampFloor(ctx.floor, true); };
   G.lampOut = (id) => { G.lampEntry[id].i = 0; G.lampFlame[id].visible = false; if (!G.lampsOut.includes(id)) G.lampsOut.push(id); ctx.world.setLampFloor(ctx.floor, true); ctx.sound('glitch'); };
   let relighting = false;
 
@@ -125,6 +126,9 @@ export function installStory(ext, G) {
     for (const id of ['D_P1', 'D_GATE']) { const it = door(id).mesh.userData.interact; it.kind = 'wtdoor'; }
     const d1 = door('D_P1'), hit = d1.mesh.clone(); hit.material = G.M.hidden; hit.position.z += 0.5; hit.userData = { interact: { kind: 'wtdoor', id: 'D_P1' } }; hit.name = 'sealhit:D_P1';
     ctx.world.group.add(hit); sealHit = hit;
+    // with the flashlight dead, the green of the emergency lamps still reaches the walls near you: the way stays readable, faces do not
+    const fill = new THREE.PointLight(0x7fa58c, 0, 7, 1.6); ctx.scene.add(fill);
+    ctx.systems.push({ id: 'mn-fill', def: { update: () => { const on = G.lightOut && ctx.floor === 0; fill.intensity = on ? 0.9 : 0; if (on) { const c = ctx.camera.position; fill.position.set(c.x, c.y + 0.9, c.z); } } }, inst: null });
     ctx.systems.push({ id: 'mn-story', def: { update: (dt, c2, active) => update(dt, active) }, inst: null });
   });
   ext.registerInteract('wtdoor', {
@@ -203,7 +207,7 @@ export function installStory(ext, G) {
     G.tankGlow.i = 1.6; apply();
     { const d = door('D_END'); if (d && !d.isOpen) d.open(); }   // the way out stands open (she pushed it as she rose)
     takeSnap(); chaseFrom(0, 3.5);
-    say('chase_go', 7); later(() => say('chase_dark', 5), 7500);
+    say('chase_go', 7); later(() => { if (G.lightOut) say('chase_dark', 5); }, 3000);
   }
   function resumeChase() {
     const ps = G.project(cam().x, cam().z).s;
