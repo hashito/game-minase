@@ -343,7 +343,7 @@ const tasks = [
   { id: 'T_END', stage: 'L5', room: 'REIAN', station: 'S_HEARSE', needs: ['T_RETURN'], title: 'ひなたと、霊安室の搬出口から外へ出る',
     meaning: '搬出口の鍵がある。黒木さんの鎖の扉を通らずに、外へ出られる。', hint: '地下の廊下の、霊安室。東の壁の両開きの扉。',
     steps: [stepRoom('地下の廊下の霊安室へ', 'REIAN'), stepLook('S_HEARSE', '東の壁の搬出口の前に立つ'), stepDo('[E] で鍵を開ける')] },
-  { id: 'T_GIVE', stage: 'L5', room: 'GENKAN', station: 'S_FRONT', optional: true, title: '（瓶を、鎖の扉の黒木さんに渡す）',
+  { id: 'T_GIVE', stage: 'L5', room: 'GENKAN', station: 'S_FRONT', optional: true, needs: ['T_RESCUE'], title: '（瓶を、鎖の扉の黒木さんに渡す）',
     meaning: '言われたとおりに持って来た。渡せば、鎖は外される。', hint: '玄関ホールの正面の扉。' },
   // side quests
   { id: 'T_SQ1', stage: 'L3', room: 'REIAN', station: 'S_SQ1', optional: true, title: '（寄り道）日誌の三枚を、日付の順に並べる',
@@ -541,7 +541,7 @@ const think = {
 // ---------------------------------------------------------------- monsters: none of the kit's (あれ is the ext's own); the file turns on the hiding places
 const monsters = { early: { stages: 1 }, hints: { run: '走れ！', turn: '曲がれ！', hide: '隠れろ！' }, monsters: [] };
 
-const releaseNotes = { version: '0.9.0', notes: [{ version: '0.9.0', date: '2026-11-16', title: 'β版を公開', items: [
+const releaseNotes = { version: '1.0.0', notes: [{ version: '1.0.0', date: '2026-11-16', title: 'β版を公開', items: [
   { type: 'new', text: '雨の廃病院と、水につかった地下の長い通路。止水弁で水を抜いて「あれ」を止める仕掛け、七番の瓶を持って逃げる場面、水が上がるなかの謎解き、三つの結末と二つの寄り道。' },
 ] }] };
 

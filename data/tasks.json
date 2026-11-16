@@ -686,6 +686,9 @@
     "room": "GENKAN",
     "station": "S_FRONT",
     "optional": true,
+    "needs": [
+      "T_RESCUE"
+    ],
     "title": "（瓶を、鎖の扉の黒木さんに渡す）",
     "meaning": "言われたとおりに持って来た。渡せば、**鎖は外される**。",
     "hint": "玄関ホールの正面の扉。"

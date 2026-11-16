@@ -14,9 +14,9 @@ export default async (api) => {
   await G(`(document.getElementById('start-btn').click(), 1)`); await sleep(1800); await H.idle(); await sleep(400);
   await H.walkTo(3.0, 24.5); await tryE(3.0, 25.65, 1.1, 'front-before-hina');
   // 2. the fire door to the basement with no key; the stairs before the chart
-  await scene('karte'); await H.route([[3.0, 16.5], [16.0, 16.5]]); await tryE(16, 15, 1.2, 'kaidan-door');
+  await scene('karte'); await H.door(3, 15, 3, 16.5); await H.walkTo(16.0, 16.5); await tryE(16, 15, 1.2, 'kaidan-door');
   // 3. the watertight door before the generator; the lamp box before the door
-  await scene('mouth'); await H.walkTo(2.6, 1.0); await tryE(2.6, -1, 1.2, 'bousui-before-gen');
+  await scene('broka'); await H.route([[3.0, 7.5], [3.0, 3.5], [2.6, 1.0]]); await tryE(2.6, -1, 1.2, 'bousui-before-gen');
   await scene('pump'); await H.walkTo(4.6, 11.4); await tryE(5.95, 11.4, 1.3, 'pump-panel-early');
   // 4. standing up in the low passage (the pipes); running there
   await scene('p2'); await p.key('KeyW', 'down'); await sleep(1500); await p.key('KeyW', 'up'); log('  p2 standing', JSON.stringify(await H.pos())); await shot('p2-stand');
@@ -41,11 +41,11 @@ export default async (api) => {
   await H.idle(6000); log('  after caught', JSON.stringify(await H.pos()), JSON.stringify(await gh()), await G('g.state.inv.includes("JAR")')); await shot('after-caught');
   // 9. the drain (return) before the thinking; the hearse doors before the ledger
   await scene('jimu'); await H.walkTo(9.0, 10.6); await tryE(9.0, 11.6, 0.15, 'return-before-think');
-  await scene('jimu'); await H.route([[9.0, 7.5], [10.0, 7.5]]); await H.door(10, 6, 10.4, 4.0); await H.walkTo(12.6, 3.0); await tryE(13.9, 3.0, 1.1, 'hearse-before');
+  await scene('jimu'); await H.door(9, 9, 9, 7.5); await H.walkTo(10.0, 7.5); await H.door(10, 6, 10.4, 4.0); await H.walkTo(12.6, 3.0); await tryE(13.9, 3.0, 1.1, 'hearse-before');
   // 10. the think: three wrong answers (the water rises; the third drowns, back to the desk)
   await scene('think'); await G(`(window.__gfQ = ['ren', 'ren', 'ren', 'ren', 'ren', 'ren'], Object.getOwnPropertyDescriptor(window, '__gfChoice') || Object.defineProperty(window, '__gfChoice', { configurable: true, get() { return (window.__gfQ || []).shift(); } }), 1)`);
   await H.walkTo(8.0, 13.4); await H.use(7.2, 14.5, 0.75); await sleep(1500); await shot('think-wrong'); await H.idle(5000);
   log('  after wrong answers', JSON.stringify({ deaths: await G('mn.deaths || 0'), wrong: await G('mn.wrong'), tasks: await G('g.state.tasks.slice(-2)'), pos: await H.pos() }));
   // 11. the front door with the jar but before the end: the choice (the give ending) offered, refused here
-  await scene('give'); await G(`(window.__gfQ = ['no'], 1)`); await tryE(3.0, 25.65, 1.1, 'give-refuse'); log('  ended?', await G('g.state.ended'));
+  await scene('give'); await G(`(window.__gfQ = ['no'], Object.getOwnPropertyDescriptor(window, '__gfChoice') || Object.defineProperty(window, '__gfChoice', { configurable: true, get() { return (window.__gfQ || []).shift(); } }), 1)`); await tryE(3.0, 25.65, 1.1, 'give-refuse'); log('  ended?', await G('g.state.ended'));
 };
