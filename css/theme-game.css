@@ -1,0 +1,13 @@
+/* The look of 水無瀬病院 ― 七番の瓶: override design tokens only (see css/theme.css for the list). Base dark-industrial + the mood
+   theme hospital-cold (css/themes.css); the accent is the yellowed green of old formalin. */
+[data-theme="dark-industrial hospital-cold"] { --gf-accent: #9fc4b0; --gf-accent-ink: #0c1612; }
+/* the water coming back over a drained valve (top right, while one holds) */
+.mn-valve { padding: 4px 10px; border-radius: 6px; background: rgba(8, 14, 16, 0.78); color: #dcebea; font-size: 15px; line-height: 1.5; letter-spacing: 0.04em; border: 1px solid rgba(160, 200, 200, 0.3); }
+.mn-valve.mn-none { color: #a9bcbc; border-color: rgba(169, 188, 188, 0.25); }
+/* the watertight door pushed from the far side / the check valve held by Hinata (top centre) */
+.mn-seal { padding: 6px 12px; border-radius: 6px; background: rgba(4, 18, 22, 0.86); color: #d8f2f0; font-size: 15px; text-align: center; min-width: 220px; border: 1px solid rgba(120, 200, 200, 0.5); }
+.mn-seal p { margin: 0 0 4px; }
+.mn-seal-bar { height: 8px; background: rgba(255, 255, 255, 0.15); border-radius: 4px; overflow: hidden; /* pair-ok */ }
+.mn-seal-bar i { display: block; height: 100%; width: 0; background: #4fb3b0; /* pair-ok */ }
+.mn-bootbar { width: min(320px, 70vw); height: 4px; margin: 8px auto 0; background: rgba(255, 255, 255, 0.12); border-radius: 2px; overflow: hidden; /* pair-ok */ }
+.mn-bootbar i { display: block; height: 100%; width: 0; background: var(--accent, #9fc4b0); /* pair-ok */ }

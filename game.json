@@ -1,0 +1,188 @@
+{
+  "id": "minase",
+  "title": "水無瀬病院 ― 七番の瓶",
+  "subtitle": "雨の廃病院の地下から、七番の瓶を持って来い",
+  "version": "0.9.0",
+  "noPrewarm": true,
+  "standard": "1.16",
+  "theme": "dark-industrial hospital-cold",
+  "preset": {
+    "base": "horror",
+    "fog": {
+      "type": "exp2",
+      "color": 461323,
+      "density": 0.05
+    },
+    "far": 55,
+    "background": 263687,
+    "hemi": {
+      "sky": 2765878,
+      "ground": 922130,
+      "intensity": 0.28
+    },
+    "exposure": 0.85
+  },
+  "modules": [
+    "game-core",
+    "ext",
+    "schema-check",
+    "game-data",
+    "world-from-plan",
+    "plan-check",
+    "task-minigames",
+    "render-presets",
+    "frame-guard",
+    "controller",
+    "ui",
+    "store",
+    "audio",
+    "progression",
+    "progress-ui",
+    "inventory-ui",
+    "release-notes",
+    "win-manager",
+    "tab-menu",
+    "pause-menu",
+    "journal-ui",
+    "map-svg",
+    "step-guide",
+    "analytics"
+  ],
+  "minigames": [
+    "pump-gauge",
+    "tune-radio",
+    "timing",
+    "steady-hand",
+    "sort-items",
+    "order-steps"
+  ],
+  "entry": {
+    "html": "index.html",
+    "main": "js/main.js"
+  },
+  "ext": [
+    "js/ext/index.js"
+  ],
+  "data": {
+    "plan": "data/plan.json",
+    "items": "data/items.json",
+    "docs": "data/docs.json",
+    "tasks": "data/tasks.json",
+    "stages": "data/stages.json",
+    "endings": "data/endings.json",
+    "releaseNotes": "data/release-notes.json",
+    "monsters": "data/monsters.json",
+    "things": "data/things.json",
+    "talk": "data/talk.json",
+    "water": "data/water.json"
+  },
+  "media": {
+    "dir": "assets"
+  },
+  "fx": {
+    "preset": "horror",
+    "noise": 0.02,
+    "scanlines": 0,
+    "vignette": 1,
+    "saturation": 0.6,
+    "glitch": false,
+    "dangerTint": true,
+    "mist": true
+  },
+  "recipes": {
+    "props": true,
+    "textures": "assets/textures/",
+    "ambience": {
+      "beds": [
+        {
+          "name": "rain",
+          "kind": "rain",
+          "level": 0.35
+        }
+      ]
+    }
+  },
+  "voice": true,
+  "things": true,
+  "controls": {
+    "crouch": true,
+    "flashlight": {
+      "color": 14674175,
+      "intensity": 18,
+      "distance": 16,
+      "angle": 0.7
+    },
+    "fov": 72,
+    "far": 55,
+    "gate": {
+      "crouch": "L3"
+    },
+    "touch": [
+      {
+        "k": "KeyE",
+        "label": "操作",
+        "cls": "big"
+      },
+      {
+        "k": "KeyF",
+        "label": "ライト"
+      }
+    ],
+    "gateText": "今は、まだ使えない。先に、いまの目的を進めよう。"
+  },
+  "portraits": {
+    "ひなた": "assets/photos/face-hinata.webp",
+    "黒木": "assets/photos/face-kuroki.webp",
+    "浅井": "assets/photos/face-asai.webp"
+  },
+  "deaths": {
+    "default": {
+      "text": "つかまった。",
+      "sub": "最後に作業を終えた場所から、やり直す。",
+      "retry": "やり直す"
+    },
+    "chimera": {
+      "text": "水の中へ、引きずりこまれた。",
+      "sub": "あれは、瓶を持つ者を水の中を追ってくる。後ろに来たら、止水弁に向いて［E］で回す。抜いた水が戻るまでに、先へ逃げる。台の上のロッカーに隠れてもよい。",
+      "photo": "assets/photos/mon-close.webp",
+      "retry": "やり直す"
+    },
+    "seal": {
+      "text": "防水扉が、向こうから押し開けられた。",
+      "sub": "防水扉を抜けたら、すぐに振り返って、扉に向いて［E］で閉める。",
+      "photo": "assets/photos/mon-close.webp",
+      "retry": "やり直す"
+    },
+    "flood": {
+      "text": "排水口の水が、部屋を満たした。",
+      "sub": "ひなたが逆止弁を押さえていられるのは、間違えるまで。集めた物（カルテ・新聞・排水日誌・台帳・名札）を思い出して、もう一度答える。",
+      "photo": "assets/photos/mon-close.webp",
+      "retry": "やり直す"
+    }
+  },
+  "titleImage": "assets/photos/title.webp",
+  "hud": {
+    "quietFor": 60,
+    "dimInDanger": true
+  },
+  "approach": {
+    "vignette": true,
+    "heartbeat": true,
+    "shake": true,
+    "dizzy": false,
+    "presence": "wet",
+    "catchImage": "assets/photos/mon-close.webp",
+    "catchOn": [
+      "chimera",
+      "seal",
+      "flood"
+    ]
+  },
+  "share": {
+    "tags": [
+      "水無瀬病院",
+      "ホラーゲーム"
+    ]
+  },
+  "thoughtVoices": "assets/voice/thoughts.json"
+}

@@ -1,0 +1,8 @@
+node_modules/
+public/
+*.log
+.DS_Store
+shots/
+tools/*.out
+tools/_raw/
+.firebase/

@@ -1,0 +1,1120 @@
+{
+  "rooms": [
+    {
+      "id": "GENKAN",
+      "name": "玄関ホール",
+      "x": 0,
+      "z": 18,
+      "w": 6,
+      "d": 8,
+      "floor": 1,
+      "kind": "room",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "tile_floor_dirty",
+      "wallTex": "plaster_water_stain",
+      "leak": 0.2
+    },
+    {
+      "id": "MACHI",
+      "name": "外来の待合",
+      "x": 6,
+      "z": 18,
+      "w": 10,
+      "d": 8,
+      "floor": 1,
+      "kind": "room",
+      "type": "hospital",
+      "furnish": false,
+      "floorTex": "linoleum_green",
+      "wallTex": "plaster_water_stain",
+      "leak": 0.3
+    },
+    {
+      "id": "UKE",
+      "name": "受付",
+      "x": 16,
+      "z": 18,
+      "w": 4,
+      "d": 8,
+      "floor": 1,
+      "kind": "room",
+      "type": "office",
+      "furnish": false,
+      "floorTex": "linoleum_grey",
+      "wallTex": "plaster_mold",
+      "leak": 0.15
+    },
+    {
+      "id": "ROKA",
+      "name": "一階の廊下",
+      "x": 0,
+      "z": 15,
+      "w": 20,
+      "d": 3,
+      "floor": 1,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "linoleum_grey",
+      "wallTex": "plaster_water_stain",
+      "leak": 0.15
+    },
+    {
+      "id": "KARTE",
+      "name": "カルテ庫",
+      "x": 0,
+      "z": 9,
+      "w": 6,
+      "d": 6,
+      "floor": 1,
+      "kind": "room",
+      "type": "office",
+      "furnish": false,
+      "floorTex": "linoleum_grey",
+      "wallTex": "plaster_mold",
+      "leak": 0.1
+    },
+    {
+      "id": "SHIN",
+      "name": "診察室",
+      "x": 6,
+      "z": 9,
+      "w": 6,
+      "d": 6,
+      "floor": 1,
+      "kind": "room",
+      "type": "hospital",
+      "furnish": false,
+      "floorTex": "tile_hospital_large",
+      "wallTex": "plaster_water_stain",
+      "leak": 0.12
+    },
+    {
+      "id": "KAIDAN",
+      "name": "階段ホール",
+      "x": 12,
+      "z": 9,
+      "w": 8,
+      "d": 6,
+      "floor": 1,
+      "kind": "room",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "tile_floor_dirty",
+      "wallTex": "plaster_mold",
+      "leak": 0.1
+    },
+    {
+      "id": "B_ROKA",
+      "name": "地下の廊下",
+      "x": 0,
+      "z": 6,
+      "w": 20,
+      "d": 3,
+      "floor": 0,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "concrete_wet",
+      "wallTex": "concrete_stained",
+      "leak": 0.05
+    },
+    {
+      "id": "B_STAIR",
+      "name": "地下の階段下",
+      "x": 12,
+      "z": 9,
+      "w": 8,
+      "d": 6,
+      "floor": 0,
+      "kind": "room",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "concrete_wet",
+      "wallTex": "concrete_stained",
+      "leak": 0.05
+    },
+    {
+      "id": "PUMP",
+      "name": "ポンプ室",
+      "x": 0,
+      "z": 9,
+      "w": 6,
+      "d": 6,
+      "floor": 0,
+      "kind": "room",
+      "type": "workshop",
+      "furnish": false,
+      "floorTex": "concrete_damp",
+      "wallTex": "concrete_stained",
+      "leak": 0.04
+    },
+    {
+      "id": "JIMU",
+      "name": "病理事務室",
+      "x": 6,
+      "z": 9,
+      "w": 6,
+      "d": 6,
+      "floor": 0,
+      "kind": "room",
+      "type": "office",
+      "furnish": false,
+      "floorTex": "linoleum_grey",
+      "wallTex": "plaster_mold",
+      "leak": 0.03
+    },
+    {
+      "id": "MOUTH",
+      "name": "防水扉の前",
+      "x": 0,
+      "z": -1,
+      "w": 6,
+      "d": 7,
+      "floor": 0,
+      "kind": "room",
+      "type": "workshop",
+      "furnish": false,
+      "floorTex": "concrete_wet",
+      "wallTex": "concrete_stained",
+      "leak": 0.03
+    },
+    {
+      "id": "REIAN",
+      "name": "霊安室",
+      "x": 6,
+      "z": 0,
+      "w": 8,
+      "d": 6,
+      "floor": 0,
+      "kind": "room",
+      "type": "hospital",
+      "furnish": false,
+      "floorTex": "tile_hospital_large",
+      "wallTex": "tile_bathroom_white",
+      "leak": 0.03
+    },
+    {
+      "id": "P1",
+      "name": "配管の通路",
+      "x": 1.6,
+      "z": -41,
+      "w": 2,
+      "d": 40,
+      "floor": 0,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "concrete_damp",
+      "wallTex": "concrete_stained"
+    },
+    {
+      "id": "P2",
+      "name": "低い通路",
+      "x": -18.6,
+      "z": -42.6,
+      "w": 22.2,
+      "d": 1.6,
+      "floor": 0,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "concrete_wet",
+      "wallTex": "rust_heavy"
+    },
+    {
+      "id": "P3",
+      "name": "水の通路",
+      "x": -18.6,
+      "z": -81,
+      "w": 2,
+      "d": 38.4,
+      "floor": 0,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "wet_floor",
+      "wallTex": "concrete_damp"
+    },
+    {
+      "id": "P4A",
+      "name": "二枚目の防水扉の手前",
+      "x": -18.6,
+      "z": -82.6,
+      "w": 14.6,
+      "d": 1.6,
+      "floor": 0,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "concrete_wet",
+      "wallTex": "tile_broken_white"
+    },
+    {
+      "id": "P4B",
+      "name": "二枚目の防水扉の先",
+      "x": -4,
+      "z": -82.6,
+      "w": 14,
+      "d": 1.6,
+      "floor": 0,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "concrete_wet",
+      "wallTex": "tile_broken_white"
+    },
+    {
+      "id": "P5",
+      "name": "下りの通路",
+      "x": 8,
+      "z": -100,
+      "w": 2,
+      "d": 17.4,
+      "floor": 0,
+      "kind": "corridor",
+      "type": "corridor",
+      "furnish": false,
+      "floorTex": "concrete_cracked",
+      "wallTex": "concrete_stained"
+    },
+    {
+      "id": "HYOHON",
+      "name": "病理標本室",
+      "x": 5,
+      "z": -108,
+      "w": 8,
+      "d": 8,
+      "floor": 0,
+      "kind": "room",
+      "type": "hospital",
+      "furnish": false,
+      "floorTex": "tile_hospital_large",
+      "wallTex": "tile_bathroom_white"
+    }
+  ],
+  "doors": [
+    {
+      "id": "D_MACHI",
+      "a": "GENKAN",
+      "b": "MACHI",
+      "x": 6,
+      "z": 22,
+      "width": 2.4,
+      "look": "none",
+      "open": true,
+      "reason": "玄関ホールから外来の待合へ、扉のない広い入口"
+    },
+    {
+      "id": "D_ROKA1",
+      "a": "GENKAN",
+      "b": "ROKA",
+      "x": 3,
+      "z": 18,
+      "width": 1.6,
+      "look": "none",
+      "open": true,
+      "reason": "玄関ホールの奥が一階の廊下"
+    },
+    {
+      "id": "D_ROKA2",
+      "a": "MACHI",
+      "b": "ROKA",
+      "x": 11,
+      "z": 18,
+      "width": 2,
+      "look": "none",
+      "open": true,
+      "reason": "待合の奥も一階の廊下につながる"
+    },
+    {
+      "id": "D_UKE",
+      "a": "MACHI",
+      "b": "UKE",
+      "x": 16,
+      "z": 24.6,
+      "width": 1.1,
+      "look": "swing",
+      "closable": true,
+      "reason": "待合の東の、受付の中への扉"
+    },
+    {
+      "id": "D_KARTE",
+      "a": "ROKA",
+      "b": "KARTE",
+      "x": 3,
+      "z": 15,
+      "width": 1.1,
+      "look": "swing",
+      "closable": true,
+      "unlock": "ward",
+      "hint": "カルテ庫の扉。……今は、ひなたと黒木さんの話が先だ。"
+    },
+    {
+      "id": "D_SHIN",
+      "a": "ROKA",
+      "b": "SHIN",
+      "x": 9,
+      "z": 15,
+      "width": 1.1,
+      "look": "swing",
+      "closable": true,
+      "unlock": "ward",
+      "hint": "診察室の扉。……今は、ひなたと黒木さんの話が先だ。"
+    },
+    {
+      "id": "D_KAIDAN",
+      "a": "ROKA",
+      "b": "KAIDAN",
+      "x": 16,
+      "z": 15,
+      "width": 1.1,
+      "look": "swing",
+      "closable": true,
+      "unlock": "ward",
+      "hint": "階段ホールの防火扉。鎖と南京錠がかかっている。受付に鍵があるかもしれない。"
+    },
+    {
+      "id": "D_BSTAIR",
+      "a": "B_STAIR",
+      "b": "B_ROKA",
+      "x": 16,
+      "z": 9,
+      "width": 1.6,
+      "look": "none",
+      "open": true,
+      "reason": "階段を降りた先が地下の廊下"
+    },
+    {
+      "id": "D_PUMP",
+      "a": "B_ROKA",
+      "b": "PUMP",
+      "x": 3,
+      "z": 9,
+      "width": 1.1,
+      "look": "swing",
+      "closable": true,
+      "unlock": "b1",
+      "hint": "ポンプ室の扉。"
+    },
+    {
+      "id": "D_JIMU",
+      "a": "B_ROKA",
+      "b": "JIMU",
+      "x": 9,
+      "z": 9,
+      "width": 1.1,
+      "look": "swing",
+      "closable": true,
+      "unlock": "b1",
+      "hint": "病理事務室の扉。"
+    },
+    {
+      "id": "D_MOUTH",
+      "a": "B_ROKA",
+      "b": "MOUTH",
+      "x": 3,
+      "z": 6,
+      "width": 1.6,
+      "look": "none",
+      "open": true,
+      "reason": "地下の廊下の西の端から、研究棟への通路口へ"
+    },
+    {
+      "id": "D_REIAN",
+      "a": "B_ROKA",
+      "b": "REIAN",
+      "x": 10,
+      "z": 6,
+      "width": 1.1,
+      "look": "swing",
+      "closable": true,
+      "unlock": "b1",
+      "hint": "霊安室の扉。"
+    },
+    {
+      "id": "D_P1",
+      "a": "MOUTH",
+      "b": "P1",
+      "x": 2.6,
+      "z": -1,
+      "width": 1.2,
+      "look": "slide",
+      "unlock": "passage",
+      "hint": "厚い鉄の防水扉。ハンドルで閉めてある。"
+    },
+    {
+      "id": "D_P12",
+      "a": "P1",
+      "b": "P2",
+      "x": 2.6,
+      "z": -41,
+      "width": 1.6,
+      "look": "none",
+      "open": true
+    },
+    {
+      "id": "D_P23",
+      "a": "P2",
+      "b": "P3",
+      "x": -17.6,
+      "z": -42.6,
+      "width": 1.6,
+      "look": "none",
+      "open": true
+    },
+    {
+      "id": "D_P34",
+      "a": "P3",
+      "b": "P4A",
+      "x": -17.6,
+      "z": -81,
+      "width": 1.6,
+      "look": "none",
+      "open": true
+    },
+    {
+      "id": "D_GATE",
+      "a": "P4A",
+      "b": "P4B",
+      "x": -4,
+      "z": -81.8,
+      "width": 1.2,
+      "look": "slide",
+      "unlock": "passage",
+      "hint": "二枚目の防水扉。小さな丸い窓がある。"
+    },
+    {
+      "id": "D_P45",
+      "a": "P4B",
+      "b": "P5",
+      "x": 9,
+      "z": -82.6,
+      "width": 1.6,
+      "look": "none",
+      "open": true
+    },
+    {
+      "id": "D_END",
+      "a": "P5",
+      "b": "HYOHON",
+      "x": 9,
+      "z": -100,
+      "width": 1.2,
+      "look": "swing",
+      "closable": true
+    },
+    {
+      "id": "ST_DOWN",
+      "a": "B_STAIR",
+      "b": "KAIDAN",
+      "kind": "stairs",
+      "look": "flight",
+      "width": 1.2,
+      "unlock": "down",
+      "hint": "地下への階段。下から、水の流れる音がする。",
+      "ends": {
+        "a": {
+          "x": 18.6,
+          "z": 12,
+          "dir": "e",
+          "arrive": [
+            15.4,
+            12
+          ],
+          "yaw": 1.5707963267948966
+        },
+        "b": {
+          "x": 18.6,
+          "z": 12,
+          "dir": "e",
+          "arrive": [
+            15.4,
+            12
+          ],
+          "yaw": 1.5707963267948966
+        }
+      },
+      "reason": "階段ホールから地下へ降りる階段"
+    }
+  ],
+  "stations": [
+    {
+      "id": "S_HINA1",
+      "room": "GENKAN",
+      "x": 1,
+      "z": 21.2,
+      "label": "ひなた"
+    },
+    {
+      "id": "S_FRONT",
+      "room": "GENKAN",
+      "x": 3,
+      "z": 25.45,
+      "label": "鎖の扉（黒木さん）"
+    },
+    {
+      "id": "S_KEYBOX",
+      "room": "UKE",
+      "x": 19.75,
+      "z": 20,
+      "label": "受付のキーボックス",
+      "look": "pinbox",
+      "mount": "wall"
+    },
+    {
+      "id": "S_GEN",
+      "room": "PUMP",
+      "x": 0.75,
+      "z": 12,
+      "label": "非常用発電機"
+    },
+    {
+      "id": "S_HINA2",
+      "room": "PUMP",
+      "x": 4.3,
+      "z": 13.9,
+      "label": "ひなた"
+    },
+    {
+      "id": "S_PUMPSW",
+      "room": "PUMP",
+      "x": 5.5,
+      "z": 11.4,
+      "label": "排水ポンプの制御盤",
+      "look": "power",
+      "mount": "wall"
+    },
+    {
+      "id": "S_CAB",
+      "room": "JIMU",
+      "x": 10.9,
+      "z": 14.45,
+      "label": "鍵のかかった台帳の棚"
+    },
+    {
+      "id": "S_DESK",
+      "room": "JIMU",
+      "x": 7.2,
+      "z": 14.4,
+      "label": "事務机",
+      "look": "plan",
+      "mount": "top"
+    },
+    {
+      "id": "S_DRAIN",
+      "room": "JIMU",
+      "x": 9,
+      "z": 11.6,
+      "label": "床の排水口"
+    },
+    {
+      "id": "S_SQ1",
+      "room": "REIAN",
+      "x": 6.6,
+      "z": 3.2,
+      "label": "霊安室の机",
+      "look": "plan",
+      "mount": "top"
+    },
+    {
+      "id": "S_HEARSE",
+      "room": "REIAN",
+      "x": 13.55,
+      "z": 3,
+      "label": "搬出口"
+    },
+    {
+      "id": "S_LAMP1",
+      "room": "P1",
+      "x": 1.95,
+      "z": -4.2,
+      "label": "非常灯のスイッチ",
+      "look": "shutterbox",
+      "mount": "wall"
+    },
+    {
+      "id": "S_LAMP2",
+      "room": "P3",
+      "x": -18.25,
+      "z": -44.2,
+      "label": "非常灯のスイッチ",
+      "look": "shutterbox",
+      "mount": "wall"
+    },
+    {
+      "id": "S_LAMP3",
+      "room": "P4A",
+      "x": -16,
+      "z": -82.25,
+      "label": "非常灯のスイッチ",
+      "look": "shutterbox",
+      "mount": "wall"
+    },
+    {
+      "id": "S_LAMP4",
+      "room": "P5",
+      "x": 9.65,
+      "z": -84.8,
+      "label": "非常灯のスイッチ",
+      "look": "shutterbox",
+      "mount": "wall"
+    },
+    {
+      "id": "S_SHELF",
+      "room": "HYOHON",
+      "x": 9,
+      "z": -107.3,
+      "label": "標本の戸棚"
+    }
+  ],
+  "hides": [
+    {
+      "id": "H_MOUTH",
+      "room": "MOUTH",
+      "x": 0.55,
+      "z": 2.4,
+      "look": "locker",
+      "label": "台の上のロッカー"
+    },
+    {
+      "id": "H_P1",
+      "room": "P1",
+      "x": 3.25,
+      "z": -21.5,
+      "look": "locker",
+      "label": "台の上のロッカー"
+    },
+    {
+      "id": "H_P3",
+      "room": "P3",
+      "x": -16.95,
+      "z": -66,
+      "look": "locker",
+      "label": "台の上のロッカー"
+    },
+    {
+      "id": "H_P5",
+      "room": "P5",
+      "x": 9.65,
+      "z": -92,
+      "look": "locker",
+      "label": "台の上のロッカー"
+    }
+  ],
+  "furniture": [
+    {
+      "id": "F_GEN_BENCH",
+      "room": "GENKAN",
+      "kind": "bench",
+      "x": 0.4,
+      "z": 23.4,
+      "rot": 90,
+      "w": 1.8,
+      "d": 0.45
+    },
+    {
+      "id": "F_GEN_SHOE",
+      "room": "GENKAN",
+      "kind": "locker",
+      "x": 5.65,
+      "z": 25.2,
+      "rot": -90,
+      "w": 1,
+      "d": 0.5
+    },
+    {
+      "id": "F_GEN_BIN",
+      "room": "GENKAN",
+      "kind": "trashBin",
+      "x": 0.35,
+      "z": 25.6,
+      "rot": 0,
+      "w": 1,
+      "d": 0.5
+    },
+    {
+      "id": "F_MA_B1",
+      "room": "MACHI",
+      "kind": "bench",
+      "x": 9.2,
+      "z": 21,
+      "rot": 0,
+      "w": 2.4,
+      "d": 0.5
+    },
+    {
+      "id": "F_MA_B2",
+      "room": "MACHI",
+      "kind": "bench",
+      "x": 9.2,
+      "z": 23.2,
+      "rot": 0,
+      "w": 2.4,
+      "d": 0.5
+    },
+    {
+      "id": "F_MA_B3",
+      "room": "MACHI",
+      "kind": "bench",
+      "x": 13.2,
+      "z": 21,
+      "rot": 0,
+      "w": 2.4,
+      "d": 0.5
+    },
+    {
+      "id": "F_MA_B4",
+      "room": "MACHI",
+      "kind": "bench",
+      "x": 13.2,
+      "z": 23.2,
+      "rot": 0,
+      "w": 2.4,
+      "d": 0.5
+    },
+    {
+      "id": "F_MA_VEND",
+      "room": "MACHI",
+      "kind": "vendingMachine",
+      "x": 7,
+      "z": 18.5,
+      "rot": 0,
+      "w": 0.9,
+      "d": 0.8
+    },
+    {
+      "id": "F_MA_PLANT",
+      "room": "MACHI",
+      "kind": "plant",
+      "x": 15.5,
+      "z": 25.5,
+      "rot": 0,
+      "w": 0.5,
+      "d": 0.5
+    },
+    {
+      "id": "F_MA_EXT",
+      "room": "MACHI",
+      "kind": "extinguisher",
+      "x": 15.85,
+      "z": 19,
+      "rot": -90,
+      "w": 1,
+      "d": 0.5
+    },
+    {
+      "id": "F_UKE_COUNTER",
+      "room": "UKE",
+      "kind": "counter",
+      "x": 16.45,
+      "z": 21,
+      "rot": 90,
+      "w": 3,
+      "d": 0.6,
+      "args": [
+        3
+      ]
+    },
+    {
+      "id": "F_UKE_DESK",
+      "room": "UKE",
+      "kind": "desk",
+      "x": 19.55,
+      "z": 23.4,
+      "rot": -90,
+      "w": 1.4,
+      "d": 0.7
+    },
+    {
+      "id": "F_UKE_CAB",
+      "room": "UKE",
+      "kind": "filingCabinet",
+      "x": 18,
+      "z": 25.65,
+      "rot": 180,
+      "w": 0.5,
+      "d": 0.6
+    },
+    {
+      "id": "F_ROKA_BENCH",
+      "room": "ROKA",
+      "kind": "bench",
+      "x": 6.5,
+      "z": 17.65,
+      "rot": 180,
+      "w": 1.6,
+      "d": 0.45
+    },
+    {
+      "id": "F_ROKA_EXT",
+      "room": "ROKA",
+      "kind": "extinguisher",
+      "x": 13,
+      "z": 17.85,
+      "rot": 180,
+      "w": 1,
+      "d": 0.5
+    },
+    {
+      "id": "F_KA_RACK1",
+      "room": "KARTE",
+      "kind": "fileRack",
+      "x": 0.4,
+      "z": 12,
+      "rot": 90,
+      "w": 5,
+      "d": 0.5,
+      "args": [
+        5,
+        2.1
+      ]
+    },
+    {
+      "id": "F_KA_RACK2",
+      "room": "KARTE",
+      "kind": "fileRack",
+      "x": 3.6,
+      "z": 9.4,
+      "rot": 0,
+      "w": 3.6,
+      "d": 0.5,
+      "args": [
+        3.6,
+        2.1
+      ]
+    },
+    {
+      "id": "F_KA_DESK",
+      "room": "KARTE",
+      "kind": "desk",
+      "x": 5.55,
+      "z": 12.4,
+      "rot": -90,
+      "w": 1.4,
+      "d": 0.7
+    },
+    {
+      "id": "F_SH_BED",
+      "room": "SHIN",
+      "kind": "bed",
+      "x": 10.9,
+      "z": 10.6,
+      "rot": 90,
+      "w": 2,
+      "d": 0.9
+    },
+    {
+      "id": "F_SH_DESK",
+      "room": "SHIN",
+      "kind": "desk",
+      "x": 6.45,
+      "z": 11.2,
+      "rot": 90,
+      "w": 1.4,
+      "d": 0.7
+    },
+    {
+      "id": "F_SH_CHAIR",
+      "room": "SHIN",
+      "kind": "pipeChair",
+      "x": 7.3,
+      "z": 11.2,
+      "rot": -90,
+      "w": 1,
+      "d": 0.5
+    },
+    {
+      "id": "F_SH_SHELF",
+      "room": "SHIN",
+      "kind": "shelf",
+      "x": 11.7,
+      "z": 13.6,
+      "rot": -90,
+      "w": 1.2,
+      "d": 0.45,
+      "args": [
+        1.2,
+        1.8,
+        0.45,
+        4,
+        "boxes"
+      ]
+    },
+    {
+      "id": "F_KD_EXT",
+      "room": "KAIDAN",
+      "kind": "extinguisher",
+      "x": 12.25,
+      "z": 9.6,
+      "rot": 90,
+      "w": 1,
+      "d": 0.5
+    },
+    {
+      "id": "F_BR_DRUM",
+      "room": "B_ROKA",
+      "kind": "drum",
+      "x": 19.4,
+      "z": 7.5,
+      "rot": 0,
+      "w": 0.6,
+      "d": 0.6
+    },
+    {
+      "id": "F_BR_DRUM2",
+      "room": "B_ROKA",
+      "kind": "drum",
+      "x": 18.7,
+      "z": 8.4,
+      "rot": 0,
+      "w": 0.6,
+      "d": 0.6
+    },
+    {
+      "id": "F_PU_DESK",
+      "room": "PUMP",
+      "kind": "steelDesk",
+      "x": 3.6,
+      "z": 14.55,
+      "rot": 180,
+      "w": 1.4,
+      "d": 0.7
+    },
+    {
+      "id": "F_PU_SHELF",
+      "room": "PUMP",
+      "kind": "shelf",
+      "x": 5.65,
+      "z": 13.6,
+      "rot": -90,
+      "w": 1.2,
+      "d": 0.45,
+      "args": [
+        1.2,
+        1.8,
+        0.45,
+        9,
+        "boxes"
+      ]
+    },
+    {
+      "id": "F_JI_FILE1",
+      "room": "JIMU",
+      "kind": "filingCabinet",
+      "x": 6.35,
+      "z": 10,
+      "rot": 90,
+      "w": 0.5,
+      "d": 0.6
+    },
+    {
+      "id": "F_JI_FILE2",
+      "room": "JIMU",
+      "kind": "filingCabinet",
+      "x": 6.35,
+      "z": 10.6,
+      "rot": 90,
+      "w": 0.5,
+      "d": 0.6
+    },
+    {
+      "id": "F_JI_DESK",
+      "room": "JIMU",
+      "kind": "desk",
+      "x": 7.2,
+      "z": 14.55,
+      "rot": 180,
+      "w": 1.4,
+      "d": 0.7
+    },
+    {
+      "id": "F_JI_CHAIR",
+      "room": "JIMU",
+      "kind": "officeChair",
+      "x": 7.2,
+      "z": 13.8,
+      "rot": 0,
+      "w": 1,
+      "d": 0.5
+    },
+    {
+      "id": "F_MO_DRUM",
+      "room": "MOUTH",
+      "kind": "drum",
+      "x": 0.5,
+      "z": 4.8,
+      "rot": 0,
+      "w": 0.6,
+      "d": 0.6
+    },
+    {
+      "id": "F_MO_CRATE",
+      "room": "MOUTH",
+      "kind": "crate",
+      "x": 0.55,
+      "z": 3.6,
+      "rot": 0,
+      "w": 0.7,
+      "d": 0.7
+    },
+    {
+      "id": "F_RE_BODY",
+      "room": "REIAN",
+      "kind": "bodyCabinets",
+      "x": 10,
+      "z": 0.45,
+      "rot": 0,
+      "w": 4,
+      "d": 0.9,
+      "args": [
+        4
+      ]
+    },
+    {
+      "id": "F_RE_BED",
+      "room": "REIAN",
+      "kind": "bed",
+      "x": 11,
+      "z": 4.6,
+      "rot": 0,
+      "w": 2,
+      "d": 0.9
+    },
+    {
+      "id": "F_RE_DESK",
+      "room": "REIAN",
+      "kind": "desk",
+      "x": 6.45,
+      "z": 3.2,
+      "rot": 90,
+      "w": 1.4,
+      "d": 0.7
+    }
+  ],
+  "start": "GENKAN",
+  "spawn": {
+    "x": 3,
+    "z": 23.6,
+    "yaw": 0,
+    "floor": 1
+  },
+  "lampPool": true,
+  "exits": [
+    "GENKAN"
+  ],
+  "floorNames": {
+    "0": "地下",
+    "1": "一階"
+  },
+  "checks": {
+    "ignore": [
+      "no-loop",
+      "exits-few",
+      "direct-total",
+      "no-corridor"
+    ],
+    "why": "出口は鎖をかけられた正面の扉一つ（閉じ込められる話）。研究棟への地下通路は一本道（長い一本道を、止水弁を回しながら逃げる場面として作った）。"
+  }
+}

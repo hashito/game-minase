@@ -1,0 +1,394 @@
+[
+  {
+    "id": "GEN_DOOR",
+    "room": "GENKAN",
+    "position": [
+      1.6,
+      25.85
+    ],
+    "y": 1.2,
+    "label": "正面の扉",
+    "text": [
+      "ガラスの扉の取っ手に、外から鎖が巻いてある。押すと、鎖がじゃらりと鳴って止まる。",
+      "すき間から、黒木さんたちの懐中電灯の光が見える。"
+    ],
+    "feeling": "外は雨だ。",
+    "size": 0.7,
+    "photo": "assets/photos/th-gen-door.webp"
+  },
+  {
+    "id": "GEN_PUDDLE",
+    "room": "GENKAN",
+    "position": [
+      4.4,
+      20.4
+    ],
+    "y": 0.1,
+    "label": "雨漏りの水たまり",
+    "text": [
+      "天井のしみから、水がぽたぽた落ちて、床に水たまりができている。"
+    ],
+    "feeling": "建物じゅうが、雨を吸っている。",
+    "size": 0.7,
+    "photo": "assets/photos/th-gen-puddle.webp"
+  },
+  {
+    "id": "MA_BENCH",
+    "room": "MACHI",
+    "position": [
+      9.2,
+      23.2
+    ],
+    "y": 0.5,
+    "label": "待合の長椅子",
+    "text": [
+      "長椅子の座面に、水がたまっている。上の天井が抜けかけている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-ma-bench.webp"
+  },
+  {
+    "id": "MA_SLIPPER",
+    "room": "MACHI",
+    "position": [
+      7.2,
+      25.4
+    ],
+    "y": 0.1,
+    "label": "スリッパ",
+    "text": [
+      "病院のスリッパが一足。片方だけ、ぐっしょり濡れている。"
+    ],
+    "feeling": "ここまで、誰かが水の中を歩いて来た？",
+    "size": 0.7,
+    "photo": "assets/photos/th-ma-slipper.webp"
+  },
+  {
+    "id": "MA_CEIL",
+    "room": "MACHI",
+    "position": [
+      12,
+      22.1
+    ],
+    "y": 2.6,
+    "label": "天井",
+    "text": [
+      "天井板が水を吸ってたわみ、すき間から雨水が糸のように落ちている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-ma-ceil.webp"
+  },
+  {
+    "id": "UKE_WINDOW",
+    "room": "UKE",
+    "position": [
+      16.8,
+      23
+    ],
+    "y": 1.2,
+    "label": "受付の窓口",
+    "text": [
+      "窓口のガラスの内側に、手のひらの跡が並んでいる。内側から。……濡れた手で。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-uke-window.webp"
+  },
+  {
+    "id": "KA_RACK",
+    "room": "KARTE",
+    "position": [
+      0.6,
+      13.6
+    ],
+    "y": 1.4,
+    "label": "カルテの棚",
+    "text": [
+      "カルテが年ごとに並んでいる。平成八年（1996年）の棚だけ、ところどころ抜けている。"
+    ],
+    "feeling": "抜けているカルテは、どこへ行ったんだろう。",
+    "size": 0.7,
+    "photo": "assets/photos/th-ka-rack.webp"
+  },
+  {
+    "id": "KA_FLOOR",
+    "room": "KARTE",
+    "position": [
+      2.4,
+      11
+    ],
+    "y": 0.1,
+    "label": "床のカルテ",
+    "text": [
+      "床にカルテが散らばっている。どれも濡れて、字がにじんでいる。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-ka-floor.webp"
+  },
+  {
+    "id": "SH_SINK",
+    "room": "SHIN",
+    "position": [
+      8.8,
+      9.2
+    ],
+    "y": 1,
+    "label": "洗面台",
+    "text": [
+      "蛇口から、水がひとすじ流れ続けている。止めても、止まらない。",
+      "排水口の奥で、ごぼごぼと音がする。"
+    ],
+    "feeling": "水道は、とっくに止まっているはずなのに。",
+    "size": 0.7,
+    "photo": "assets/photos/th-sh-sink.webp"
+  },
+  {
+    "id": "KD_FOOT",
+    "room": "KAIDAN",
+    "position": [
+      14.5,
+      12
+    ],
+    "y": 0.1,
+    "label": "濡れた足跡",
+    "text": [
+      "地下への階段から上がって来た、濡れた足跡。裸足の跡が、いくつも重なっている。",
+      "階段ホールの真ん中で、ぷつりと消えている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-kd-foot.webp"
+  },
+  {
+    "id": "BR_WATER",
+    "room": "B_ROKA",
+    "position": [
+      6,
+      7.5
+    ],
+    "y": 0.1,
+    "label": "地下の廊下の水",
+    "text": [
+      "くるぶしまでの水。壁のすき間から、雨水が流れこんでいる。",
+      "水の底に、割れたガラスが光っている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-br-water.webp"
+  },
+  {
+    "id": "PU_GAUGE",
+    "room": "PUMP",
+    "position": [
+      1.6,
+      9.08
+    ],
+    "y": 1.5,
+    "label": "水位計",
+    "text": [
+      "壁の水位計。針が、赤い目盛りの手前でふるえている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-pu-gauge.webp"
+  },
+  {
+    "id": "JI_PHOTO",
+    "room": "JIMU",
+    "position": [
+      7.3,
+      9.06
+    ],
+    "y": 1.5,
+    "label": "職員の写真",
+    "text": [
+      "白衣の職員の集合写真。前の列の端の、若い女の人の顔だけ、水のしみで見えなくなっている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-ji-photo.webp"
+  },
+  {
+    "id": "RE_DRAWER",
+    "room": "REIAN",
+    "position": [
+      8.5,
+      0.6
+    ],
+    "y": 1,
+    "label": "遺体の保管庫",
+    "text": [
+      "金属の引き出しが並んでいる。一つだけ少し開いて、中から水が垂れている。",
+      "中は空だ。底に、水がたまっているだけ。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-re-drawer.webp"
+  },
+  {
+    "id": "MO_DOOR",
+    "room": "MOUTH",
+    "position": [
+      1.5,
+      -0.8
+    ],
+    "y": 1.6,
+    "label": "防水扉の窓",
+    "text": [
+      "厚い鉄の扉に、小さな丸い窓。向こうは真っ暗。",
+      "窓の内側に、水の筋が垂れている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-mo-door.webp"
+  },
+  {
+    "id": "P1_LEAK",
+    "room": "P1",
+    "position": [
+      3.4,
+      -12
+    ],
+    "y": 2.2,
+    "label": "配管の水もれ",
+    "text": [
+      "天井の配管の継ぎ目から、水が噴き出している。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-p1-leak.webp"
+  },
+  {
+    "id": "P1_HAIR",
+    "room": "P1",
+    "position": [
+      1.75,
+      -16
+    ],
+    "y": 1.3,
+    "label": "配管の髪",
+    "text": [
+      "壁の配管に、長い黒髪がからまっている。何本も。"
+    ],
+    "feeling": "女の人の髪だ。",
+    "size": 0.7,
+    "photo": "assets/photos/th-p1-hair.webp"
+  },
+  {
+    "id": "P2_HANDS",
+    "room": "P2",
+    "position": [
+      -9,
+      -41.8
+    ],
+    "y": 0.1,
+    "label": "濡れた手の跡",
+    "text": [
+      "床に、濡れた手の跡が続いている。右手、右手、左手、右手。……数が合わない。"
+    ],
+    "feeling": "何本も手のあるものが、這って進んだ跡だ。",
+    "size": 0.7,
+    "photo": "assets/photos/th-p2-hands.webp"
+  },
+  {
+    "id": "P3_KARTE",
+    "room": "P3",
+    "position": [
+      -17.2,
+      -58
+    ],
+    "y": 0.1,
+    "label": "水に浮く紙",
+    "text": [
+      "水の上に、カルテが一枚浮いている。名前の欄だけ、黒く塗りつぶしてある。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-p3-karte.webp"
+  },
+  {
+    "id": "P4_GLASS",
+    "room": "P4B",
+    "position": [
+      6,
+      -82.2
+    ],
+    "y": 0.25,
+    "label": "割れた瓶",
+    "text": [
+      "割れたガラス瓶の破片が、床に散らばっている。つんと鼻を刺すにおい。ホルマリン（標本を腐らせないための薬）だ。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-p4-glass.webp"
+  },
+  {
+    "id": "P5_DRAG",
+    "room": "P5",
+    "position": [
+      8.6,
+      -89
+    ],
+    "y": 0.1,
+    "label": "引きずった跡",
+    "text": [
+      "湿った床に、何かを引きずった跡。奥から来て、奥へ戻っている。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-p5-drag.webp"
+  },
+  {
+    "id": "HY_TANK",
+    "room": "HYOHON",
+    "position": [
+      6.3,
+      -104
+    ],
+    "y": 0.4,
+    "label": "ホルマリンの槽",
+    "text": [
+      "床に埋めた大きな槽に、黄色く濁った液がたまっている。表面に、白い布の切れ端が浮いている。",
+      "底のほうに、何か大きなものが沈んでいる。"
+    ],
+    "feeling": "見ないほうがいい。",
+    "size": 0.7,
+    "photo": "assets/photos/th-hy-tank.webp"
+  },
+  {
+    "id": "HY_JARS",
+    "room": "HYOHON",
+    "position": [
+      12.6,
+      -104
+    ],
+    "y": 1.3,
+    "label": "標本の瓶の列",
+    "text": [
+      "壁の棚に、ガラス瓶が何十本も並んでいる。黄色い液の中に、人の臓器。",
+      "ラベルは番号だけ。名前は、どこにも書いていない。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-hy-jars.webp"
+  },
+  {
+    "id": "HY_COAT",
+    "room": "HYOHON",
+    "position": [
+      10.8,
+      -107.4
+    ],
+    "y": 0.4,
+    "label": "白衣の切れ端",
+    "text": [
+      "戸棚の下に、白衣の切れ端が落ちている。胸のポケットに、ボールペンが一本。"
+    ],
+    "feeling": "",
+    "size": 0.7,
+    "photo": "assets/photos/th-hy-coat.webp"
+  }
+]
