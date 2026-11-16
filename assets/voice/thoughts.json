@@ -1,0 +1,307 @@
+{
+ "start": {
+  "text": "玄関ホールの西で、ひなたが待っている。まず、ひなたと話そう。",
+  "file": "t-start.mp3",
+  "sec": 4.8
+ },
+ "hina_first": {
+  "text": "先に、ひなたと話そう。玄関ホールの西の、長椅子のそばにいる。",
+  "file": "t-hina_first.mp3",
+  "sec": 5.1
+ },
+ "front_first": {
+  "text": "鍵を探す前に、扉の外の黒木さんと話そう。なぜ七番の瓶なのか、聞かないと。",
+  "file": "t-front_first.mp3",
+  "sec": 6.2
+ },
+ "front_shut": {
+  "text": "鎖が、じゃらりと鳴っただけだ。扉は開かない。",
+  "file": "t-front_shut.mp3",
+  "sec": 3.5
+ },
+ "front_again": {
+  "text": "鎖のすき間から、黒木さんたちの懐中電灯の光。……瓶を持って来るまで、開けてはくれない。",
+  "file": "t-front_again.mp3",
+  "sec": 6.5
+ },
+ "give_nojar": {
+  "text": "黒木さんに渡せるものは、まだ何もない。七番の瓶は、地下の標本室だ。",
+  "file": "t-give_nojar.mp3",
+  "sec": 5.6
+ },
+ "give_wait": {
+  "text": "まだ渡さない。",
+  "file": "t-give_wait.mp3",
+  "sec": 1
+ },
+ "key_first": {
+  "text": "キーボックスは、受付の中の奥の壁。待合の東の扉から入れる。",
+  "file": "t-key_first.mp3",
+  "sec": 5
+ },
+ "karte_hint": {
+  "text": "カルテ庫の東の壁の机に、カルテが一冊置いてある。手に取って読もう。",
+  "file": "t-karte_hint.mp3",
+  "sec": 5
+ },
+ "down_go": {
+  "text": "ひなたは、壁に手をついてポンプ室へ向かった。私も、地下の廊下の西のポンプ室へ行こう。",
+  "file": "t-down_go.mp3",
+  "sec": 6.5
+ },
+ "radio_gen": {
+  "text": "無線を合わせる前に、発電機だ。ポンプが動かないと、ひなたのいる部屋まで水が来る。",
+  "file": "t-radio_gen.mp3",
+  "sec": 6
+ },
+ "bousui_radio": {
+  "text": "防水扉を開ける前に、ひなたと無線を合わせておこう。ポンプ室の奥にいる。",
+  "file": "t-bousui_radio.mp3",
+  "sec": 5.3
+ },
+ "bousui_shut": {
+  "text": "防水扉は、閉めてハンドルを回しきった。向こうに、あれがいる。……もう開けない。",
+  "file": "t-bousui_shut.mp3",
+  "sec": 5.7
+ },
+ "lamp_order": {
+  "text": "手前の非常灯から、順につけていこう。帰り道が見えるように。",
+  "file": "t-lamp_order.mp3",
+  "sec": 4.6
+ },
+ "lamp_done": {
+  "text": "非常灯がついた。帰り道の目印になる。",
+  "file": "t-lamp_done.mp3",
+  "sec": 3.1
+ },
+ "valve_early": {
+  "text": "赤いハンドルの止水弁。回すと、このあたりの水が抜けるらしい。……今は、回す理由がない。",
+  "file": "t-valve_early.mp3",
+  "sec": 6.8
+ },
+ "crouch_hint": {
+  "text": "配管が低い。[C] でしゃがんで、くぐる。",
+  "file": "t-crouch_hint.mp3",
+  "sec": 3
+ },
+ "ev_drip": {
+  "text": "天井の配管から、水がしたたっている。……奥から、水の流れる音。",
+  "file": "t-ev_drip.mp3",
+  "sec": 5
+ },
+ "ev_hair": {
+  "text": "配管の継ぎ目に、長い黒髪がからまっている。何本も。",
+  "file": "t-ev_hair.mp3",
+  "sec": 4.2
+ },
+ "ev_flick": {
+  "text": "懐中電灯が、ちらついた。……電池は新しいはずなのに。",
+  "file": "t-ev_flick.mp3",
+  "sec": 4.1
+ },
+ "ev_clang": {
+  "text": "うしろで、配管が鳴った。がん、と一つ。……誰も、いない。",
+  "file": "t-ev_clang.mp3",
+  "sec": 5.3
+ },
+ "ev_low": {
+  "text": "この先、天井の配管が低い。しゃがまないと進めない。[C] でしゃがむ。",
+  "file": "t-ev_low.mp3",
+  "sec": 5.2
+ },
+ "ev_hands": {
+  "text": "床に、濡れた手の跡。数が合わない。奥からこちらへ続いている。",
+  "file": "t-ev_hands.mp3",
+  "sec": 5
+ },
+ "ev_cross": {
+  "text": "今、突き当たりの水の中を、何かが横切った。",
+  "file": "t-ev_cross.mp3",
+  "sec": 3.7
+ },
+ "ev_water": {
+  "text": "水がひざまで来た。冷たい。ゆっくりしか歩けない。",
+  "file": "t-ev_water.mp3",
+  "sec": 3.7
+ },
+ "ev_splash": {
+  "text": "うしろで、水がはねた。……振り向いても、誰もいない。",
+  "file": "t-ev_splash.mp3",
+  "sec": 3.9
+ },
+ "ev_float": {
+  "text": "水の上に、カルテが一枚浮いている。名前のところが、黒く塗りつぶしてある。",
+  "file": "t-ev_float.mp3",
+  "sec": 5.6
+ },
+ "ev_hum": {
+  "text": "懐中電灯が消えかけた。……水の中から、誰かの鼻歌が聞こえる。",
+  "file": "t-ev_hum.mp3",
+  "sec": 4.6
+ },
+ "ev_drag": {
+  "text": "湿った床に、何かを引きずった跡。奥から来て、奥へ戻っている。",
+  "file": "t-ev_drag.mp3",
+  "sec": 5.2
+ },
+ "ev_clink": {
+  "text": "奥の部屋から、ガラスの触れ合う音がした。……瓶の音だ。",
+  "file": "t-ev_clink.mp3",
+  "sec": 3.9
+ },
+ "gate_look": {
+  "text": "二枚目の防水扉。小さな丸い窓がある。……開ける前に、窓から向こうを見よう。",
+  "file": "t-gate_look.mp3",
+  "sec": 5.8
+ },
+ "gate_wait": {
+  "text": "窓の向こうに、まだ、あれがいる。",
+  "file": "t-gate_wait.mp3",
+  "sec": 2.6
+ },
+ "lesson_start": {
+  "text": "前から、来る！　止水弁に向いて [E]、水を抜け！",
+  "file": "t-lesson_start.mp3",
+  "sec": 3.8
+ },
+ "lesson_back": {
+  "text": "止水弁より手前（扉の側）に下がって、弁を回さないと止まらない。",
+  "file": "t-lesson_back.mp3",
+  "sec": 3.8
+ },
+ "lesson_again": {
+  "text": "水の中に沈んで、消えた。……また来る。止水弁を回して、水を抜くんだ。",
+  "file": "t-lesson_again.mp3",
+  "sec": 5.6
+ },
+ "valve_first": {
+  "text": "乾いた床の手前で、あれが止まった。右上に、水が戻るまでの目盛り。",
+  "file": "t-valve_first.mp3",
+  "sec": 5.2
+ },
+ "chase_go": {
+  "text": "逃げろ。走れる（Shift）。うしろに来たら、止水弁に [E] で水を抜く。台の上のロッカーにも隠れられる。",
+  "file": "t-chase_go.mp3",
+  "sec": 7.1
+ },
+ "chase_dark": {
+  "text": "懐中電灯が消えた。[F] で、叩いてつけ直せる。",
+  "file": "t-chase_dark.mp3",
+  "sec": 3.6
+ },
+ "relight_wait": {
+  "text": "懐中電灯を叩いている……。",
+  "file": "t-relight_wait.mp3",
+  "sec": 1.8
+ },
+ "relight": {
+  "text": "ついた。……まだ、もつ。",
+  "file": "t-relight.mp3",
+  "sec": 2
+ },
+ "chase_low": {
+  "text": "この先の低い通路は、しゃがんでしか進めない。手前の止水弁を通り過ぎたら、振り返って回しておく。あれは、そこで止まる。",
+  "file": "t-chase_low.mp3",
+  "sec": 8.8
+ },
+ "cp_mid": {
+  "text": "低い通路の入口まで戻った。",
+  "file": "t-cp_mid.mp3",
+  "sec": 2
+ },
+ "hide_lost": {
+  "text": "台の上のロッカーの中。足が水から上がっている。……水音が、遠ざかっていく。",
+  "file": "t-hide_lost.mp3",
+  "sec": 5.6
+ },
+ "seal_go": {
+  "text": "あれが来る。防水扉に向いて [E]、扉を閉めろ！",
+  "file": "t-seal_go.mp3",
+  "sec": 3.5
+ },
+ "seal_shut": {
+  "text": "閉まった。ハンドルを、回せるところまで回した。",
+  "file": "t-seal_shut.mp3",
+  "sec": 3.4
+ },
+ "rescue_go": {
+  "text": "ポンプ室だ。地下の廊下の西。ひなたがいる。",
+  "file": "t-rescue_go.mp3",
+  "sec": 3.3
+ },
+ "cab_locked": {
+  "text": "鍵のかかった棚。小さな鍵穴がある。……鍵が要る。",
+  "file": "t-cab_locked.mp3",
+  "sec": 3.8
+ },
+ "desk_early": {
+  "text": "事務机。……今は、並べて考える物がそろっていない。",
+  "file": "t-desk_early.mp3",
+  "sec": 4
+ },
+ "drain_wait": {
+  "text": "排水口から、水が噴き出している。……まず、事務机で、あの人が何をしたいのか確かめないと。",
+  "file": "t-drain_wait.mp3",
+  "sec": 6.7
+ },
+ "return_wait": {
+  "text": "瓶は、まだ返さない。",
+  "file": "t-return_wait.mp3",
+  "sec": 1.8
+ },
+ "hearse_locked": {
+  "text": "搬出口の両開きの扉。鍵がかかっている。鍵は、どこかにあるはずだ。",
+  "file": "t-hearse_locked.mp3",
+  "sec": 5.6
+ },
+ "hearse_jar": {
+  "text": "外へ出る前に、七番の瓶をどうするか決めないと。あの人は、瓶を持つ者を追ってくる。",
+  "file": "t-hearse_jar.mp3",
+  "sec": 6.1
+ },
+ "pump_ok": {
+  "text": "排水ポンプの制御盤。ポンプは今、動いている。",
+  "file": "t-pump_ok.mp3",
+  "sec": 4
+ },
+ "pump_early": {
+  "text": "排水ポンプの制御盤。動かすには、先に発電機だ。",
+  "file": "t-pump_early.mp3",
+  "sec": 4.2
+ },
+ "think_retry": {
+  "text": "もう一度、集めた物を見直そう。",
+  "file": "t-think_retry.mp3",
+  "sec": 2.5
+ },
+ "think_flood": {
+  "text": "水が、また上がった。ひなたの押さえる逆止弁が、もたない……！",
+  "file": "t-think_flood.mp3",
+  "sec": 4.5
+ },
+ "sq1_more": {
+  "text": "まだ足りない：",
+  "file": "t-sq1_more.mp3",
+  "sec": 0.8
+ },
+ "sq2_count": {
+  "text": "排水口のごみをどけた。水の引きが、少し良くなった。",
+  "file": "t-sq2_count.mp3",
+  "sec": 3.9
+ },
+ "stair_dark": {
+  "text": "地下への階段。下から、水の流れる音がする。",
+  "file": "t-stair_dark.mp3",
+  "sec": 3.7
+ },
+ "done_here": {
+  "text": "ここでは、もうすることはない。",
+  "file": "t-done_here.mp3",
+  "sec": 2
+ },
+ "not_yet": {
+  "text": "今は、まだだ。左上の目標を先にしよう。",
+  "file": "t-not_yet.mp3",
+  "sec": 3.6
+ }
+}

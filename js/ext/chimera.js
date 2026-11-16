@@ -37,7 +37,7 @@ export function installChimera(ext, G) {
   G.project = (x, z) => project(x, z);
   G.routeAt = (s) => at(s);
   // how fast she can go at s: the low pipes (P2) hold her back
-  const slowAt = (s) => { const p = at(s), r = ctx.world.roomAt(p.x, p.z); return r === 'P2' ? 0.4 : 1; };
+  const slowAt = (s) => { const p = at(s), r = ctx.world.roomAt(p.x, p.z); return r === 'P2' ? 0.3 : 1; };   // 0.9 m/s: a little slower than you crouching (1.1)
   /** the dry bands and shut doors between her and the player (their s), nearest first */
   function blockers(from, to) {
     const out = [];

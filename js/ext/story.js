@@ -212,6 +212,7 @@ export function installStory(ext, G) {
   }
   ext.on('player:respawn', () => {
     if (done('T_JAR') && !done('T_ESCAPE') && snap) {
+      if (ctx.fp && ctx.state.room !== 'P2') ctx.fp.crouching = false;   // back on your feet to run
       for (const [id, v] of Object.entries(snap.posts)) G.setPost(id, v >= 0, Math.max(0, v));
       const ps = G.project(cam().x, cam().z).s;
       chaseFrom(flag('cp_mid') || flag('cp_gate') ? Math.max(0, ps - 16) : 0, 4.0);   // back at the cabinet she rises again behind you (4 s to get going)
@@ -220,7 +221,7 @@ export function installStory(ext, G) {
     if (done('T_LEDGER') && !done('T_THINK')) { G.wrong = 0; apply(); }
   });
   ext.registerTask('T_SEAL', {
-    run: async () => { const d = door('D_P1'); G.spinWheel('D_P1', 1.6); ctx.sound('noise', 'slide'); d.close(); G.ghostStop(); ctx.sound('noise', 'thud'); return true; },
+    run: async () => { const d = door('D_P1'); G.spinWheel('D_P1', 1.6); ctx.sound('noise', 'slide'); d.close(); G.ghostStop(); ctx.sound('noise', 'thud'); ctx.answer(W.seal_shut, 2.5); return true; },
     onDone: () => { for (const P of G.posts.values()) G.setPost(P.def.id, false); apply(); later(async () => { await talk('seal_done', '防水扉'); say('rescue_go', 4); }, 600); },
   });
   ext.registerTask('T_RESCUE', {
@@ -292,7 +293,7 @@ export function installStory(ext, G) {
     if (to === 'MOUTH' && done('T_JAR') && !done('T_ESCAPE') && G.gh.mode === 'chase') {
       ctx.completeTask('T_ESCAPE');
       G.gh.s = Math.min(G.gh.s, G.mouthS - 12); G.gh.lunge = 99; sealSpot();
-      talk('top', '防水扉').then(() => say('seal_go', 5));
+      talk('top', '防水扉').then(() => { if (!done('T_SEAL')) say('seal_go', 5); });
     }
     if (to === 'PUMP' && done('T_SEAL') && !done('T_RESCUE') && !flag('rescue_in')) { setFlag('rescue_in'); later(() => talk('rescue_in', 'ポンプ室'), 300); }
     if (to === 'P4A' && G.gh.mode === 'chase' && !flag('cp_gate')) { setFlag('cp_gate'); ctx.checkpoint = { x: -5.2, z: -81.8, yaw: Math.PI / 2, floor: 0 }; takeSnap(); }
@@ -323,6 +324,8 @@ export function installStory(ext, G) {
       if (room === 'P4B' && done('T_GATE') && !done('T_POST') && G.gh.mode === 'off' && c.x > -2.6) lessonStart(false);
       if (G.gh.mode === 'lesson' && c.x > 2.65) { lessonBack -= dt; if (lessonBack <= 0) { say('lesson_back', 4); lessonBack = 6; } }
       // a checkpoint at the mouth of the low passage on the way back
+      // before the low passage: you crawl there; a valve behind you first
+      if (G.gh.mode === 'chase' && room === 'P3' && c.z > -52 && !G.lowWarned) { G.lowWarned = true; say('chase_low', 6); }
       if (G.gh.mode === 'chase' && room === 'P2' && c.x > -16.6 && !flag('cp_mid')) { setFlag('cp_mid'); ctx.checkpoint = { x: -16.2, z: -41.8, yaw: -Math.PI / 2, floor: 0 }; takeSnap(); say('cp_mid', 2.5); }
     }
   }

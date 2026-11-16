@@ -4,163 +4,191 @@
       "who": "私",
       "text": "私は戸川湊、大学一年。幼なじみの篠原ひなたと、心霊動画を撮りに、山あいの廃病院へ来た。",
       "img": "assets/photos/op-hospital.webp",
-      "id": "opening-1"
+      "id": "opening-1",
+      "voice": "assets/voice/opening-1.mp3"
     },
     {
       "who": "私",
       "text": "水無瀬病院。二十七年前、台風の夜に地下が水につかって、そのまま閉まった病院だ。今夜も雨が降っている。",
       "img": "assets/photos/op-rain.webp",
-      "id": "opening-2"
+      "id": "opening-2",
+      "voice": "assets/voice/opening-2.mp3"
     },
     {
       "who": "私",
       "text": "玄関ホールで撮りはじめたとき、地元の先輩の黒木さんたちが入って来た。携帯を二人とも取り上げられた。",
       "img": "assets/photos/op-kuroki.webp",
-      "id": "opening-3"
+      "id": "opening-3",
+      "voice": "assets/voice/opening-3.mp3"
     },
     {
       "who": "私",
       "text": "黒木さんたちは外へ出て、正面の扉の取っ手に鎖を巻いた。裏口も窓も、板で打ちつけてある。",
       "img": "assets/photos/op-chain.webp",
-      "id": "opening-4"
+      "id": "opening-4",
+      "voice": "assets/voice/opening-4.mp3"
     },
     {
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "地下の標本室に、七番の瓶がある。それを持って来い。持って来るまで、鎖は外さん。",
       "img": "assets/photos/op-chain.webp",
-      "id": "opening-5"
+      "id": "opening-5",
+      "voice": "assets/voice/opening-5.mp3"
     }
   ],
   "hina1": [
     {
       "who": "ひなた",
       "text": "湊、ごめん。私が撮りに行こうって言ったから。",
-      "id": "hina1-1"
+      "id": "hina1-1",
+      "voice": "assets/voice/hina1-1.mp3"
     },
     {
       "who": "私",
       "text": "ひなたのせいじゃない。……黒木さん、本気だ。",
-      "id": "hina1-2"
+      "id": "hina1-2",
+      "voice": "assets/voice/hina1-2.mp3"
     },
     {
       "who": "ひなた",
       "text": "無線機は取られなかった。撮影で使うつもりだった二台。離れても、これで話せる。",
-      "id": "hina1-3"
+      "id": "hina1-3",
+      "voice": "assets/voice/hina1-3.mp3"
     },
     {
       "who": "ひなた",
       "text": "黒木さん、なんで「七番」なんだろう。……扉のところで、聞いてみて。",
-      "id": "hina1-4"
+      "id": "hina1-4",
+      "voice": "assets/voice/hina1-4.mp3"
     }
   ],
   "front": [
     {
       "who": "私",
       "text": "黒木さん、開けてください。こんなの、ただの肝試しじゃないですか。",
-      "id": "front-1"
+      "id": "front-1",
+      "voice": "assets/voice/front-1.mp3"
     },
     {
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "肝試しじゃねえよ。……去年、俺の弟の蓮が、ここの地下まで入った。",
-      "id": "front-2"
+      "id": "front-2",
+      "voice": "assets/voice/front-2.mp3"
     },
     {
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "出て来てから、あいつは一言もしゃべらねえ。紙に「7」って、そればっかり書いてる。",
-      "id": "front-3"
+      "id": "front-3",
+      "voice": "assets/voice/front-3.mp3"
     },
     {
       "who": "私",
       "text": "鎖のすき間から、くしゃくしゃの紙が押しこまれた。紙いっぱいに、鉛筆の「7」。",
-      "id": "front-4"
+      "id": "front-4",
+      "voice": "assets/voice/front-4.mp3"
     },
     {
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "俺は、下までは行けなかった。……蓮が何を見たのか知りたい。地下の標本室の、七番の瓶を持って来い。",
-      "id": "front-5"
+      "id": "front-5",
+      "voice": "assets/voice/front-5.mp3"
     },
     {
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "持って来たら、鎖は外す。携帯も返す。……持って来なけりゃ、朝まで開けねえ。",
-      "id": "front-6"
+      "id": "front-6",
+      "voice": "assets/voice/front-6.mp3"
     },
     {
       "who": "ひなた",
       "text": "湊。……受付に、鍵の箱があったよ。地下へ降りる階段の鍵、あるかもしれない。",
-      "id": "front-7"
+      "id": "front-7",
+      "voice": "assets/voice/front-7.mp3"
     }
   ],
   "key_done": [
     {
       "who": "私",
       "text": "「階段 防火扉」の札のついた鍵。……これで、地下へ降りられる。",
-      "id": "key_done-1"
+      "id": "key_done-1",
+      "voice": "assets/voice/key_done-1.mp3"
     },
     {
       "who": "ひなた",
       "text": "待って。七番って何の番号か分かんないまま行くの、こわい。カルテ庫を見てからにしよう。廊下の西の端。",
-      "id": "key_done-2"
+      "id": "key_done-2",
+      "voice": "assets/voice/key_done-2.mp3"
     }
   ],
   "karte_done": [
     {
       "who": "ひなた",
       "text": "浅井庄一さん。……カルテに「七」の付箋。亡くなった人の体を、地下で調べたってこと？",
-      "id": "karte_done-1"
+      "id": "karte_done-1",
+      "voice": "assets/voice/karte_done-1.mp3"
     },
     {
       "who": "私",
       "text": "病理解剖。死んだ理由を確かめるために、体を調べる。……「臓器の保存」の、家族の同意が空欄だ。",
-      "id": "karte_done-2"
+      "id": "karte_done-2",
+      "voice": "assets/voice/karte_done-2.mp3"
     },
     {
       "who": "ひなた",
       "text": "七番の瓶って、もしかして。……ううん、行こう。階段は、廊下の東の防火扉の奥。",
-      "id": "karte_done-3"
+      "id": "karte_done-3",
+      "voice": "assets/voice/karte_done-3.mp3"
     }
   ],
   "down": [
     {
       "who": "私",
       "text": "地下は、くるぶしまで水につかっていた。雨水が、壁のすき間から流れこんでいる。",
-      "id": "down-1"
+      "id": "down-1",
+      "voice": "assets/voice/down-1.mp3"
     },
     {
       "who": "ひなた",
       "text": "いっ……！　ごめん、最後の段で、すべった。足首……ひねったかも。",
-      "id": "down-2"
+      "id": "down-2",
+      "voice": "assets/voice/down-2.mp3"
     },
     {
       "who": "私",
       "text": "ひなたは立てるけれど、まともには歩けない。……水の中を、長い通路の奥までは無理だ。",
-      "id": "down-3"
+      "id": "down-3",
+      "voice": "assets/voice/down-3.mp3"
     },
     {
       "who": "ひなた",
       "text": "ポンプ室って、案内図にあったよね。発電機が動けば、水が抜けるかも。そこまでなら行ける。",
-      "id": "down-4"
+      "id": "down-4",
+      "voice": "assets/voice/down-4.mp3"
     }
   ],
   "gen_done": [
     {
       "who": "私",
       "text": "発電機がうなり、天井の非常灯が、ぽつぽつとついた。壁の水位計の針が、ゆっくり下がりはじめる。",
-      "id": "gen_done-1"
+      "id": "gen_done-1",
+      "voice": "assets/voice/gen_done-1.mp3"
     },
     {
       "who": "ひなた",
       "text": "私、ここに残る。ポンプを見てる。水が上がってきたら、無線で知らせるから。",
-      "id": "gen_done-2"
+      "id": "gen_done-2",
+      "voice": "assets/voice/gen_done-2.mp3"
     },
     {
       "who": "ひなた",
       "text": "だから湊、無線の周波数、合わせておこう。私のと同じところに。",
-      "id": "gen_done-3"
+      "id": "gen_done-3",
+      "voice": "assets/voice/gen_done-3.mp3"
     }
   ],
   "radio_done": [
@@ -169,97 +197,113 @@
       "where": "無線",
       "text": "よし、聞こえる。……湊、何かあったら、すぐ呼んで。ほんとに。",
       "id": "radio_done-1",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/radio_done-1.mp3"
     },
     {
       "who": "私",
       "text": "研究棟への通路は、地下の廊下の西の端。防水扉の向こうだ。",
-      "id": "radio_done-2"
+      "id": "radio_done-2",
+      "voice": "assets/voice/radio_done-2.mp3"
     }
   ],
   "bousui_done": [
     {
       "who": "私",
       "text": "防水扉の向こうは、配管の通路。真っ暗で、ずっと奥まで続いている。水の流れる音。",
-      "id": "bousui_done-1"
+      "id": "bousui_done-1",
+      "voice": "assets/voice/bousui_done-1.mp3"
     },
     {
       "who": "ひなた",
       "where": "無線",
       "text": "湊、通路の壁に、非常灯のスイッチがあるはず。帰りに道が見えるように、つけていって。",
       "id": "bousui_done-2",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/bousui_done-2.mp3"
     }
   ],
   "gate": [
     {
       "who": "私",
       "text": "二枚目の防水扉の、窓の向こう。水が、窓の高さまで満ちている。……水の中に、何かいる。",
-      "id": "gate-1"
+      "id": "gate-1",
+      "voice": "assets/voice/gate-1.mp3"
     },
     {
       "who": "浅井",
       "where": "窓の向こうの水の中",
       "text": "……かえして……。",
-      "id": "gate-2"
+      "id": "gate-2",
+      "voice": "assets/voice/gate-2.mp3"
     },
     {
       "who": "私",
       "text": "白い布をまとった、人のようなもの。手が、何本もある。それが窓を叩いている。",
-      "id": "gate-3"
+      "id": "gate-3",
+      "voice": "assets/voice/gate-3.mp3"
     },
     {
       "who": "私",
       "text": "ひなた、扉の向こうが水でいっぱいだ。……何かいる。ポンプで、この先の水を抜けないか。",
-      "id": "gate-4"
+      "id": "gate-4",
+      "voice": "assets/voice/gate-4.mp3"
     },
     {
       "who": "ひなた",
       "where": "無線",
       "text": "やってみる。研究棟側のポンプ、二号に切りかえる。……今！",
       "id": "gate-5",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/gate-5.mp3"
     },
     {
       "who": "私",
       "text": "窓の向こうの水が、渦を巻いて引いていく。水が下がると、あれも一緒に沈んで、見えなくなった。",
-      "id": "gate-6"
+      "id": "gate-6",
+      "voice": "assets/voice/gate-6.mp3"
     },
     {
       "who": "私",
       "text": "……水から出てこない。水が引くと、あれは一緒に退いた。",
-      "id": "gate-7"
+      "id": "gate-7",
+      "voice": "assets/voice/gate-7.mp3"
     }
   ],
   "post_ok": [
     {
       "who": "私",
       "text": "止まった。乾いた床の手前で、あれが身をよじっている。……でも、床の溝から、水がにじみ戻ってくる。",
-      "id": "post_ok-1"
+      "id": "post_ok-1",
+      "voice": "assets/voice/post_ok-1.mp3"
     }
   ],
   "post_done": [
     {
       "who": "私",
       "text": "水が戻った。……あれは、すっと水に沈んで消えた。",
-      "id": "post_done-1"
+      "id": "post_done-1",
+      "voice": "assets/voice/post_done-1.mp3"
     },
     {
       "who": "ひなた",
       "where": "無線",
       "text": "湊！　大丈夫？　何があったの。",
       "id": "post_done-2",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/post_done-2.mp3"
     },
     {
       "who": "私",
       "text": "あれは、水のある所しか進めない。止水弁を回して水を抜けば、そこで止まる。でも、水はしばらくで戻ってくる。",
-      "id": "post_done-3"
+      "id": "post_done-3",
+      "voice": "assets/voice/post_done-3.mp3"
     },
     {
       "who": "私",
       "text": "通路のロッカーは、一段高い台の上にある。中に入れば、足が水から上がる。……見失うかもしれない。",
-      "id": "post_done-4"
+      "id": "post_done-4",
+      "voice": "assets/voice/post_done-4.mp3"
     }
   ],
   "hyohon": [
@@ -267,156 +311,183 @@
       "who": "私",
       "text": "病理標本室。壁の棚に、ガラス瓶が何十本も並んでいる。黄色い液の中に、人の臓器。",
       "img": "assets/photos/in-hyohon.webp",
-      "id": "hyohon-1"
+      "id": "hyohon-1",
+      "voice": "assets/voice/hyohon-1.mp3"
     },
     {
       "who": "私",
       "text": "つんと鼻を刺すにおい。ホルマリン。標本を腐らせないための薬だ。床の槽にも、同じ液がたまっている。",
-      "id": "hyohon-2"
+      "id": "hyohon-2",
+      "voice": "assets/voice/hyohon-2.mp3"
     },
     {
       "who": "私",
       "text": "北の壁の、ガラス戸の戸棚。いちばん奥に、ラベルに「7」とだけ書いた瓶がある。",
-      "id": "hyohon-3"
+      "id": "hyohon-3",
+      "voice": "assets/voice/hyohon-3.mp3"
     },
     {
       "who": "ひなた",
       "where": "無線",
       "text": "湊、聞こえる？　……雨が強くなってる。水位計の針が、また上がりはじめた。急いで。",
       "id": "hyohon-4",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/hyohon-4.mp3"
     }
   ],
   "rise": [
     {
       "who": "私",
       "text": "瓶の首に、ひもで名札と小さな鍵が結んである。名札は「検査科　浅井早苗」。……新聞の、行方不明の技師の人だ。",
-      "id": "rise-1"
+      "id": "rise-1",
+      "voice": "assets/voice/rise-1.mp3"
     },
     {
       "who": "浅井",
       "where": "うしろの槽から",
       "text": "……かえして……それは、わたしの……。",
-      "id": "rise-2"
+      "id": "rise-2",
+      "voice": "assets/voice/rise-2.mp3"
     },
     {
       "who": "私",
       "text": "懐中電灯が、ばちっと消えた。非常灯の明かりの中で、槽の液が盛り上がる。……逃げろ。止水弁を回しながら、防水扉まで。",
-      "id": "rise-3"
+      "id": "rise-3",
+      "voice": "assets/voice/rise-3.mp3"
     },
     {
       "who": "ひなた",
       "where": "無線",
       "text": "湊！　研究棟の排水が逆流して……通路に水が……ポンプが、と……ザザッ……",
       "id": "rise-4",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/rise-4.mp3"
     }
   ],
   "top": [
     {
       "who": "私",
       "text": "防水扉を抜けた。うしろの通路の水の中から、あれが来る。……扉を閉めないと！",
-      "id": "top-1"
+      "id": "top-1",
+      "voice": "assets/voice/top-1.mp3"
     }
   ],
   "seal_done": [
     {
       "who": "私",
       "text": "扉を閉めて、ハンドルを回しきった。向こうから叩く音が、しだいに遠ざかる。",
-      "id": "seal_done-1"
+      "id": "seal_done-1",
+      "voice": "assets/voice/seal_done-1.mp3"
     },
     {
       "who": "私",
       "text": "……ひなた？　ひなた、聞こえるか。",
-      "id": "seal_done-2"
+      "id": "seal_done-2",
+      "voice": "assets/voice/seal_done-2.mp3"
     },
     {
       "who": "私",
       "text": "無線は雑音だけだ。地下の廊下の水が、また上がっている。……ポンプ室だ。",
-      "id": "seal_done-3"
+      "id": "seal_done-3",
+      "voice": "assets/voice/seal_done-3.mp3"
     }
   ],
   "rescue_in": [
     {
       "who": "ひなた",
       "text": "湊……！　ポンプが止まって、水が……。足が、動かなくて。",
-      "id": "rescue_in-1"
+      "id": "rescue_in-1",
+      "voice": "assets/voice/rescue_in-1.mp3"
     },
     {
       "who": "私",
       "text": "ひなたは机の上に上がっている。水は、もう膝の上まで来ている。東の壁の制御盤で、ポンプを動かさないと。",
-      "id": "rescue_in-2"
+      "id": "rescue_in-2",
+      "voice": "assets/voice/rescue_in-2.mp3"
     }
   ],
   "rescue_done": [
     {
       "who": "ひなた",
       "text": "……ありがとう。死ぬかと思った。",
-      "id": "rescue_done-1"
+      "id": "rescue_done-1",
+      "voice": "assets/voice/rescue_done-1.mp3"
     },
     {
       "who": "私",
       "text": "瓶の首に、名札と小さな鍵がついていた。「検査科　浅井早苗」。新聞の、行方不明の技師の人だ。",
-      "id": "rescue_done-2"
+      "id": "rescue_done-2",
+      "voice": "assets/voice/rescue_done-2.mp3"
     },
     {
       "who": "ひなた",
       "text": "鍵……病理事務室に、鍵のかかった棚があった。地下に降りて来たとき、廊下から見えたの。",
-      "id": "rescue_done-3"
+      "id": "rescue_done-3",
+      "voice": "assets/voice/rescue_done-3.mp3"
     },
     {
       "who": "ひなた",
       "text": "あそこを開ければ、何か分かるかも。……肩、貸して。私も行く。",
-      "id": "rescue_done-4"
+      "id": "rescue_done-4",
+      "voice": "assets/voice/rescue_done-4.mp3"
     }
   ],
   "ledger_done": [
     {
       "who": "私",
       "text": "台帳に、番号と、名前が戻った。七番は、浅井庄一さんの心臓。……早苗さんのお父さんだ。",
-      "id": "ledger_done-1"
+      "id": "ledger_done-1",
+      "voice": "assets/voice/ledger_done-1.mp3"
     },
     {
       "who": "私",
       "text": "棚の奥に、もう一つ鍵があった。札に「霊安室 搬出口」。……正面の扉を通らずに、外へ出られる。",
-      "id": "ledger_done-2"
+      "id": "ledger_done-2",
+      "voice": "assets/voice/ledger_done-2.mp3"
     },
     {
       "who": "ひなた",
       "text": "湊……床の排水口。水が、噴き出してる！",
-      "id": "ledger_done-3"
+      "id": "ledger_done-3",
+      "voice": "assets/voice/ledger_done-3.mp3"
     },
     {
       "who": "私",
       "text": "病理事務室の床の排水口から、黄色い水が湧いている。……排水管は、研究棟とつながっているんだ。",
-      "id": "ledger_done-4"
+      "id": "ledger_done-4",
+      "voice": "assets/voice/ledger_done-4.mp3"
     },
     {
       "who": "ひなた",
       "text": "逆止弁、ここ！　私が押さえてる。湊、早く……あの人が何をしたいのか、分かれば……！",
-      "id": "ledger_done-5"
+      "id": "ledger_done-5",
+      "voice": "assets/voice/ledger_done-5.mp3"
     }
   ],
   "think_done": [
     {
       "who": "私",
       "text": "浅井早苗さんは、父の心臓が、黙って標本にされていたことを知った。",
-      "id": "think_done-1"
+      "id": "think_done-1",
+      "voice": "assets/voice/think_done-1.mp3"
     },
     {
       "who": "私",
       "text": "台風の夜、父を連れて帰ろうと、標本室へ降りた。葛城医師は、早苗さんがいると知りながら、防水扉を閉めた。",
-      "id": "think_done-2"
+      "id": "think_done-2",
+      "voice": "assets/voice/think_done-2.mp3"
     },
     {
       "who": "私",
       "text": "早苗さんは二十七年、水の中で、父の瓶を守りつづけている。……持ち出す者を、追いかけて。",
-      "id": "think_done-3"
+      "id": "think_done-3",
+      "voice": "assets/voice/think_done-3.mp3"
     },
     {
       "who": "私",
       "text": "排水口の水の中から、何本もの手が伸びている。……瓶を返すなら、あそこだ。",
-      "id": "think_done-4"
+      "id": "think_done-4",
+      "voice": "assets/voice/think_done-4.mp3"
     }
   ],
   "give": [
@@ -424,114 +495,134 @@
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "……持って来たのか。本当に。",
-      "id": "give-1"
+      "id": "give-1",
+      "voice": "assets/voice/give-1.mp3"
     },
     {
       "who": "私",
       "text": "鎖のすき間から、瓶を差し出した。黒木さんは、それを両手で受け取った。",
-      "id": "give-2"
+      "id": "give-2",
+      "voice": "assets/voice/give-2.mp3"
     },
     {
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "これが、七番。……蓮は、これを見たのか。",
-      "id": "give-3"
+      "id": "give-3",
+      "voice": "assets/voice/give-3.mp3"
     },
     {
       "who": "ひなた",
       "text": "湊……地下の水の音が、急に遠くなった。どこかへ、流れていくみたい。",
-      "id": "give-4"
+      "id": "give-4",
+      "voice": "assets/voice/give-4.mp3"
     }
   ],
   "return_name": [
     {
       "who": "私",
       "text": "瓶を、排水口の水の上へ差し出した。何本もの手が、瓶を包むように受け取った。",
-      "id": "return_name-1"
+      "id": "return_name-1",
+      "voice": "assets/voice/return_name-1.mp3"
     },
     {
       "who": "私",
       "text": "浅井早苗さん。……あなたの名前です。お父さんは、浅井庄一さん。台帳に、ちゃんと書いてあります。",
-      "id": "return_name-2"
+      "id": "return_name-2",
+      "voice": "assets/voice/return_name-2.mp3"
     },
     {
       "who": "浅井",
       "where": "排水口の水の中",
       "text": "……なまえ。……わたしの。",
-      "id": "return_name-3"
+      "id": "return_name-3",
+      "voice": "assets/voice/return_name-3.mp3"
     },
     {
       "who": "私",
       "text": "何本もあった手が、ほどけるように一つずつ消えて、最後に、細い二本の手だけが残った。瓶を、胸に抱いている。",
-      "id": "return_name-4"
+      "id": "return_name-4",
+      "voice": "assets/voice/return_name-4.mp3"
     },
     {
       "who": "浅井",
       "where": "排水口の水の中",
       "text": "お父さん、見つけた。……ありがとう。呼んでくれて。",
-      "id": "return_name-5"
+      "id": "return_name-5",
+      "voice": "assets/voice/return_name-5.mp3"
     },
     {
       "who": "私",
       "text": "水が、すうっと排水口に吸いこまれていった。床には、濡れた名札の跡だけが残っていた。",
-      "id": "return_name-6"
+      "id": "return_name-6",
+      "voice": "assets/voice/return_name-6.mp3"
     },
     {
       "who": "ひなた",
       "text": "……行こう、湊。霊安室の搬出口から。",
-      "id": "return_name-7"
+      "id": "return_name-7",
+      "voice": "assets/voice/return_name-7.mp3"
     }
   ],
   "return_plain": [
     {
       "who": "私",
       "text": "瓶を、排水口の水の上へ差し出した。何本もの手が、瓶を包むように受け取った。",
-      "id": "return_plain-1"
+      "id": "return_plain-1",
+      "voice": "assets/voice/return_plain-1.mp3"
     },
     {
       "who": "浅井",
       "where": "排水口の水の中",
       "text": "……お父さん……。",
-      "id": "return_plain-2"
+      "id": "return_plain-2",
+      "voice": "assets/voice/return_plain-2.mp3"
     },
     {
       "who": "私",
       "text": "水が、すうっと排水口に吸いこまれていった。瓶も、手も、一緒に消えた。",
-      "id": "return_plain-3"
+      "id": "return_plain-3",
+      "voice": "assets/voice/return_plain-3.mp3"
     },
     {
       "who": "私",
       "text": "……あの人の名前を、呼んであげればよかった。日誌の切れ端が、まだどこかに残っていたかもしれない。",
-      "id": "return_plain-4"
+      "id": "return_plain-4",
+      "voice": "assets/voice/return_plain-4.mp3"
     },
     {
       "who": "ひなた",
       "text": "……行こう、湊。霊安室の搬出口から。",
-      "id": "return_plain-5"
+      "id": "return_plain-5",
+      "voice": "assets/voice/return_plain-5.mp3"
     }
   ],
   "hearse": [
     {
       "who": "私",
       "text": "搬出口の鍵が、重い音を立てて回った。両開きの扉の外から、雨のにおいがする。",
-      "id": "hearse-1"
+      "id": "hearse-1",
+      "voice": "assets/voice/hearse-1.mp3"
     },
     {
       "who": "ひなた",
       "text": "黒木さんたち、まだ正面にいるよね。……蓮くんにも、ちゃんと話そう。何があったのか。",
-      "id": "hearse-2"
+      "id": "hearse-2",
+      "voice": "assets/voice/hearse-2.mp3"
     }
   ],
   "sq1_done": [
     {
       "who": "私",
       "text": "日誌を書いたのは、浅井早苗さん。新聞の、行方不明の技師の人だ。",
-      "id": "sq1_done-1"
+      "id": "sq1_done-1",
+      "voice": "assets/voice/sq1_done-1.mp3"
     },
     {
       "who": "私",
       "text": "七番の瓶は、早苗さんのお父さんの心臓。早苗さんは台風の夜、お父さんを連れて帰ろうとして、地下へ降りた。",
-      "id": "sq1_done-2"
+      "id": "sq1_done-2",
+      "voice": "assets/voice/sq1_done-2.mp3"
     }
   ],
   "whisper1": [
@@ -539,7 +630,8 @@
       "who": "浅井",
       "where": "通路の奥",
       "text": "……どこ……。",
-      "id": "whisper1-1"
+      "id": "whisper1-1",
+      "voice": "assets/voice/whisper1-1.mp3"
     }
   ],
   "whisper2": [
@@ -547,7 +639,8 @@
       "who": "浅井",
       "where": "すぐうしろ",
       "text": "……かえして……。",
-      "id": "whisper2-1"
+      "id": "whisper2-1",
+      "voice": "assets/voice/whisper2-1.mp3"
     }
   ],
   "radio1": [
@@ -556,7 +649,8 @@
       "where": "無線",
       "text": "湊、聞こえる？　今どのへん？　……こっちは、水位計の針が下がってる。大丈夫。",
       "id": "radio1-1",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/radio1-1.mp3"
     }
   ],
   "radio2": [
@@ -565,7 +659,8 @@
       "where": "無線",
       "text": "湊。……さっきから、配管の中を何かが流れていく音がする。ごぼごぼって。……気のせいだよね。",
       "id": "radio2-1",
-      "vfx": "phone"
+      "vfx": "phone",
+      "voice": "assets/voice/radio2-1.mp3"
     }
   ]
 }

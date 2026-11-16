@@ -12,7 +12,7 @@ export default async (api) => {
   // ?qa=1: ctx.choose opens nothing and answers window.__gfChoice at once, so the answers are queued before the [E] that asks
   const pre = (ids) => G(`(window.__gfQ = ${JSON.stringify(ids)}, Object.getOwnPropertyDescriptor(window, '__gfChoice') || Object.defineProperty(window, '__gfChoice', { configurable: true, get() { return (window.__gfQ || []).shift(); } }), 1)`);
   const use = async (x, z, y, tag) => { let pr = ''; for (let i = 0; i < 3 && !pr; i++) { if (i) await sleep(600); pr = await H.use(x, z, y); } log(' ', tag || 'use', '|', pr); return pr; };
-  const crouch = async (on) => { const c = await G('g.fp.crouching'); if (c !== on) { await p.key('KeyC'); await sleep(300); } };
+  const crouch = async (on) => { const c = !!(await G('g.fp.crouching')); if (c !== !!on) { await p.key('KeyC'); await sleep(300); } };
   const ghost = () => G('({ mode: mn.gh.mode, s: +mn.gh.s.toFixed(1), me: +mn.project(g.camera.position.x, g.camera.position.z).s.toFixed(1), deaths: mn.deaths || 0 })');
 
   const FROM = process.env.PLAY_FROM || '';   // L4: started with --query "qa=1&scene=hyohon"
@@ -90,12 +90,26 @@ export default async (api) => {
   const sCache = new Map(); const mnS = (x, z) => sCache.get(x + ',' + z);
   for (const [x, z] of VALVES) sCache.set(x + ',' + z, await G(`mn.project(${x}, ${z}).s`));
   const runTo = (x, z, o = {}) => H.walkTo(x, z, { run: true, onStep, ...o });
-  const leg = async (pts, tag) => { const d0 = await G('mn.deaths || 0'); for (const [x, z] of pts) await runTo(x, z); log('  chase', tag, JSON.stringify(await ghost()), (await G('mn.deaths || 0')) > d0 ? 'DIED' : ''); };
-  await leg([[9, -100.2], [9, -82.2]], 'P5');
-  await leg([[-17.6, -81.8]], 'P4'); await shot('chase-p4');
-  await leg([[-17.6, -46.0], [-17.6, -43.0]], 'P3'); await shot('chase-valve');
-  await H.walkTo(-17.6, -41.8, { onStep }); await crouch(true); await H.walkTo(-5.0, -41.8, { near: 0.5 }); await H.walkTo(2.6, -41.8, { near: 0.5 }); await crouch(false); log('  chase P2', JSON.stringify(await ghost()));
-  await leg([[2.6, -30], [2.6, -1.8], [2.6, 1.2]], 'P1'); await sleep(600);
+  // the way back as waypoints [x, z, crouch, tag]; after a death the run goes on from the waypoint nearest the checkpoint
+  const WAY = [[9, -100.2, 0], [9, -82.2, 0, 'P5'], [-17.6, -81.8, 0, 'P4'], [-17.6, -46.0, 0], [-17.6, -41.8, 0, 'P3'], [-5.0, -41.8, 1], [2.6, -41.8, 1, 'P2'], [2.6, -30, 0], [2.6, -1.8, 0], [2.6, 1.2, 0, 'P1']];
+  let wi = 0, deaths0 = await G('mn.deaths || 0');
+  for (let guard = 0; wi < WAY.length && guard < 60; guard++) {
+    const [x, z, low, tag] = WAY[wi];
+    await crouch(!!low);
+    const ok = low ? await H.walkTo(x, z, { near: 0.5 }) : await runTo(x, z);
+    const d = await G('mn.deaths || 0');
+    if (d > deaths0) {   // caught: back at the checkpoint; go on from the nearest waypoint
+      deaths0 = d; await H.idle(); const c = await H.pos();
+      let best = 0; WAY.forEach((w, i) => { if (Math.hypot(w[0] - c.x, w[1] - c.z) < Math.hypot(WAY[best][0] - c.x, WAY[best][1] - c.z)) best = i; });
+      log('  chase DIED near', tag || '', '-> again from', JSON.stringify(c), 'waypoint', best, JSON.stringify(await ghost())); await shot('caught-' + d);
+      wi = best; continue;
+    }
+    if (!ok) log('  chase could not reach', x, z);
+    if (tag === 'P3') { const g = await ghost(); const on = await G('[...mn.posts.values()].some((P) => P.on && P.def.id === "K_P3C")'); if (g.mode === 'chase' && g.me - g.s < 45 && !on) { await crouch(false); await H.face(-17.6, -45.0, 1.15); await sleep(150); await p.key('KeyE'); await sleep(400); valvesUsed++; log('  valve before the crawl', JSON.stringify(await ghost())); } }
+    if (tag) { log('  chase', tag, JSON.stringify(await ghost())); if (tag === 'P4') await shot('chase-p4'); if (tag === 'P3') await shot('chase-p3'); }
+    wi++;
+  }
+  await crouch(false); await sleep(600);
   log('  chase valves used', valvesUsed, 'deaths', await G('mn.deaths || 0'));
   await H.idle(); await must('T_ESCAPE'); await shot('seal-now');
   await use(2.6, -0.5, 1.2, 'T_SEAL'); await must('T_SEAL'); await H.idle(); await shot('sealed');
