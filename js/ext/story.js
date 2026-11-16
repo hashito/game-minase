@@ -62,6 +62,7 @@ export function installStory(ext, G) {
     // the doors
     const p1 = door('D_P1'); if (done('T_BOUSUI') && !done('T_SEAL')) { if (!p1.isOpen) p1.open(); } else if (p1.isOpen) p1.close();
     const gt = door('D_GATE'); if (done('T_GATE') && !gt.isOpen) gt.open();
+    const de = door('D_END'); if (done('T_JAR') && !done('T_ESCAPE') && de && !de.isOpen) de.open();   // the jar room's door stands open for the run back
     for (const D of Object.values(G.wt)) D.open = D.d.isOpen ? 1 : 0;
     G.cabLock.visible = !done('T_LEDGER');
     G.hearseOpen = flag('end_name') || flag('end_return') ? 1 : null; G.hearseOut.visible = G.hearseOpen != null;
@@ -200,7 +201,8 @@ export function installStory(ext, G) {
     await talk('rise', '病理標本室');
     ctx.setLight(false); G.lightOut = true; ctx.sound('stinger'); ctx.fx && ctx.fx.spook && ctx.fx.spook(1);
     G.tankGlow.i = 1.6; apply();
-    takeSnap(); chaseFrom(0, 2.6);
+    { const d = door('D_END'); if (d && !d.isOpen) d.open(); }   // the way out stands open (she pushed it as she rose)
+    takeSnap(); chaseFrom(0, 3.5);
     say('chase_go', 7); later(() => say('chase_dark', 5), 7500);
   }
   function resumeChase() {

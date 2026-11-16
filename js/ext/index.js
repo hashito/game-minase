@@ -19,5 +19,6 @@ export default function (ext) {
   installAnswers(ext, G);
   installBoot(ext, G);
   ext.on('bus:error', ({ name, error }) => console.error('[minase]', name, error && error.stack ? error.stack.split(String.fromCharCode(10)).slice(0, 3).join(' ') : String(error)));
+  ext.on('player:dead', () => { G.deaths = (G.deaths || 0) + 1; });   // the playthrough tools count them
   ext.on('game:ready', () => { if (typeof window !== 'undefined') window.__mn = G; });
 }

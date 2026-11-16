@@ -1,114 +1,128 @@
 // The whole game from the title through real input (keys inside the page; mini games are done at once with ?qa=1):
-//   node tools/probe.mjs --qa --out D:/minase-stages/play-e1 --steps tools/play/full.mjs
-// PLAY_END = give (E1, default) | keep (E2) | free (E3: reads the letters on the way). PLAY_UPTO = L2 | L3 | L4 stops early.
+//   node tools/probe.mjs --qa --out D:/minase-stages/play-e3 --steps tools/play/full.mjs
+// PLAY_END = name (E3: the diary pages on the way, default) | return (E2) | give (E1). PLAY_UPTO = L2 | L3 | L4 stops early.
 // Every key point gets a screenshot.
 import { helpers } from './lib.mjs';
 
 export default async (api) => {
   const { p, G, sleep, log, shot } = api, H = helpers(api);
-  const END = process.env.PLAY_END || 'give', LET = END === 'free', UPTO = process.env.PLAY_UPTO || '';
-  const st = async (tag) => log(tag, await G(`({ room: g.state.room, n: g.state.tasks.length, last: g.state.tasks.slice(-3), level: g.prog.index, fuda: kc.fuda, prompt: document.getElementById('prompt').textContent, ended: g.state.ended, inv: g.state.inv.join(" ") })`));
-  const must = async (task) => { const ok = await G(`g.state.tasks.includes('${task}')`); if (!ok) throw new Error(`ERROR ${task} not done: ${JSON.stringify(await G('({ room: g.state.room, tasks: g.state.tasks, prompt: document.getElementById("prompt").textContent })'))}`); };
-  const choose = async (id) => { for (let i = 0; i < 40; i++) { const ok = await G(`(() => { const b = document.querySelector('.gf-talk-choice[data-id="${id}"]'); if (b) { b.click(); return true; } return false; })()`); if (ok) return true; await sleep(250); } log('  no choice', id); return false; };
+  const END = process.env.PLAY_END || 'name', PAGES = END === 'name', UPTO = process.env.PLAY_UPTO || '';
+  const st = async (tag) => log(tag, await G(`({ room: g.state.room, n: g.state.tasks.length, last: g.state.tasks.slice(-3), level: g.prog.index, prompt: document.getElementById('prompt').textContent, ended: g.state.ended, inv: g.state.inv.join(" "), deaths: mn.deaths || 0 })`));
+  const must = async (task) => { for (let i = 0; i < 12 && !(await G(`g.state.tasks.includes('${task}')`)); i++) { await sleep(500); await H.idle(800); } const ok = await G(`g.state.tasks.includes('${task}')`); if (!ok) throw new Error(`ERROR ${task} not done: ${JSON.stringify(await G('({ room: g.state.room, tasks: g.state.tasks, prompt: document.getElementById("prompt").textContent, pos: [g.camera.position.x, g.camera.position.z] })'))}`); };
   // ?qa=1: ctx.choose opens nothing and answers window.__gfChoice at once, so the answers are queued before the [E] that asks
   const pre = (ids) => G(`(window.__gfQ = ${JSON.stringify(ids)}, Object.getOwnPropertyDescriptor(window, '__gfChoice') || Object.defineProperty(window, '__gfChoice', { configurable: true, get() { return (window.__gfQ || []).shift(); } }), 1)`);
-  const use = async (x, z, y, tag) => { let pr = ''; for (let i = 0; i < 3 && !pr; i++) { if (i) await sleep(600); pr = await H.use(x, z, y); } log(' ', tag || 'use', '|', pr); return pr; };   // an empty prompt (a line still on screen, a step short) is tried again
-  const peel = async (x, z, y = 1.45) => { const pr = await H.use(x, z, y, { wait: 1400 }); log('  peel |', pr); };
-  const where = async () => log('  at', JSON.stringify(await H.pos()));
+  const use = async (x, z, y, tag) => { let pr = ''; for (let i = 0; i < 3 && !pr; i++) { if (i) await sleep(600); pr = await H.use(x, z, y); } log(' ', tag || 'use', '|', pr); return pr; };
   const crouch = async (on) => { const c = await G('g.fp.crouching'); if (c !== on) { await p.key('KeyC'); await sleep(300); } };
+  const ghost = () => G('({ mode: mn.gh.mode, s: +mn.gh.s.toFixed(1), me: +mn.project(g.camera.position.x, g.camera.position.z).s.toFixed(1), deaths: mn.deaths || 0 })');
 
+  const FROM = process.env.PLAY_FROM || '';   // L4: started with --query "qa=1&scene=hyohon"
+  if (!FROM) {
   await G(`(document.getElementById('start-btn').click(), 1)`);
   await sleep(1800); await shot('opening-1');
   await H.idle(); await sleep(400);
-  await shot('omote-start'); await st('start');
+  await shot('genkan-start'); await st('start');
   // ---- L1 ----
-  await H.walkTo(3.6, 23.4); await H.walkTo(4.9, 23.2); await H.face(5.7, 22.5, 1.0); await sleep(300); await shot('choba');
-  await use(5.7, 22.55, 1.0, 'T_CHOBA'); await must('T_CHOBA');
-  await H.walkTo(4.2, 21.2); await H.face(4.43, 20.08, 1.45); await sleep(300); await shot('naka-fuda');
-  await peel(4.43, 20.08); await H.idle(); await must('T_PEEL1');
-  await H.walkTo(3.8, 21.4); await use(2.98, 21.4, 1.35, 'paste daikoku'); await H.idle(); await shot('daikoku-pasted');
-  await use(2.98, 21.4, 1.35, 'peel daikoku'); await H.idle(); await must('T_PASTE1');
+  await H.walkTo(1.9, 21.8); await H.face(1.0, 21.2, 1.2); await sleep(300); await shot('hinata');
+  await use(1.0, 21.2, 1.0, 'T_HINA'); await must('T_HINA');
+  await H.walkTo(3.0, 24.5); await H.face(3.0, 25.7, 1.1); await sleep(300); await shot('front-door');
+  await use(3.0, 25.65, 1.1, 'T_FRONT'); await must('T_FRONT');
+  await H.route([[4.6, 22.1], [7.0, 22.1], [14.9, 22.1], [15.2, 24.6]]);
+  await H.door(16, 24.6, 17.2, 24.6);
+  await H.route([[18.0, 22.0], [19.0, 20.0]]); await H.face(19.95, 20, 1.3); await sleep(300); await shot('keybox');
+  await use(19.95, 20, 1.3, 'T_KEY'); await must('T_KEY');
   await st('L1 done');
-  // ---- L2: the kitchen ----
-  await H.walkTo(3.6, 22.8); await H.walkTo(1.4, 21.2); await peel(1.88, 20.08); await H.idle();
-  await H.walkTo(1.3, 19.2); await H.walkTo(1.5, 17.7); await shot('hashiri');
-  await use(2.25, 17.7, 1.0, 'TESHOKU'); await H.idle();
-  if (LET) { await H.walkTo(1.5, 18.4); await use(2.25, 18.4, 0.62, 'LETTER1'); await H.idle(); }
-  await H.walkTo(1.4, 15.4); await use(0.5, 15.4, 0.85, 'MATCHES'); await H.idle(); await must('T_HASHIRI');
-  // the back rooms
-  await H.route([[1.3, 19.4], [1.3, 21.0], [1.7, 23.0], [3.6, 23.0], [3.9, 21.0], [3.9, 19.0]]);
-  await shot('naka');
-  await H.walkTo(5.4, 14.0); await peel(5.83, 13.08); await H.idle(); await H.walkTo(5.3, 12.0);
-  await H.walkTo(6.5, 11.6); await use(7.35, 11.6, 0.42, 'DOC_DIARY'); await H.idle(); await must('T_OKU'); await shot('oku');
-  if (LET) { await H.walkTo(3.0, 8.0); await use(3.3, 7.05, 1.05, 'LETTER2'); await H.idle(); }
-  await H.walkTo(5.4, 7.4); await peel(5.83, 6.58); await H.idle(); await H.walkTo(5.3, 5.75);
-  await H.walkTo(5.0, 5.9); await peel(5.83, 5.08); await H.idle(); await H.walkTo(5.3, 4.0); await H.idle();
-  await must('T_SAGYO'); await shot('sagyo');
-  await H.walkTo(6.6, 3.9); await use(7.5, 3.9, 0.9, 'KOTEKO'); await H.idle();
-  if (LET) { await H.walkTo(2.6, 3.6); await use(2.6, 4.5, 0.75, 'LETTER3'); await H.idle(); }
-  // the phone
-  await sleep(3000); await H.idle();
-  await H.route([[5.3, 4.2], [5.3, 5.75], [5.3, 7.4], [5.3, 12.0], [5.3, 14.0], [3.6, 14.2]]); await shot('phone');
-  await use(3.15, 13.55, 0.7, 'T_PHONE'); await H.idle(); await must('T_PHONE'); await shot('after-phone');
-  if (LET) { await H.walkTo(6.5, 16.5); await use(7.45, 16.5, 0.9, 'T_SQ1'); await H.idle(); const lt = await G('g.state.flags.includes("letters")'); log('  letters', lt); if (!lt) throw new Error('ERROR letters not read'); }
-  // the mill and the hatch
-  await H.route([[5.3, 14.0], [5.3, 12.0], [5.3, 7.4], [5.3, 5.75], [5.3, 4.0], [6.6, 1.0]]);
-  await H.face(6.6, -0.5, 0.4); await sleep(300); await shot('usu');
-  await use(6.6, -0.5, 0.4, 'T_USU'); await H.idle(); await sleep(1500); await must('T_USU');
-  await use(6.6, -0.5, 0.1, 'T_HATCH'); await H.idle(); await must('T_HATCH'); await shot('hatch-open');
+  // ---- L2 ----
+  await H.route([[18.0, 22.0], [17.2, 24.6], [15.2, 24.6], [11.0, 22.1], [11.0, 19.0], [11.0, 16.5], [3.0, 16.5]]);
+  await H.door(3, 15, 3, 13.6); await shot('karte');
+  await H.walkTo(4.6, 12.0); await use(5.55, 12.0, 0.8, 'DOC_CHART'); await must('T_KARTE'); await H.idle();
+  await H.route([[3.0, 13.6], [3.0, 16.5]]);
+  if (PAGES) { await H.walkTo(9.0, 16.5); await H.door(9, 15, 9, 13.6); await H.walkTo(7.6, 12.2); await use(6.45, 11.6, 0.78, 'PAGE1'); await H.face(8.8, 9.3, 1.0); await sleep(300); await shot('shin-sink'); await H.route([[9.0, 13.6], [9.0, 16.5]]); }
+  await H.walkTo(16.0, 16.5); await H.door(16, 15, 16, 13.6); await shot('kaidan');
+  await H.walkTo(15.2, 12.0); await use(17.6, 12.0, 0.8, 'stairs down'); await sleep(1500); await H.idle(); await must('T_KAIDAN'); await shot('b-stair');
   await st('L2 done'); if (UPTO === 'L2') return;
-  // ---- L3: down ----
-  await use(6.6, -0.5, 0.3, 'ladder down'); await sleep(1500); await H.idle(); await st('muro'); await shot('muro-dark');
-  await use(5.2, 1.6, 0.35, 'T_LIGHT'); await H.idle(); await must('T_LIGHT'); await shot('muro-lit');
-  await H.face(6.6, -0.5, 3.0); await sleep(300); await shot('muro-scratches');
-  await H.walkTo(2.8, 0.2); await peel(3.18, -0.92); await H.idle(); await must('T_P1');
-  await H.walkTo(2.6, -2.6); await use(1.68, -2.6, 1.3, 'T_LAMP1'); await H.idle(); await must('T_LAMP1');
+  // ---- L3: the basement ----
+  await H.route([[16.0, 10.0], [16.0, 7.5], [3.0, 7.5]]);
+  await H.door(3, 9, 3, 10.6); await shot('pump-room');
+  await H.walkTo(2.0, 12.0); await use(0.85, 12.0, 0.8, 'T_GEN'); await must('T_GEN'); await H.idle(); await shot('generator-on');
+  await H.walkTo(3.6, 12.6); await use(4.6, 13.7, 1.0, 'T_RADIO'); await must('T_RADIO'); await H.idle();
+  if (PAGES) { await H.route([[3.0, 10.4], [3.0, 7.5], [10.0, 7.5]]); await H.door(10, 6, 9.4, 4.9); await use(11.0, 4.6, 0.62, 'PAGE2'); await shot('reian'); await H.route([[10.0, 4.9], [10.0, 7.5], [3.0, 7.5]]); }
+  else await H.route([[3.0, 10.4], [3.0, 7.5]]);
+  await H.walkTo(3.0, 5.0); await H.walkTo(2.6, 1.0); await H.face(2.6, -1, 1.2); await sleep(300); await shot('bousui');
+  await use(2.6, -1, 1.2, 'T_BOUSUI'); await must('T_BOUSUI'); await sleep(1600); await H.idle();
+  await H.walkTo(2.6, -4.2); await use(1.7, -4.2, 1.3, 'T_LAMP1'); await must('T_LAMP1'); await shot('p1-lamp');
   const t0 = Date.now();
   await H.walkTo(2.6, -16, { onStep: () => H.idle(200).then(() => false) }); await shot('p1-hair');
-  await H.walkTo(2.6, -41.7); await H.idle(); await crouch(true); await shot('p2-low');
+  await H.walkTo(2.6, -40.6); await H.walkTo(2.6, -41.8); await H.idle(); await crouch(true); await shot('p2-low');
   await H.walkTo(-17.5, -41.8, { near: 0.5 }); await crouch(false); await H.idle(); await shot('p2-end');
-  await H.walkTo(-17.6, -44.2); await use(-18.52, -44.2, 1.3, 'T_LAMP2'); await H.idle(); await must('T_LAMP2');
-  await H.walkTo(-17.6, -60); await shot('p3-water'); await H.walkTo(-17.6, -81.3); await H.idle();
-  await H.walkTo(-16.0, -81.6); await use(-16.0, -82.52, 1.3, 'T_LAMP3'); await H.idle(); await must('T_LAMP3'); await shot('p4-corridor');
-  for (const [x, z, sz] of [[-14.0, -81.04, -81.9], [-11.2, -82.56, -81.6]]) { await H.walkTo(x, sz); await peel(x, z, 1.5); await H.idle(); }
-  await H.walkTo(-9.0, -81.8); await sleep(1500); await shot('gate-encounter'); await H.idle(); await sleep(2500); await H.idle();
-  await H.walkTo(-6.4, -81.9); await peel(-6.4, -81.04, 1.5); await H.idle();
-  await H.walkTo(-5.0, -81.8); await peel(-4.08, -81.12); await H.idle(); await must('T_GATE');
-  await H.walkTo(-2.0, -81.8); await H.walkTo(0.9, -81.8); await sleep(1200); await shot('lesson-coming');
-  await use(2.0, -81.8, 1.4, 'paste lesson'); await sleep(4000); await H.idle(); await shot('lesson-press');
-  for (let i = 0; i < 40 && !(await G('g.state.tasks.includes("T_POST")')); i++) { await sleep(500); await H.idle(500); }
-  await H.idle(); await must('T_POST');
-  await H.walkTo(8.9, -82.0); await H.walkTo(9.0, -84.8); await use(9.92, -84.8, 1.3, 'T_LAMP4'); await H.idle(); await must('T_LAMP4');
-  await H.walkTo(9, -98.8); await H.door(9, -100, 9, -101.6); await H.idle(); await must('T_OKUMURO');
+  await H.walkTo(-17.6, -44.2); await use(-18.5, -44.2, 1.3, 'T_LAMP2'); await must('T_LAMP2');
+  for (const [gx, gz] of [[-18.0, -50.0], [-17.2, -67.6], [-18.0, -74.0]]) { await H.walkTo(-17.6, gz + 1.0); await use(gx, gz, 0.15, 'grate'); await H.idle(); }
+  await H.walkTo(-17.6, -60); await shot('p3-water'); await H.walkTo(-17.6, -81.4); await H.idle();
+  await H.walkTo(-16.0, -81.8); await use(-16.0, -82.55, 1.3, 'T_LAMP3'); await must('T_LAMP3'); await shot('p4-corridor');
+  await H.walkTo(-9.6, -81.8); await sleep(2500); await shot('gate-window'); await H.idle(); await sleep(2000); await H.idle();
+  for (let i = 0; i < 20 && (await G('mn.gh.mode')) !== 'off'; i++) await sleep(500);
+  await H.walkTo(-5.0, -81.8); await use(-4.0, -81.8, 1.3, 'T_GATE'); await must('T_GATE'); await sleep(1600);
+  await H.walkTo(-2.0, -81.8); await H.walkTo(0.9, -81.8); await sleep(1200); await H.idle(); await shot('lesson-coming');
+  await use(2.0, -81.8, 1.15, 'valve lesson'); await sleep(3500); await H.idle(); await shot('lesson-press');
+  for (let i = 0; i < 60 && !(await G('g.state.tasks.includes("T_POST")')); i++) { await sleep(500); await H.idle(500); }
+  await H.idle(); await must('T_POST'); log('  lesson', JSON.stringify(await ghost()));
+  await H.walkTo(8.9, -82.0); await H.walkTo(9.0, -84.8); await use(9.95, -84.8, 1.3, 'T_LAMP4'); await must('T_LAMP4');
+  if (PAGES) { await H.walkTo(9.0, -96.5); await use(8.25, -96.5, 0.42, 'PAGE3'); }
+  await H.walkTo(9, -98.8); await H.door(9, -100, 9, -101.6); await H.idle(); await must('T_HYOHON');
   log('passage walk (s):', ((Date.now() - t0) / 1000).toFixed(0));
-  await H.walkTo(9, -106.6); await H.face(9, -107.66, 1.1); await sleep(300); await shot('okumuro-shelf');
+  await H.walkTo(9, -106.6); await H.face(9, -107.6, 1.2); await sleep(300); await shot('cabinet');
   await st('L3 done'); if (UPTO === 'L3') return;
-  // ---- L4: the comb and the chase ----
-  await use(9, -107.66, 1.1, 'T_BOX'); await sleep(800); await H.idle(); await must('T_BOX'); await shot('rise');
-  await H.face(9, -105, 1.2); await sleep(200);
-  const runTo = (x, z, o = {}) => H.walkTo(x, z, { run: true, ...o });
-  await runTo(9, -100.2); await runTo(9, -82.2); await runTo(-17.6, -81.8); await shot('chase-p4');
-  await runTo(-17.6, -46.0); await H.walkTo(-17.6, -44.0); await use(-17.6, -45.0, 1.4, 'paste P3C'); await shot('chase-paste');
-  await H.walkTo(-17.6, -41.8); await crouch(true); await H.walkTo(-5.0, -41.8, { near: 0.5 }); log('  chase', await G('({ me: kc.project(g.camera.position.x, g.camera.position.z).s.toFixed(1), gh: kc.gh.s.toFixed(1), deaths: g.state.deaths })'));
-  await H.walkTo(2.4, -41.8, { near: 0.5 }); await crouch(false);
-  await runTo(2.6, -1.8); await runTo(2.6, -0.1); await runTo(6.6, 0.9); await use(6.6, -0.5, 1.2, 'ladder up'); await sleep(1500);
-  log('dead?', await G('g.state.room'));
-  await H.idle(); await must('T_ESCAPE'); await shot('seal-bar');
-  await use(6.6, -0.5, 0.1, 'T_SEAL'); await H.idle(); await must('T_SEAL');
+  } else { await sleep(2500); await H.idle(); await H.walkTo(9, -106.6); }
+  // ---- L4: the jar and the chase ----
+  await use(9, -107.5, 1.2, 'T_JAR'); await sleep(800); await H.idle(); await must('T_JAR'); await shot('rise');
+  await shot('rise-tank');
+  // run back like a player told 「うしろに来たら、止水弁に [E]」: past each valve, if she is within 12 m, turn round to the wheel and [E]
+  const VALVES = [[9, -98.8], [9, -84.0], [-9.0, -81.8], [-17.6, -78.6], [-17.6, -60.0], [-17.6, -45.0], [2.6, -28.0], [2.6, -10.0]];
+  let valvesUsed = 0;
+  const onStep = async () => {
+    const g = await ghost();
+    if (g.mode !== 'chase' || g.me - g.s > 12) return false;
+    const c = await H.pos(); const v = VALVES.find(([x, z]) => Math.hypot(x - c.x, z - c.z) < 3.2 && mnS(x, z) < g.me - 0.6);
+    if (!v || (await G(`[...mn.posts.values()].some((P) => P.on && Math.hypot(P.def.x - ${v[0]}, P.def.z - ${v[1]}) < 0.5)`))) return false;
+    await H.face(v[0], v[1], 1.15); await sleep(120); await p.key('KeyE'); await sleep(350); valvesUsed++;
+    log('  valve', v.join(','), JSON.stringify(await ghost()));
+    return false;
+  };
+  const sCache = new Map(); const mnS = (x, z) => sCache.get(x + ',' + z);
+  for (const [x, z] of VALVES) sCache.set(x + ',' + z, await G(`mn.project(${x}, ${z}).s`));
+  const runTo = (x, z, o = {}) => H.walkTo(x, z, { run: true, onStep, ...o });
+  const leg = async (pts, tag) => { const d0 = await G('mn.deaths || 0'); for (const [x, z] of pts) await runTo(x, z); log('  chase', tag, JSON.stringify(await ghost()), (await G('mn.deaths || 0')) > d0 ? 'DIED' : ''); };
+  await leg([[9, -100.2], [9, -82.2]], 'P5');
+  await leg([[-17.6, -81.8]], 'P4'); await shot('chase-p4');
+  await leg([[-17.6, -46.0], [-17.6, -43.0]], 'P3'); await shot('chase-valve');
+  await H.walkTo(-17.6, -41.8, { onStep }); await crouch(true); await H.walkTo(-5.0, -41.8, { near: 0.5 }); await H.walkTo(2.6, -41.8, { near: 0.5 }); await crouch(false); log('  chase P2', JSON.stringify(await ghost()));
+  await leg([[2.6, -30], [2.6, -1.8], [2.6, 1.2]], 'P1'); await sleep(600);
+  log('  chase valves used', valvesUsed, 'deaths', await G('mn.deaths || 0'));
+  await H.idle(); await must('T_ESCAPE'); await shot('seal-now');
+  await use(2.6, -0.5, 1.2, 'T_SEAL'); await must('T_SEAL'); await H.idle(); await shot('sealed');
+  await H.route([[3.0, 4.0], [3.0, 7.5]]); await H.door(3, 9, 3, 10.4); await sleep(800); await H.idle(); await shot('rescue');
+  await H.walkTo(4.6, 11.4); await use(5.95, 11.4, 1.3, 'T_RESCUE'); await must('T_RESCUE'); await H.idle();
   await st('L4 done'); if (UPTO === 'L4') return;
   // ---- L5 ----
   if (END === 'give') {
-    await H.route([[5.3, 4.0], [5.3, 5.75], [5.3, 7.4], [5.3, 12.0], [5.3, 14.0], [3.9, 19.0], [3.9, 21.0], [4.9, 23.2]]);
-    await pre(['give']); await use(5.7, 22.5, 1.0, 'T_END give'); await sleep(800); await H.idle();
+    await H.route([[3.0, 10.4], [3.0, 7.5], [16.0, 7.5], [16.0, 10.5], [15.4, 12.0]]);
+    await use(17.6, 12.0, 0.8, 'stairs up'); await sleep(1500); await H.idle();
+    await H.route([[16.0, 13.6], [16.0, 16.5], [3.0, 16.5], [3.0, 19.0], [3.0, 24.5]]);
+    await pre(['give']); await use(3.0, 25.65, 1.1, 'T_GIVE'); await sleep(800); await H.idle();
   } else {
-    await H.walkTo(1.6, 2.2); await pre(['away', 'muro', 'shut', 'haru', 'burn']); await use(0.75, 2.2, 0.9, 'T_THINK'); await sleep(800);
-    await H.idle(1500);
-    await H.idle(1500); log('  think answers left', await G('window.__gfQ.length'));
+    await H.route([[3.0, 10.4], [3.0, 7.5], [9.0, 7.5]]); await H.door(9, 9, 9, 10.4);
+    await H.walkTo(10.9, 13.4); await use(10.9, 14.5, 1.0, 'T_LEDGER'); await must('T_LEDGER'); await H.idle(); await shot('ledger');
+    await H.walkTo(8.0, 13.4); await pre(['ren', 'father', 'father', 'katsuragi', 'father']); await use(7.2, 14.5, 0.75, 'T_THINK'); await sleep(800);
+    await H.idle(1500); await H.idle(1500); log('  think answers left', await G('window.__gfQ.length'), 'wrong', await G('mn.wrong'));
     await H.idle(); await must('T_THINK'); await shot('think-done');
-    await H.walkTo(6.6, 1.0); await pre(['yes']); await use(6.6, -0.5, 0.1, 'T_RETURN'); await sleep(800); await H.idle(); await must('T_RETURN'); await shot('returned');
-    await H.route([[5.3, 4.0], [5.3, 5.75], [5.3, 7.4], [5.3, 12.0], [5.3, 14.0], [3.9, 19.0], [3.9, 21.0], [4.9, 23.2]]);
-    await pre([END]); await use(5.7, 22.5, 1.0, 'T_END ' + END); await sleep(800); await H.idle(3000); await H.idle();
+    if (PAGES) {
+      await H.route([[9.0, 10.4], [9.0, 7.5], [10.0, 7.5]]); await H.door(10, 6, 9.4, 4.9);
+      await H.walkTo(7.6, 3.2); await use(6.6, 3.2, 0.75, 'T_SQ1'); await H.idle(); log('  named', await G('g.state.flags.includes("named")'));
+      await H.route([[9.4, 4.9], [10.0, 7.5], [9.0, 7.5], [9.0, 10.4]]);
+    }
+    await H.walkTo(9.0, 10.5); await pre(['yes']); await use(9.0, 11.6, 0.15, 'T_RETURN'); await sleep(800); await H.idle(); await must('T_RETURN'); await shot('returned');
+    await H.route([[9.0, 10.4], [9.0, 7.5], [10.0, 7.5]]); await H.door(10, 6, 10.4, 4.0);
+    await H.walkTo(12.6, 3.0); await use(13.9, 3.0, 1.1, 'T_END'); await sleep(800); await H.idle(3000); await H.idle();
   }
   await sleep(1500); await shot('ending');
-  await st('end'); log('ending', await G('g.state.ended && (g.state.endingId || g.state.ending || true)'), await G('g.state.flags.filter((f) => /^end_/.test(f))'));
+  await st('end'); log('ending', await G('g.state.ended'), await G('g.state.flags.filter((f) => /^end_/.test(f))'));
 };

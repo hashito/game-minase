@@ -42,7 +42,7 @@ export function installTests(ext, G) {
       if (ctx.state.tasks.includes('T_JAR')) G.lightOut = false;
       if (G.applyStory) G.applyStory();
       for (const id of ['D_P1', 'D_GATE']) { const d = ctx.world.doors.get(id); if (d && d.snap) d.snap(); }
-      if (sc.chase != null) { const ps = G.project(sc.at.x, sc.at.z).s; G.chaseFrom(Math.max(0, ps - sc.chase), 1.5); }
+      if (sc.chase != null) { const ps = G.project(sc.at.x, sc.at.z).s; G.chaseFrom(Math.max(0, ps - sc.chase), 5); }
       if (sc.seal) G.chaseFrom(G.mouthS - 14, 1.5);
     },
   });

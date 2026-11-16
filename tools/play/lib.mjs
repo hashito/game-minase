@@ -56,7 +56,7 @@ export function helpers({ p, G, sleep, log, shot }) {
     await sleep(500);
     return walkTo(nx, nz, o);
   }
-  const state = () => G(`({ room: g.state.room, tasks: g.state.tasks.slice(-4), n: g.state.tasks.length, level: g.prog.index, film: kg.film, flags: g.state.flags.slice(-3), prompt: document.getElementById('prompt').textContent, ended: g.state.ended })`);
+  const state = () => G(`({ room: g.state.room, tasks: g.state.tasks.slice(-4), n: g.state.tasks.length, level: g.prog.index, ghost: mn && mn.gh && mn.gh.mode, flags: g.state.flags.slice(-3), prompt: document.getElementById('prompt').textContent, ended: g.state.ended })`);
   const flash = async (x, z, y) => { await face(x, z, y); await sleep(200); await p.key('KeyQ'); await sleep(500); };
   // the tunnel walker near and in sight: turn to her and flash [Q] (what a player is told to do)
   async function guardWalker() {

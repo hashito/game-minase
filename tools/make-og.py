@@ -1,5 +1,5 @@
 # assets/og-image.png (1200x630): the title picture with the real title drawn over it (no letters come from the image model),
-# and assets/favicon.svg (a white charm with a red seal). python tools/make-og.py
+# and assets/favicon.svg (a specimen jar of yellow formalin). python tools/make-og.py
 import sys
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 src = 'tools/_raw/title.png'
@@ -17,10 +17,10 @@ big = ImageFont.truetype(F, 84); sub = ImageFont.truetype(F, 38); small = ImageF
 def text(xy, s, f, fill):
     for dx, dy in ((2, 2), (0, 0)):
         dr.text((xy[0] + dx, xy[1] + dy), s, font=f, fill=(0, 0, 0) if dx else fill)
-text((70, 420), '札の家', big, (240, 232, 214))
-text((330, 452), '― 奥の棚の櫛', sub, (232, 220, 196))
-text((72, 530), 'お札をはがして、奥の棚の櫛を持って来い。一人称3Dホラー', small, (214, 200, 176))
+text((70, 420), '水無瀬病院', big, (226, 236, 232))
+text((520, 452), '― 七番の瓶', sub, (214, 228, 222))
+text((72, 530), '廃病院の地下から、七番の瓶を持って来い。一人称3Dホラー', small, (196, 214, 206))
 im.save('assets/og-image.png', optimize=True)
-svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill="#120e0a"/><rect x="20" y="6" width="24" height="52" fill="#ece4cf"/><circle cx="32" cy="16" r="6.5" fill="#9e1b17"/><rect x="29" y="27" width="6" height="22" fill="#1a120c"/></svg>\n'
+svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="10" fill="#0b1413"/><rect x="22" y="6" width="20" height="7" rx="2" fill="#2a2f2e"/><rect x="16" y="13" width="32" height="45" rx="7" fill="#9fb4ad" opacity=".55"/><rect x="18" y="26" width="28" height="30" rx="5" fill="#d8c341"/><ellipse cx="32" cy="45" rx="7" ry="8" fill="#5a4a3e"/><rect x="23" y="17" width="18" height="7" fill="#ece8dc"/></svg>' + chr(10)
 open('assets/favicon.svg', 'w', newline='\n', encoding='utf-8').write(svg)
 print('ok')
