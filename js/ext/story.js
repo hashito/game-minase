@@ -206,7 +206,7 @@ export function installStory(ext, G) {
     ctx.setLight(false); G.lightOut = true; ctx.sound('stinger'); ctx.fx && ctx.fx.spook && ctx.fx.spook(1);
     G.tankGlow.i = 1.6; apply();
     { const d = door('D_END'); if (d && !d.isOpen) d.open(); }   // the way out stands open (she pushed it as she rose)
-    takeSnap(); chaseFrom(0, 3.5);
+    takeSnap(); chaseFrom(0, 5.0);   // 5 s: time to turn, see what rises out of the tank, and still run
     say('chase_go', 7); later(() => { if (G.lightOut) say('chase_dark', 5); }, 3000);
   }
   function resumeChase() {
