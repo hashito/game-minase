@@ -1,5 +1,5 @@
 {
-  "kit": "02cd7c0",
+  "kit": "74ad163",
   "dest": "js/kit",
   "modules": [
     "game-core",
@@ -135,7 +135,7 @@
     "check-playtest.mjs"
   ],
   "hashes": {
-    "js\\kit\\game-core.js": "79c58d0e28b0",
+    "js\\kit\\game-core.js": "6c010a276e14",
     "js\\kit\\item-kinds.js": "9b67d808c2f3",
     "js\\kit\\item-models.js": "5cc334f5801e",
     "js\\kit\\prop-geo.js": "89b9dabf8cf4",
@@ -204,7 +204,7 @@
     "js\\kit\\monster-nav.js": "629ed7bf22ca",
     "js\\kit\\monster-looks.js": "d08d0bdcca05",
     "js\\kit\\character.js": "48d9693cee75",
-    "js\\kit\\motion.js": "48d2cd24d859",
+    "js\\kit\\motion.js": "782e55c36615",
     "js\\kit\\monster-escape.js": "5a484fc15bc7",
     "js\\kit\\fx.js": "a1bb58e2cc14",
     "js\\kit\\fx-std.js": "fd1a76a638f7",

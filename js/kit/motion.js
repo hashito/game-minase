@@ -1,4 +1,4 @@
-/* game-kit 8e20d97: js/motion.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 02cd7c0: js/motion.js — edit in game-kit and run tools/kit-sync.js */
 // Motion for people: poses, crossfades, a speed-matched walk / run, two-bone leg IK, head look-at.
 // Pure maths (no three.js import), so it runs in Node tests and is shared by the procedural
 // character (js/character.js) and the glTF animator (js/gltf-character.js).
@@ -362,11 +362,11 @@ const POSES = {
     p.waistX = -0.08;
     p.chestX = -0.1;
     p.breath = Math.sin(t * 1.4);
-    p.shLx = p.shRx = -0.5;
-    p.shLabd = p.shRabd = -0.32;
-    p.elL = -1.95; p.elR = -1.85;
+    p.shLx = p.shRx = -0.3;
+    p.shLabd = p.shRabd = -0.25;
+    p.elL = -1.3; p.elR = -1.2;   // forearms across the belly (1.17.1: -1.95 raised the hands over the head)
     const up = Math.max(0, Math.sin(t * 0.21 + ctx.seed));
-    p.headX = 0.22 - up * 0.25;
+    p.headX = 0.1 - up * 0.15;
     p.headY = Math.sin(t * 0.17 + ctx.seed) * 0.2;
     p.headZ = 0.06;
     return p;
