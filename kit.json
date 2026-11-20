@@ -1,5 +1,5 @@
 {
-  "kit": "19a0634",
+  "kit": "f1cd86f",
   "dest": "js/kit",
   "modules": [
     "game-core",
@@ -137,7 +137,7 @@
     "check-playtest.mjs"
   ],
   "hashes": {
-    "js\\kit\\game-core.js": "63cc816db802",
+    "js\\kit\\game-core.js": "ac81ff16cc7a",
     "js\\kit\\item-kinds.js": "9b67d808c2f3",
     "js\\kit\\item-models.js": "5cc334f5801e",
     "js\\kit\\prop-geo.js": "89b9dabf8cf4",
