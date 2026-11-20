@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/moments.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 8e20d97: js/moments.js — edit in game-kit and run tools/kit-sync.js */
 // Full-screen moments that are not windows (standard 1.12, from 五人分の朝). From an ext module: import { fade, showDeath, ... } from '../kit/moments.js'
 // (node tools/kit-sync.js <game> moments). Every one waits for the player's button and honours calm mode / reduced motion / ?qa.
 //   fade(ctx, fn)                    black out, run fn (move the player), come back
@@ -54,6 +54,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // black out, run fn (move the player), come back
 export async function fade(ctx, fn) {
+  injectCss();   // 1.17.0: every moment brings its own CSS (the death card had none unless phoneCall ran first: an invisible card held the game, 水無瀬病院 #23)
   const el = document.createElement('div'); el.className = 'gf-mo-cover'; document.body.appendChild(el);
   try { ctx.fp && ctx.fp.release && ctx.fp.release(); } catch { /* none */ }
   if (!ctx.qa) { await wait(20); el.classList.add('on'); await wait(500); }
@@ -67,9 +68,11 @@ function button(label, primary = true) { const b = document.createElement('butto
 
 // the death card: resolves when the player presses 再開する
 export function showDeath(ctx, cause, line, o = {}) {
+  injectCss();
   return new Promise((done) => {
     try { ctx.fp && ctx.fp.release && ctx.fp.release(); } catch { /* none */ }
     try { ctx.audio && ctx.audio.dropout && ctx.audio.dropout(); } catch { /* no sound */ }
+    try { const say = document.getElementById('say'); if (say) say.classList.remove('on'); } catch { /* no say band */ }   // 1.17.0: the thought line never sits over the card's button
     const el = document.createElement('div'); el.className = 'gf-mo-card'; el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-modal', 'true');
     el.innerHTML = '<div class="gf-mo-card-in"><p class="gf-mo-cause"></p><p class="gf-mo-sub"></p></div>';
     el.querySelector('.gf-mo-cause').textContent = cause; el.querySelector('.gf-mo-sub').textContent = line;
@@ -84,6 +87,7 @@ export function showDeath(ctx, cause, line, o = {}) {
 
 // o = { photo, seconds, lines[], stamp, after, label (aria), done (the button), voice(line) }
 export function playScene(ctx, o) {
+  injectCss();
   return new Promise((done) => {
     try { ctx.fp && ctx.fp.release && ctx.fp.release(); } catch { /* none */ }
     const calm = still(ctx);
