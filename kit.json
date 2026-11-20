@@ -1,5 +1,5 @@
 {
-  "kit": "74ad163",
+  "kit": "19a0634",
   "dest": "js/kit",
   "modules": [
     "game-core",
@@ -100,7 +100,9 @@
     "mg-rotate-pipes",
     "control-help",
     "paper-doc",
-    "low-zone"
+    "low-zone",
+    "wall-paste",
+    "timed-shot"
   ],
   "css": "css/kit.css",
   "cssExtra": [
@@ -135,7 +137,7 @@
     "check-playtest.mjs"
   ],
   "hashes": {
-    "js\\kit\\game-core.js": "6c010a276e14",
+    "js\\kit\\game-core.js": "63cc816db802",
     "js\\kit\\item-kinds.js": "9b67d808c2f3",
     "js\\kit\\item-models.js": "5cc334f5801e",
     "js\\kit\\prop-geo.js": "89b9dabf8cf4",
@@ -169,13 +171,13 @@
     "js\\kit\\room-types.js": "56b0fe6c1e35",
     "js\\kit\\barrier-look.js": "ecfa4b40086f",
     "js\\kit\\station-looks.js": "524d035b0c2e",
-    "js\\kit\\hide-looks.js": "bb02b0c84e23",
+    "js\\kit\\hide-looks.js": "070db7ef8ac3",
     "js\\kit\\win-manager.js": "73ad7b720926",
     "js\\kit\\tab-menu.js": "d6ac302f750d",
     "js\\kit\\guide-aids.js": "380c92d0cbce",
     "js\\kit\\pause-menu.js": "17ee9156acc7",
     "js\\kit\\journal-ui.js": "15cb337950ae",
-    "js\\kit\\map-svg.js": "e17de3d43895",
+    "js\\kit\\map-svg.js": "bbb4be389d8c",
     "js\\kit\\plan-check.js": "959cf6278ad8",
     "js\\kit\\step-guide.js": "ac5df02f1361",
     "js\\kit\\frame-guard.js": "7171e1d2a967",
@@ -219,14 +221,14 @@
     "js\\kit\\text-contrast.js": "1df5e0dc7e4e",
     "js\\kit\\chat.js": "c7175f27fd29",
     "js\\kit\\chat-ext.js": "479bbd365615",
-    "css/kit.css": "de93a13a4b25",
+    "css/kit.css": "7e05ca25ed30",
     "css\\theme.css": "1efaa7d1672b",
     "css\\themes.css": "3d37bee4806c",
     "css\\shell.css": "883ca53dfd45",
     "schema/chat-game.schema.json": "4463a3812a3d",
     "schema/chat-story.schema.json": "74021fbcd2f8",
     "schema/creation-brief.schema.json": "4a7c4e40cf74",
-    "schema/docs.schema.json": "533be2902f17",
+    "schema/docs.schema.json": "6ac035fd7d5b",
     "schema/endings.schema.json": "ec10b40dad12",
     "schema/game.schema.json": "08622f782238",
     "schema/items.schema.json": "faa2f5a7e22a",
@@ -235,7 +237,7 @@
     "schema/plan.schema.json": "1250d3cdb7c4",
     "schema/release-notes.schema.json": "4097758c9ec4",
     "schema/stages.schema.json": "1c343e9e4f9f",
-    "schema/tasks.schema.json": "bc2134649d64",
+    "schema/tasks.schema.json": "9b2a66d4973c",
     "schema/terminals.schema.json": "d925c34908f1",
     "schema/things.schema.json": "8758a52e26d8",
     "tools/serve.js": "383ea74a3e8f",
@@ -265,7 +267,7 @@
     "js\\kit\\mg-order-steps.js": "4eb7a493420a",
     "js\\kit\\mg-steady-hand.js": "0ce8a8213125",
     "tools/build-site.js": "c8beaa333016",
-    "tools/check-traps.mjs": "577f4df2f4a8",
+    "tools/check-traps.mjs": "2626544c3f48",
     "tools/check-hud-overlap.mjs": "31bd80df3582",
     "tools/perf-probe.mjs": "dc14d52ac813",
     "js\\kit\\mg-pump-gauge.js": "798da12248f2",
@@ -275,7 +277,9 @@
     "js\\kit\\control-help.js": "9c4eebfb5285",
     "js\\kit\\paper-doc.js": "965fa796adf3",
     "js\\kit\\low-zone.js": "7df668d66e88",
-    "tools/check-playtest.mjs": "ea324a4addfd"
+    "tools/check-playtest.mjs": "af2e2d3b7c41",
+    "js\\kit\\wall-paste.js": "261910056d54",
+    "js\\kit\\timed-shot.js": "48aed0a40506"
   },
   "textures": [
     "tile_hospital_large",
