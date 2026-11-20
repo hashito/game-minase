@@ -1,6 +1,7 @@
 [
   {
     "id": "DOC_HEISA",
+    "paper": "notice",
     "title": "閉院のお知らせ（玄関の掲示）",
     "room": "GENKAN",
     "x": 0.06,
@@ -13,6 +14,7 @@
   },
   {
     "id": "DOC_MAP",
+    "paper": "map",
     "title": "院内案内図",
     "room": "UKE",
     "x": 18.6,
@@ -25,6 +27,7 @@
   },
   {
     "id": "DOC_CHART",
+    "paper": "chart",
     "title": "カルテ「浅井庄一」",
     "room": "KARTE",
     "x": 5.55,
@@ -37,6 +40,7 @@
   },
   {
     "id": "DOC_NEWS",
+    "paper": "news",
     "title": "新聞の切り抜き（1999年9月17日）",
     "room": "SHIN",
     "x": 6.45,
@@ -49,6 +53,7 @@
   },
   {
     "id": "DOC_LOG",
+    "paper": "log",
     "title": "排水日誌（ポンプ室）",
     "room": "PUMP",
     "x": 3.2,

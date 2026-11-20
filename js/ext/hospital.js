@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildHinata } from './people.js';
+import { lowZone } from '../kit/low-zone.js';
 
 // where each station's invisible [E] box goes (height above the floor; x / z moves; size of the box). Stations with a "look" are the kit's.
 const HIT = {
@@ -17,18 +18,7 @@ const HIT = {
   S_CAB: { y: 1.0, dz: 0.15, s: [0.95, 1.8, 0.5] }, S_DRAIN: { y: 0.15, s: [0.8, 0.3, 0.8] },
   S_HEARSE: { y: 1.1, dx: 0.3, s: [0.3, 2.0, 1.6] }, S_SHELF: { y: 1.2, dz: -0.2, s: [1.6, 1.6, 0.5] },
 };
-// where ひなた stands at each moment of the story: [x, z, floor, yaw toward (x, z), pose, y above the floor]
-export const HINA = {
-  genkan: [1.0, 21.2, 1, [3, 21.6], 'idle'],
-  roka: [4.6, 16.4, 1, [3, 15.2], 'idle'],
-  kaidan: [13.8, 12.6, 1, [16, 15], 'idle'],
-  bstair: [14.4, 10.4, 0, [15.4, 12], 'crouch'],
-  pump: [4.6, 13.7, 0, [3, 11], 'idle'],
-  rescue: [3.6, 14.55, 0, [3, 10], 'scared', 0.76],
-  jimu: [7.8, 12.2, 0, [9, 11.6], 'idle'],
-  drain: [9.75, 12.1, 0, [9, 11.6], 'crouch'],
-  reian: [12.4, 4.2, 0, [10, 6], 'idle'],
-};
+// where ひなた stands at each moment: js/ext/hina.js (she walks between them)
 
 export function installHospital(ext, G) {
   ext.on('game:ready', (ctx) => {
@@ -83,12 +73,10 @@ export function installHospital(ext, G) {
       const pm = new THREE.Mesh(mergeGeometries(geos), M.pipe); pm.name = 'mn-pipes'; grp.add(pm);
     }
     // P2: the low pipes every 1.4 m (crawl under them: crouch). Their colliders are marked "low" (story.js lets a crouching body pass)
-    G.low = [];
-    for (let x = 0.0; x > -17.6; x -= 1.4) {
-      const b = cyl('P2', x, -41.8, 0.13, 0.13, 1.6, M.rust, 1.08, false, 10); b.rotation.x = Math.PI / 2;
-      const c = { box: new THREE.Box3().setFromObject(b), off: false, low: true }; c.box.min.y = fy('P2') + 0.2; W.colliders.push(c); G.low.push(c);
-    }
-    box('P2', -8, -41.8, 22, 0.05, 1.6, M.dark, 1.4, false);   // the ceiling hangs low the whole way
+    // 1.2.0 (#18): the kit's low zone (js/kit/low-zone.js): the ceiling drops at a striped beam at each end, a standing body is stopped at
+    // the entrance, the crouch card shows in front of it. The pipes hang under the low ceiling the whole way.
+    for (let x = 0.8; x > -16.2; x -= 1.4) { const b = cyl('P2', x, -41.8, 0.08, 0.08, 1.6, M.rust, 1.02, false, 10); b.rotation.x = Math.PI / 2; }
+    G.lowP2 = lowZone(ctx, { id: 'P2', floor: 0, x0: -16.4, x1: 1.4, z0: -42.6, z1: -41.0, ceiling: 1.2, along: 'x', why: '天井が低い。' });
 
     // ---------------- the watertight doors (防水扉): our own slab with a round window, a wheel on each face; the kit's leaf is hidden ----------------
     G.wt = {};
@@ -137,23 +125,16 @@ export function installHospital(ext, G) {
       // the notice board by the door, a shoe rack, the umbrella stand
       box('GENKAN', 0.06, 21.0, 0.04, 0.8, 1.1, std(0x5a4a3a), 1.1, false);
       cyl('GENKAN', 5.4, 19.0, 0.18, 0.16, 0.5, M.steel, 0, true);
-      flat('GENKAN', 4.4, 20.4, 1.4, 1.0, M.water, 0.015, 0.3);
     }
     // ---------------- 外来の待合: the sagging ceiling panels, threads of rain falling through ----------------
     for (const [x, z, r] of [[12.0, 22.1, 0.35], [8.0, 19.8, -0.2], [14.6, 24.5, 0.5]]) { const p = box('MACHI', x, z, 1.2, 0.03, 0.6, M.cream, 2.62, false); p.rotation.z = r * 0.4; p.rotation.x = r * 0.2; }
-    flat('MACHI', 12.0, 22.1, 1.6, 1.2, M.water, 0.015); flat('MACHI', 8.0, 19.8, 1.0, 0.8, M.water, 0.015);
     for (let i = 0; i < 4; i++) plane('MACHI', 7.2 + i * 0.25, 25.4, 0.12, 0.28, M.cream, 0.01, 0.2 * i, -Math.PI / 2);
     // ---------------- 受付: papers on the floor, the window with the hand prints (a thing to look at) ----------------
     for (let i = 0; i < 6; i++) flat('UKE', 17.4 + (i % 3) * 0.6, 22.3 + Math.floor(i / 3) * 1.1, 0.21, 0.3, M.paper, 0.01 + i * 0.001, i * 0.7);
-    box('UKE', 16.45, 23.0, 0.06, 0.9, 1.4, M.glass, 1.0, false);
     // ---------------- カルテ庫: charts all over the floor ----------------
     for (let i = 0; i < 14; i++) flat('KARTE', 1.6 + (i * 1.37) % 3.4, 10.4 + (i * 0.83) % 3.6, 0.24, 0.32, i % 3 ? M.paper : std(0x7b8a96, { roughness: 1, side: THREE.DoubleSide }), 0.01 + i * 0.0008, i * 0.9);
     // ---------------- 診察室: the sink that keeps running ----------------
-    box('SHIN', 8.8, 9.3, 0.6, 0.85, 0.45, M.white); box('SHIN', 8.8, 9.32, 0.44, 0.05, 0.3, M.dark, 0.85, false);
-    cyl('SHIN', 8.8, 9.15, 0.015, 0.015, 0.25, M.steel, 1.0); G.tap = cyl('SHIN', 8.8, 9.32, 0.008, 0.008, 0.2, M.stream, 0.86);
-    box('SHIN', 8.8, 9.07, 0.5, 0.6, 0.03, std(0x9fa8a6, { metalness: 0.7, roughness: 0.15 }), 1.25, false);
     // ---------------- 階段ホール: wet footprints from the stairs ----------------
-    for (let i = 0; i < 8; i++) flat('KAIDAN', 16.8 - i * 0.42, 12.0 + (i % 2 ? 0.16 : -0.16), 0.11, 0.24, M.water, 0.013, Math.PI / 2);
 
     // ---------------- 地下の廊下: the water to the ankles, a drain ----------------
     flat('B_ROKA', 8.0, 7.5, 0.5, 0.5, G.grateM || M.dark, 0.01);
@@ -194,7 +175,6 @@ export function installHospital(ext, G) {
       }
       box('REIAN', 13.9, 3, 0.12, 0.2, 1.8, M.dark, 2.2, false);
       G.hearseOut = plane('REIAN', 14.05, 3, 1.6, 2.2, std(0x1a2226, { roughness: 1, emissive: 0x0d1418, emissiveIntensity: 1 }), 1.1, -Math.PI / 2); G.hearseOut.visible = false;
-      flat('REIAN', 10.5, 2.5, 2.0, 1.4, M.water, 0.014, 0.2);
     }
     // ---------------- 防水扉の前: crates, the locker on its raised step ----------------
     box('MOUTH', 0.55, 1.2, 0.8, 0.6, 0.8, std(0x4b4232), 0, true);
@@ -203,18 +183,12 @@ export function installHospital(ext, G) {
 
     // ---------------- the passage ----------------
     // P1: water dripping from the pipe joints, hair caught in the pipes
-    for (let i = 0; i < 6; i++) { const h = plane('P1', 1.82, -16 + i * 0.05, 0.02, 0.5 + i * 0.07, M.hair, 1.6, Math.PI / 2); h.rotation.z = 0.2 * (i - 3); }
-    for (let z = -6; z > -40; z -= 7) flat('P1', 2.6 + Math.sin(z) * 0.3, z, 1.0, 1.4, M.water, 0.012, z);
     // P2: hand prints (a thing to look at), more hair
-    for (let i = 0; i < 9; i++) flat('P2', -6 - i * 0.45, -41.8 + (i % 2 ? 0.25 : -0.25), 0.12, 0.16, std(0x2a2f2c, { roughness: 0.3, transparent: true, opacity: 0.8 }), 0.013, i);
-    for (let i = 0; i < 8; i++) plane('P2', -13 + i * 0.12, -41.2, 0.02, 0.6 + (i % 3) * 0.15, M.hair, 0.6, 0);
     // P3: a chart floating on the water (a thing), hair in the water
-    for (let i = 0; i < 10; i++) plane('P3', -17.4 + (i % 3) * 0.12, -58 + i * 0.1, 0.03, 0.6, M.hair, 0.13, 0, -Math.PI / 2);
     plane('P3', -17.2, -58.0, 0.22, 0.3, M.paper, 0.14, 0, -Math.PI / 2);
     // P4: broken tiles, the broken jar on the floor
-    for (let i = 0; i < 7; i++) flat('P4B', 5.6 + (i % 3) * 0.2, -82.0 + (i % 2) * 0.3, 0.08, 0.06, M.glass, 0.014, i);
+    for (let i = 0; i < 7; i++) flat('P4B', 5.6 + (i % 3) * 0.2, -82.0 + (i % 2) * 0.3, 0.08, 0.06, M.glass, 0.014, i).userData.rectOk = true;   // glass shards
     // P5: something dragged along the damp floor
-    for (let i = 0; i < 10; i++) flat('P5', 8.6 + Math.sin(i) * 0.15, -86 - i * 1.0, 0.25, 0.9, std(0x2a2b28, { roughness: 0.4, transparent: true, opacity: 0.6 }), 0.012 + i * 0.0005);
     // ---------------- 病理標本室: the shelves of jars, the formalin tank, the glass cabinet with jar 7 ----------------
     {
       // the shelves on the east and west walls: jars in rows (instanced)
@@ -237,7 +211,7 @@ export function installHospital(ext, G) {
       // the formalin tank sunk in the floor (west half): a rim and the yellow liquid; a white rag floats on it
       const tx = 6.9, tz = -104;
       for (const [w, d, x, z] of [[1.6, 0.12, tx, tz - 1.1], [1.6, 0.12, tx, tz + 1.1], [0.12, 2.32, tx - 0.8, tz], [0.12, 2.32, tx + 0.8, tz]]) box('HYOHON', x, z, w, 0.3, d, M.white, 0, true);
-      G.tank = flat('HYOHON', tx, tz, 1.5, 2.1, M.formalin, 0.22);
+      G.tank = flat('HYOHON', tx, tz, 1.5, 2.1, M.formalin, 0.22); G.tank.userData.rectOk = true;   // the liquid in a square tank
       flat('HYOHON', tx + 0.2, tz - 0.3, 0.4, 0.3, M.paper, 0.235, 0.6);
       // the glass cabinet on the north wall: jar 7 on its middle shelf, at the back
       const cx = 9, cz = -107.72;
@@ -284,12 +258,6 @@ export function installHospital(ext, G) {
 
     // ---------------- ひなた ----------------
     const H = buildHinata(); grp.add(H.root); G.hina = H; H.root.visible = false;
-    G.placeHina = (key) => {
-      const p = HINA[key]; if (!p) { H.root.visible = false; G.hinaAt = null; return; }
-      const [x, z, floor, [tx, tz], pose, dy] = p;
-      H.root.visible = true; H.root.position.set(x, W.floorY(floor) + (dy || 0), z); H.root.rotation.y = Math.atan2(tx - x, tz - z);
-      H.set(pose); G.hinaAt = key; G.hinaFloor = floor;
-    };
 
     // ---------------- the stations: invisible [E] boxes on the things (no green boxes; no collider in front of the furniture) ----------------
     for (const s of ctx.data.plan.stations) {

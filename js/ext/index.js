@@ -3,6 +3,8 @@
 // They share one small state (G). Order matters: the valves first (hospital.js uses their grate picture), then the hospital, her, the story.
 import { installWater } from './water.js';
 import { installHospital } from './hospital.js';
+import { installHina } from './hina.js';
+import { installDress } from './dress.js';
 import { installChimera } from './chimera.js';
 import { installStory } from './story.js';
 import { installTests } from './test-scenes.js';
@@ -13,6 +15,8 @@ export default function (ext) {
   const G = {};
   installWater(ext, G);
   installHospital(ext, G);
+  installDress(ext, G);
+  installHina(ext, G);
   installChimera(ext, G);
   installStory(ext, G);
   installTests(ext, G);

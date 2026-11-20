@@ -7,6 +7,8 @@ import { W } from './words.js';
 
 const ROOM_SURFACE = { P3: 'water', P4B: 'water', B_ROKA: 'water', B_STAIR: 'water', MOUTH: 'water', P1: 'concrete', P2: 'concrete', P5: 'concrete', PUMP: 'concrete' };
 const PASSAGE = new Set(['P1', 'P2', 'P3', 'P4A', 'P4B', 'P5', 'HYOHON']);
+// the checkpoints of the run back (outside the low zone: you come back standing)
+const CP_GATE = { x: -5.2, z: -81.8, yaw: Math.PI / 2, floor: 0 }, CP_MID = { x: -17.2, z: -41.8, yaw: -Math.PI / 2, floor: 0 };
 // the scripted moments on the way in: [id, x, z, what]. Each runs once, when you first walk past its point
 const EVENTS = [
   ['e1', 2.6, -8, 'drip'], ['e2', 2.6, -16.5, 'hair'], ['e3', 2.6, -27, 'flick'], ['e4', 2.6, -36, 'clang'],
@@ -67,7 +69,7 @@ export function installStory(ext, G) {
     for (const D of Object.values(G.wt)) D.open = D.d.isOpen ? 1 : 0;
     G.cabLock.visible = !done('T_LEDGER');
     G.hearseOpen = flag('end_name') || flag('end_return') ? 1 : null; G.hearseOut.visible = G.hearseOpen != null;
-    G.placeHina(hinaKey());
+    G.hinaGo(hinaKey());   // 1.2.0 (#13): she walks there (a resumed game or a test scene places her)
     ctx.world.setLampFloor(ctx.floor, true);
     sealSpot();
   }
@@ -108,9 +110,6 @@ export function installStory(ext, G) {
       }
       return G.light0(true);
     };
-    // a crouching body passes under the low pipes of the passage
-    const s0 = ctx.fp.solid.bind(ctx.fp);
-    ctx.fp.solid = (cl) => (cl.low && ctx.fp.crouching ? false : s0(cl));
     ctx.stepSurfaceOf = (room) => ROOM_SURFACE[room] || null;
     // the valves: only from the lesson on
     G.canTurn = (id) => {
@@ -181,7 +180,8 @@ export function installStory(ext, G) {
   // the valve lesson: she comes from the far end; a drained valve stops her (she never kills here)
   let lessonBack = 0;
   function lessonStart(again) {
-    G.ghostStart('lesson', G.project(9, -81.8).s, { speed: 1.4, onCatch: () => { G.ghostFade(); G.gh.onCatch = null; } });
+    // 1.2.0 (#21 「最初に敵が出た時に触れても自分が死なない」): contact is a catch here too; back before the lesson, she comes again
+    G.ghostStart('lesson', G.project(9, -81.8).s, { speed: 1.3, onCatch: () => { G.ghostStop(); ctx.checkpoint = { x: -3.4, z: -81.8, yaw: -Math.PI / 2, floor: 0 }; ctx.die('lesson'); } });
     say(again ? 'lesson_again' : 'lesson_start', 5); ctx.sound('stinger');
   }
   ext.on('minase:ghost-press', ({ id }) => {
@@ -192,6 +192,9 @@ export function installStory(ext, G) {
     if (mode === 'lesson' && !done('T_POST')) later(() => { if (!done('T_POST') && ctx.state.room === 'P4B') lessonStart(true); }, 1500);
   });
   ext.on('minase:ghost-lost', () => say('hide_lost', 4));
+  let sankN = 0;
+  ext.on('minase:ghost-sank', ({ on }) => { if (sankN++ < 3) say(on ? 'ghost_sank_on' : 'ghost_sank', 5); });
+  ext.on('minase:valve-behind', () => say('valve_behind', 6));
   ext.on('minase:grate', () => { const n = G.grated.length; if (n >= 3) tryDone('T_SQ2'); else say('sq2_count', 3); });
 
   // ---------------- L4: the jar, the chase, the first watertight door, the pump room ----------------
@@ -207,10 +210,15 @@ export function installStory(ext, G) {
     G.tankGlow.i = 1.6; apply();
     { const d = door('D_END'); if (d && !d.isOpen) d.open(); }   // the way out stands open (she pushed it as she rose)
     takeSnap(); chaseFrom(0, 5.0);   // 5 s: time to turn, see what rises out of the tank, and still run
-    say('chase_go', 7); later(() => { if (G.lightOut) say('chase_dark', 5); }, 3000);
+    ctx.checkpoint = { x: 9, z: -106.4, yaw: 0, floor: 0 };
+    if (ctx.lookTo) ctx.lookTo({ x: 6.9, y: ctx.world.floorY(0) + 1.3, z: -104 }, { sec: 1.6 });   // #20: you see her rise, every time
+    say('chase_go', 7);
+    later(() => { if (ctx.controlHint) ctx.controlHint('run', { why: 'ここからは走れる。', once: false }); }, 1800);
+    later(() => { if (G.lightOut) { say('chase_dark', 5); if (ctx.controlHint) ctx.controlHint('light', { why: '懐中電灯が消えた。', text: '叩いてつけ直す', once: false }); } }, 3400);
   }
   function resumeChase() {
     const ps = G.project(cam().x, cam().z).s;
+    if (done('T_JAR') && !done('T_ESCAPE')) ctx.checkpoint = flag('cp_mid') ? CP_MID : flag('cp_gate') ? CP_GATE : { x: 9, z: -106.4, yaw: 0, floor: 0 };   // #23
     if (done('T_JAR') && !done('T_ESCAPE')) { takeSnap(); chaseFrom(flag('cp_mid') || flag('cp_gate') ? Math.max(0, ps - 16) : 0, 4.0); }
     else if (done('T_ESCAPE') && !done('T_SEAL')) chaseFrom(G.mouthS - 14, 1.5);
   }
@@ -300,9 +308,9 @@ export function installStory(ext, G) {
       talk('top', '防水扉').then(() => { if (!done('T_SEAL')) say('seal_go', 5); });
     }
     if (to === 'PUMP' && done('T_SEAL') && !done('T_RESCUE') && !flag('rescue_in')) { setFlag('rescue_in'); later(() => talk('rescue_in', 'ポンプ室'), 300); }
-    if (to === 'P4A' && G.gh.mode === 'chase' && !flag('cp_gate')) { setFlag('cp_gate'); ctx.checkpoint = { x: -5.2, z: -81.8, yaw: Math.PI / 2, floor: 0 }; takeSnap(); }
+    if (to === 'P4A' && G.gh.mode === 'chase' && !flag('cp_gate')) { setFlag('cp_gate'); ctx.checkpoint = CP_GATE; takeSnap(); }
   });
-  ext.on('thing:look', ({ id }) => { if (id === 'GEN_DOOR' && done('T_FRONT')) ans('front_again'); });
+  ext.on('thing:look', ({ id }) => { if (id === 'GEN_DOOR' && done('T_FRONT') && !has('JAR') && !done('T_GIVE') && !done('T_RETURN')) ctx.talk('kuroki_wait', { title: '鎖の扉' }); else if (id === 'GEN_DOOR' && done('T_FRONT')) ans('front_again'); });   // 1.2.0 (#9): 黒木 answers at the door, face and all
 
   // ---------------- every frame ----------------
   let hintT = 0, flick = 0, black = 0, peek = 0;
@@ -318,7 +326,7 @@ export function installStory(ext, G) {
       if (black > 0) { black -= dt; ctx.flashlight.intensity = black > 0 ? 0.05 : LIT; }
       else if (flick > 0) { flick -= dt; ctx.flashlight.intensity = flick > 0 ? LIT * (0.2 + Math.random() * 0.5) : LIT; }
     }
-    if (peek > 0) { peek -= dt; if (peek <= 0 && G.gh.mode === 'peek') G.ghostStop(); }
+    if (peek > 0) { peek -= dt; if (peek <= 0 && G.gh.mode === 'peek') G.ghostFade(); }
     if (ctx.floor === 0) {
       const me = G.project(c.x, c.z);
       // the way in: a moment every few metres
@@ -330,7 +338,7 @@ export function installStory(ext, G) {
       // a checkpoint at the mouth of the low passage on the way back
       // before the low passage: you crawl there; a valve behind you first
       if (G.gh.mode === 'chase' && room === 'P3' && c.z > -52 && !G.lowWarned) { G.lowWarned = true; say('chase_low', 6); }
-      if (G.gh.mode === 'chase' && room === 'P2' && c.x > -16.6 && !flag('cp_mid')) { setFlag('cp_mid'); ctx.checkpoint = { x: -16.2, z: -41.8, yaw: -Math.PI / 2, floor: 0 }; takeSnap(); say('cp_mid', 2.5); }
+      if (G.gh.mode === 'chase' && (room === 'P2' || room === 'P3') && c.z > -43.4 && c.x > -17.4 && !flag('cp_mid')) { setFlag('cp_mid'); ctx.checkpoint = CP_MID; takeSnap(); say('cp_mid', 2.5); }
     }
   }
   const noise = (name, pos, n) => ctx.audio && ctx.audio.noise && ctx.audio.noise(name, { pos, n });
@@ -344,7 +352,7 @@ export function installStory(ext, G) {
       case 'clang': noise('thud', { x: c.x, y: 2.4, z: c.z + 6 }, 2); ctx.body && ctx.body.play && ctx.body.play('stagger'); say('ev_clang', 4); break;
       case 'low': say('ev_low', 5); break;
       case 'hands': say('ev_hands', 5); break;
-      case 'cross': G.ghostStart('peek', G.project(-17.6, -48).s); peek = 0.8; ctx.sound('noise', 'splash'); later(() => say('ev_cross', 4), 800); break;
+      case 'cross': G.ghostStart('peek', G.project(-17.6, -43.0).s, { speed: 0 }); peek = 2.2; ctx.sound('noise', 'splash'); ctx.sound('stinger'); voice('whisper1'); later(() => say('ev_cross', 4), 1200); break;
       case 'water': noise('splash', { x: c.x, y: 0.2, z: c.z }, 2); say('ev_water', 5); break;
       case 'splash': noise('splash', { x: c.x, y: 0.2, z: c.z + 5 }, 3); say('ev_splash', 4); break;
       case 'float': say('ev_float', 5); break;

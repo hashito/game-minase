@@ -80,9 +80,9 @@
   "sec": 6.8
  },
  "crouch_hint": {
-  "text": "配管が低い。[C] でしゃがんで、くぐる。",
+  "text": "天井が低い。しゃがんで、くぐる。",
   "file": "t-crouch_hint.mp3",
-  "sec": 3
+  "sec": 2.9
  },
  "ev_drip": {
   "text": "天井の配管から、水がしたたっている。……奥から、水の流れる音。",
@@ -105,9 +105,9 @@
   "sec": 5.3
  },
  "ev_low": {
-  "text": "この先、天井の配管が低い。しゃがまないと進めない。[C] でしゃがむ。",
+  "text": "この先、天井が低い。黄色と黒の梁の下は、しゃがまないと進めない。",
   "file": "t-ev_low.mp3",
-  "sec": 5.2
+  "sec": 5.4
  },
  "ev_hands": {
   "text": "床に、濡れた手の跡。大きさも形も、一つずつ違う。奥からこちらへ続いている。",
@@ -289,10 +289,40 @@
   "file": "t-sq2_count.mp3",
   "sec": 3.9
  },
- "stair_dark": {
-  "text": "地下への階段。下から、水の流れる音がする。",
-  "file": "t-stair_dark.mp3",
-  "sec": 3.7
+ "valve_behind": {
+  "text": "遅い。あれは、もうこの止水弁より先にいる。抜けた水は、あれの後ろだ。……次の弁まで走って、通り過ぎてから回す。",
+  "file": "t-valve_behind.mp3",
+  "sec": 8.9
+ },
+ "ghost_sank": {
+  "text": "乾いた床をかきむしって……水の中へ沈んだ。水が戻れば、また来る。今のうちに先へ。",
+  "file": "t-ghost_sank.mp3",
+  "sec": 6.5
+ },
+ "ghost_sank_on": {
+  "text": "足もとの水が抜けて、あれが崩れるように沈んだ。……戻ってくる前に、走れ。",
+  "file": "t-ghost_sank_on.mp3",
+  "sec": 5.2
+ },
+ "lesson_caught": {
+  "text": "……つかまった。冷たい腕が、何本も。",
+  "file": "t-lesson_caught.mp3",
+  "sec": 2.9
+ },
+ "ladder_dark": {
+  "text": "床の穴に、鉄のはしご。下から、水の流れる音がする。",
+  "file": "t-ladder_dark.mp3",
+  "sec": 4.6
+ },
+ "stairs_broken": {
+  "text": "地下への階段は、途中から崩れて水の中だ。降りられない。",
+  "file": "t-stairs_broken.mp3",
+  "sec": 4.3
+ },
+ "lift_broken": {
+  "text": "エレベーターの扉が、半分開いたまま止まっている。中は真っ暗な穴だ。……乗れるものじゃない。",
+  "file": "t-lift_broken.mp3",
+  "sec": 6.2
  },
  "done_here": {
   "text": "ここでは、もうすることはない。",

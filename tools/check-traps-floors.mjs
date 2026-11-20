@@ -42,7 +42,7 @@ async function inPage(FL) {
   const g = window.__game, W = g.world, R = 0.28, S = 0.1, fy = W.floorY ? W.floorY(FL) : 0;
   const plan = await (await fetch((await (await fetch('game.json')).json()).data.plan || 'data/plan.json')).json();
   const doorCols = new Set(); if (W.doors) for (const d of W.doors.values()) { if (d.col) doorCols.add(d.col); if (d.collider) doorCols.add(d.collider); }
-  const cols = W.colliders.filter((c) => !c.off && !doorCols.has(c) && c.box.max.y >= fy + 0.15 && c.box.min.y <= fy + 1.6);
+  const cols = W.colliders.filter((c) => !c.off && !c.low && !doorCols.has(c) && c.box.max.y >= fy + 0.15 && c.box.min.y <= fy + 1.6);
   const rooms = plan.rooms.filter((r) => !r.y && (r.floor || 0) === FL), onFloor = new Set(rooms.map((r) => r.id));
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
   for (const r of rooms) { x0 = Math.min(x0, r.x); z0 = Math.min(z0, r.z); x1 = Math.max(x1, r.x + r.w); z1 = Math.max(z1, r.z + r.d); }

@@ -84,10 +84,10 @@
     "id": "UKE_WINDOW",
     "room": "UKE",
     "position": [
-      16.8,
-      23
+      16,
+      21.2
     ],
-    "y": 1.2,
+    "y": 1.5,
     "label": "受付の窓口",
     "text": [
       "窓口のガラスの内側に、手のひらの跡が並んでいる。内側から。……濡れた手で。"
@@ -100,8 +100,8 @@
     "id": "KA_RACK",
     "room": "KARTE",
     "position": [
-      0.6,
-      13.6
+      0.55,
+      12
     ],
     "y": 1.4,
     "label": "カルテの棚",
@@ -163,6 +163,40 @@
     "photo": "assets/photos/th-kd-foot.webp"
   },
   {
+    "id": "KD_STAIRS",
+    "room": "KAIDAN",
+    "position": [
+      13.4,
+      11.3
+    ],
+    "y": 0.4,
+    "label": "崩れた階段",
+    "text": [
+      "地下への階段が、途中から崩れ落ちている。手すりが曲がって、下は真っ暗。",
+      "下の水の中に、折れた段が積み重なっているのが見える。"
+    ],
+    "feeling": "降りられない。……ほかの道を探す。",
+    "size": 0.7,
+    "photo": "assets/photos/th-kd-stairs.webp"
+  },
+  {
+    "id": "KD_LIFT",
+    "room": "KAIDAN",
+    "position": [
+      18,
+      9.15
+    ],
+    "y": 1.3,
+    "label": "止まったエレベーター",
+    "text": [
+      "エレベーターの扉が、手のひらの幅だけ開いたまま止まっている。すき間の奥は、真っ暗な縦穴。",
+      "ボタンを押しても、灯りはつかない。"
+    ],
+    "feeling": "電気が来ていない。",
+    "size": 0.7,
+    "photo": "assets/photos/th-kd-lift.webp"
+  },
+  {
     "id": "BR_WATER",
     "room": "B_ROKA",
     "position": [
@@ -215,8 +249,8 @@
     "id": "RE_DRAWER",
     "room": "REIAN",
     "position": [
-      8.5,
-      0.6
+      10,
+      1
     ],
     "y": 1,
     "label": "遺体の保管庫",
@@ -249,10 +283,10 @@
     "id": "P1_LEAK",
     "room": "P1",
     "position": [
-      3.4,
+      3.3,
       -12
     ],
-    "y": 2.2,
+    "y": 2.5,
     "label": "配管の水もれ",
     "text": [
       "天井の配管の継ぎ目から、水が噴き出している。"

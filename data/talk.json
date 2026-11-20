@@ -74,6 +74,7 @@
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "肝試しじゃねえよ。……去年、俺の弟の蓮が、ここの地下まで入った。",
+      "img": "assets/photos/tk-kuroki-door.webp",
       "id": "front-2",
       "voice": "assets/voice/front-2.mp3"
     },
@@ -148,27 +149,33 @@
   "down": [
     {
       "who": "私",
-      "text": "地下は、くるぶしまで水につかっていた。雨水が、壁のすき間から流れこんでいる。",
+      "text": "階段は途中から崩れ落ちていた。エレベーターも止まっている。壁の点検口の鉄のはしごで、地下へ降りた。",
       "id": "down-1",
       "voice": "assets/voice/down-1.mp3"
     },
     {
-      "who": "ひなた",
-      "text": "いっ……！　ごめん、最後の段で、すべった。足首……ひねったかも。",
+      "who": "私",
+      "text": "地下は、くるぶしまで水につかっていた。雨水が、壁のすき間から流れこんでいる。",
       "id": "down-2",
       "voice": "assets/voice/down-2.mp3"
     },
     {
-      "who": "私",
-      "text": "ひなたは立てるけれど、まともには歩けない。……水の中を、長い通路の奥までは無理だ。",
+      "who": "ひなた",
+      "text": "いっ……！　ごめん、はしごの最後の段で、すべった。足首……ひねったかも。",
       "id": "down-3",
       "voice": "assets/voice/down-3.mp3"
     },
     {
-      "who": "ひなた",
-      "text": "ポンプ室って、案内図にあったよね。発電機が動けば、水が抜けるかも。そこまでなら行ける。",
+      "who": "私",
+      "text": "ひなたは立てるけれど、まともには歩けない。……水の中を、長い通路の奥までは無理だ。",
       "id": "down-4",
       "voice": "assets/voice/down-4.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "ポンプ室って、案内図にあったよね。発電機が動けば、水が抜けるかも。そこまでなら行ける。",
+      "id": "down-5",
+      "voice": "assets/voice/down-5.mp3"
     }
   ],
   "gen_done": [
@@ -519,6 +526,7 @@
       "who": "黒木",
       "where": "鎖の扉の外",
       "text": "……持って来たのか。本当に。",
+      "img": "assets/photos/tk-kuroki-door.webp",
       "id": "give-1",
       "voice": "assets/voice/give-1.mp3"
     },
@@ -665,6 +673,225 @@
       "text": "……かえして……。",
       "id": "whisper2-1",
       "voice": "assets/voice/whisper2-1.mp3"
+    }
+  ],
+  "kuroki_wait": [
+    {
+      "who": "黒木",
+      "where": "鎖の扉の外",
+      "text": "まだか。……瓶を持って来るまで、ここは開けねえ。",
+      "img": "assets/photos/tk-kuroki-door.webp",
+      "id": "kuroki_wait-1",
+      "voice": "assets/voice/kuroki_wait-1.mp3"
+    },
+    {
+      "who": "黒木",
+      "where": "鎖の扉の外",
+      "text": "蓮は、今夜も書いてる。7、7、7って。……頼む。",
+      "id": "kuroki_wait-2",
+      "voice": "assets/voice/kuroki_wait-2.mp3"
+    }
+  ],
+  "hm_roka": [
+    {
+      "who": "ひなた",
+      "text": "私、先に廊下に出てるね。カルテ庫の前で待ってる。",
+      "id": "hm_roka-1",
+      "voice": "assets/voice/hm_roka-1.mp3"
+    }
+  ],
+  "hm_kaidan": [
+    {
+      "who": "ひなた",
+      "text": "階段ホールの前まで行ってる。鎖のかかった防火扉のところ。",
+      "id": "hm_kaidan-1",
+      "voice": "assets/voice/hm_kaidan-1.mp3"
+    }
+  ],
+  "hm_pump": [
+    {
+      "who": "ひなた",
+      "text": "ポンプ室、廊下の西の端だよね。……足、引きずって行くから、先に行って。",
+      "id": "hm_pump-1",
+      "voice": "assets/voice/hm_pump-1.mp3"
+    }
+  ],
+  "hm_jimu": [
+    {
+      "who": "ひなた",
+      "text": "病理事務室、行こう。壁につかまって行くから、大丈夫。",
+      "id": "hm_jimu-1",
+      "voice": "assets/voice/hm_jimu-1.mp3"
+    }
+  ],
+  "hm_drain": [
+    {
+      "who": "ひなた",
+      "text": "排水口、私が押さえる！",
+      "id": "hm_drain-1",
+      "voice": "assets/voice/hm_drain-1.mp3"
+    }
+  ],
+  "hm_reian": [
+    {
+      "who": "ひなた",
+      "text": "霊安室の前で待ってる。搬出口、あそこだよね。",
+      "id": "hm_reian-1",
+      "voice": "assets/voice/hm_reian-1.mp3"
+    }
+  ],
+  "hw_genkan": [
+    {
+      "who": "ひなた",
+      "text": "黒木さん、まだ扉の外にいる。……七番のこと、聞いてみて。",
+      "id": "hw_genkan-1",
+      "voice": "assets/voice/hw_genkan-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "受付は、待合の東の扉から入れるよ。",
+      "id": "hw_genkan-2",
+      "voice": "assets/voice/hw_genkan-2.mp3"
+    }
+  ],
+  "hw_roka": [
+    {
+      "who": "ひなた",
+      "text": "カルテ庫、鍵はかかってないみたい。廊下の西の端。",
+      "id": "hw_roka-1",
+      "voice": "assets/voice/hw_roka-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "……さっきから、床の下で水の音がする。",
+      "id": "hw_roka-2",
+      "voice": "assets/voice/hw_roka-2.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "湊、無線の電池、まだある？　私のは大丈夫。",
+      "id": "hw_roka-3",
+      "voice": "assets/voice/hw_roka-3.mp3"
+    }
+  ],
+  "hw_kaidan": [
+    {
+      "who": "ひなた",
+      "text": "防火扉の鎖、受付の鍵で開くといいけど。",
+      "id": "hw_kaidan-1",
+      "voice": "assets/voice/hw_kaidan-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "奥、真っ暗だね。……懐中電灯、先に照らして。",
+      "id": "hw_kaidan-2",
+      "voice": "assets/voice/hw_kaidan-2.mp3"
+    }
+  ],
+  "hw_bstair": [
+    {
+      "who": "ひなた",
+      "text": "いたた……。大丈夫、ちょっと休めば歩ける。",
+      "id": "hw_bstair-1",
+      "voice": "assets/voice/hw_bstair-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "ポンプ室まで、一緒に行こう。廊下の西。",
+      "id": "hw_bstair-2",
+      "voice": "assets/voice/hw_bstair-2.mp3"
+    }
+  ],
+  "hw_pump_gen": [
+    {
+      "who": "ひなた",
+      "text": "発電機、西の壁の大きいのだよ。手押しのポンプで燃料を送るんだと思う。",
+      "id": "hw_pump_gen-1",
+      "voice": "assets/voice/hw_pump_gen-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "足首は、冷たい水で冷やしてるから平気。……たぶん。",
+      "id": "hw_pump_gen-2",
+      "voice": "assets/voice/hw_pump_gen-2.mp3"
+    }
+  ],
+  "hw_pump": [
+    {
+      "who": "ひなた",
+      "text": "水位計の針、下がってる。今のうちに行って。防水扉は、廊下の西の端。",
+      "id": "hw_pump-1",
+      "voice": "assets/voice/hw_pump-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "ポンプの音、ずっと聞いてる。止まったら、すぐ無線で言う。",
+      "id": "hw_pump-2",
+      "voice": "assets/voice/hw_pump-2.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "……ほんとに、一人で行くの？　気をつけて。",
+      "id": "hw_pump-3",
+      "voice": "assets/voice/hw_pump-3.mp3"
+    }
+  ],
+  "hw_pump_after": [
+    {
+      "who": "ひなた",
+      "text": "湊、無事でよかった。",
+      "id": "hw_pump_after-1",
+      "voice": "assets/voice/hw_pump_after-1.mp3"
+    }
+  ],
+  "hw_rescue": [
+    {
+      "who": "ひなた",
+      "text": "湊……制御盤！　東の壁の！",
+      "id": "hw_rescue-1",
+      "voice": "assets/voice/hw_rescue-1.mp3"
+    }
+  ],
+  "hw_jimu": [
+    {
+      "who": "ひなた",
+      "text": "台帳の棚、名札の鍵で開くはず。",
+      "id": "hw_jimu-1",
+      "voice": "assets/voice/hw_jimu-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "浅井早苗さん……お父さんを探しに来たのかな。",
+      "id": "hw_jimu-2",
+      "voice": "assets/voice/hw_jimu-2.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "……さっきは、本当にありがとう。",
+      "id": "hw_jimu-3",
+      "voice": "assets/voice/hw_jimu-3.mp3"
+    }
+  ],
+  "hw_drain": [
+    {
+      "who": "ひなた",
+      "text": "押さえてる！　湊、早く……あの人が何をしたいのか、考えて！",
+      "id": "hw_drain-1",
+      "voice": "assets/voice/hw_drain-1.mp3"
+    }
+  ],
+  "hw_reian": [
+    {
+      "who": "ひなた",
+      "text": "搬出口の鍵、持ってる？",
+      "id": "hw_reian-1",
+      "voice": "assets/voice/hw_reian-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "……ここ、寒い。早く外に出よう。",
+      "id": "hw_reian-2",
+      "voice": "assets/voice/hw_reian-2.mp3"
     }
   ],
   "radio1": [

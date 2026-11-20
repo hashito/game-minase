@@ -38,13 +38,15 @@ export default async (api) => {
   await H.route([[3.0, 13.6], [3.0, 16.5]]);
   if (PAGES) { await H.walkTo(9.0, 16.5); await H.door(9, 15, 9, 13.6); await H.walkTo(7.6, 12.2); await use(6.45, 11.6, 0.78, 'PAGE1'); await H.face(8.8, 9.3, 1.0); await sleep(300); await shot('shin-sink'); await H.route([[9.0, 13.6], [9.0, 16.5]]); }
   await H.walkTo(16.0, 16.5); await H.door(16, 15, 16, 13.6); await shot('kaidan');
-  await H.walkTo(15.2, 12.0); await use(17.6, 12.0, 0.8, 'stairs down'); await sleep(1500); await H.idle(); await must('T_KAIDAN'); await shot('b-stair');
+  // 1.2.0 (#11): the stairs collapsed, the ladder
+  await H.walkTo(18.2, 12.0); await shot('ladder'); await use(19.5, 12.0, 0.4, 'ladder down'); await sleep(1500); await H.idle(); await must('T_KAIDAN'); await shot('b-stair');
   await st('L2 done'); if (UPTO === 'L2') return;
   // ---- L3: the basement ----
   await H.route([[16.0, 10.0], [16.0, 7.5], [3.0, 7.5]]);
   await H.door(3, 9, 3, 10.6); await shot('pump-room');
   await H.walkTo(2.0, 12.0); await use(0.85, 12.0, 0.8, 'T_GEN'); await must('T_GEN'); await H.idle(); await shot('generator-on');
-  await H.walkTo(3.6, 12.6); await use(4.6, 13.7, 1.0, 'T_RADIO'); await must('T_RADIO'); await H.idle();
+  for (let i = 0; i < 120 && (await G('mn.hinaAt')) !== 'pump'; i++) await sleep(500);   // 1.2.0 (#13): she limps here on her own
+  await H.walkTo(4.4, 12.6); await use(5.72, 12.55, 1.0, 'T_RADIO'); await must('T_RADIO'); await H.idle();
   if (PAGES) { await H.route([[3.0, 10.4], [3.0, 7.5], [10.0, 7.5]]); await H.door(10, 6, 9.4, 4.9); await use(11.0, 4.6, 0.62, 'PAGE2'); await shot('reian'); await H.route([[10.0, 4.9], [10.0, 7.5], [3.0, 7.5]]); }
   else await H.route([[3.0, 10.4], [3.0, 7.5]]);
   await H.walkTo(3.0, 5.0); await H.walkTo(2.6, 1.0); await H.face(2.6, -1, 1.2); await sleep(300); await shot('bousui');
@@ -119,8 +121,8 @@ export default async (api) => {
   await st('L4 done'); if (UPTO === 'L4') return;
   // ---- L5 ----
   if (END === 'give') {
-    await H.route([[3.0, 10.4], [3.0, 7.5], [16.0, 7.5], [16.0, 10.5], [15.4, 12.0]]);
-    await use(17.6, 12.0, 0.8, 'stairs up'); await sleep(1500); await H.idle();
+    await H.route([[3.0, 10.4], [3.0, 7.5], [16.0, 7.5], [16.0, 10.5], [15.4, 12.0], [18.2, 12.0]]);
+    await use(19.5, 12.0, 1.0, 'ladder up'); await sleep(1500); await H.idle();
     await H.route([[16.0, 13.6], [16.0, 16.5], [3.0, 16.5], [3.0, 19.0], [3.0, 24.5]]);
     await pre(['give']); await use(3.0, 25.65, 1.1, 'T_GIVE'); await sleep(800); await H.idle();
   } else {

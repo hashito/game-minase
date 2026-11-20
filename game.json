@@ -2,7 +2,7 @@
   "id": "minase",
   "title": "水無瀬病院 ― 七番の瓶",
   "subtitle": "雨の廃病院の地下から、七番の瓶を持って来い",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "noPrewarm": true,
   "standard": "1.16",
   "theme": "dark-industrial hospital-cold",
@@ -128,7 +128,8 @@
         "label": "ライト"
       }
     ],
-    "gateText": "今は、まだ使えない。先に、いまの目的を進めよう。"
+    "gateText": "今は、まだ使えない。先に、いまの目的を進めよう。",
+    "runButton": true
   },
   "portraits": {
     "ひなた": "assets/photos/face-hinata.webp",
@@ -158,6 +159,11 @@
       "sub": "ひなたが逆止弁を押さえていられるのは、間違えるまで。集めた物（カルテ・新聞・排水日誌・台帳・名札）を思い出して、もう一度答える。",
       "photo": "assets/photos/mon-close.webp",
       "retry": "やり直す"
+    },
+    "lesson": {
+      "text": "水の中から伸びた腕に、足首をつかまれた。",
+      "sub": "あれに触れると、つかまる。止水弁の前の、乾いた所まで戻る。",
+      "retry": "やり直す"
     }
   },
   "titleImage": "assets/photos/title.webp",
@@ -175,7 +181,8 @@
     "catchOn": [
       "chimera",
       "seal",
-      "flood"
+      "flood",
+      "lesson"
     ]
   },
   "share": {
@@ -184,5 +191,6 @@
       "ホラーゲーム"
     ]
   },
-  "thoughtVoices": "assets/voice/thoughts.json"
+  "thoughtVoices": "assets/voice/thoughts.json",
+  "docStyle": "paper"
 }
