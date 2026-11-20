@@ -44,7 +44,7 @@ export function installWater(ext, G) {
     const grp = new THREE.Group(); grp.name = `valve:${def.id}`; ctx.world.group.add(grp);
     const add = (g, m, x, y, z) => { const o = new THREE.Mesh(g, m); o.position.set(x, y, z); grp.add(o); return o; };
     const across = def.along === 'z' ? room.w : room.d, half = across / 2 - 0.08;
-    const wheels = [];
+    const wheels = [], lamps = [];
     for (const s of [-1, 1]) {
       const px = def.along === 'z' ? def.x + s * half : def.x, pz = def.along === 'z' ? def.z : def.z + s * half;
       // a pipe down the wall and the red wheel on it, facing into the passage
@@ -55,15 +55,19 @@ export function installWater(ext, G) {
       for (let k = 0; k < 3; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.025, 0.025), red); sp.rotation.z = (k * Math.PI) / 3; w.add(sp); }
       w.rotation.y = def.along === 'z' ? Math.PI / 2 : 0;
       grp.add(w); wheels.push(w);
+      // 1.2.0 (#21): a lamp over each wheel says whether it works now (green: turn it / amber: holding / dark: not yet)
+      const lamp = add(new THREE.SphereGeometry(0.045, 10, 8), new THREE.MeshBasicMaterial({ color: 0x202020 }), def.along === 'z' ? px - s * 0.1 : px, fy + 1.55, def.along === 'z' ? pz : pz - s * 0.1);
+      lamps.push(lamp);
     }
     // the floor grate across the passage (always there) and the dry band over the water (shown while the valve holds)
     const g = add(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.1 : 0.6, def.along === 'z' ? 0.6 : across - 0.1), grateM, def.x, fy + 0.012, def.z); g.rotation.x = -Math.PI / 2;
     const mat = new THREE.MeshStandardMaterial({ color: 0x4a4d4a, roughness: 0.95 });
     const band = add(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.04 : 3.2, def.along === 'z' ? 3.2 : across - 0.04), mat, def.x, fy + 0.13, def.z); band.rotation.x = -Math.PI / 2; band.visible = false; band.renderOrder = 2;
-    const hit = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.7), hidden);
+    // 1.2.0 (#21): the [E] box spans the passage from wheel to wheel (either wheel, or the grate between, turns it)
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(def.along === 'z' ? across - 0.1 : 0.8, 1.2, def.along === 'z' ? 0.8 : across - 0.1), hidden);
     hit.position.set(def.x, fy + 1.15, def.z); hit.name = `valvehit:${def.id}`; hit.userData.interact = { kind: 'valve', id: def.id };
     ctx.world.group.add(hit); ctx.world.interactables.push(hit);
-    const P = { def, wheels, band, mat, hit, on: false, burn: 0, press: false, turn: 0, fy, along: def.along };
+    const P = { def, wheels, lamps, band, mat, hit, on: false, burn: 0, press: false, turn: 0, fy, along: def.along };
     posts.set(def.id, P);
     return P;
   }
@@ -118,6 +122,7 @@ export function installWater(ext, G) {
   // ---------------- every frame: the wheels turning, the water seeping back ----------------
   function update(dt, active) {
     for (const P of posts.values()) if (P.turn) { const k = Math.sign(P.turn); for (const w of P.wheels) w.children.forEach((c) => { c.rotation.z += k * dt * 8; }); P.turn = Math.abs(P.turn) > 0.02 ? P.turn - k * dt * 1.5 : 0; if (Math.sign(P.turn) !== k) P.turn = 0; }
+    for (const P of posts.values()) { const c = P.on ? 0xff6a00 : G.canTurn && G.canTurn(P.def.id) === true ? 0x00ff3c : 0x241010; for (const l of P.lamps) l.material.color.setHex(c); }
     if (!active) return;
     let any = false;
     for (const P of posts.values()) {

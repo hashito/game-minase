@@ -12,7 +12,8 @@
 import * as THREE from 'three';
 import { buildChimera } from './people.js';
 
-export const SPEED = { walk: 3.0, lesson: 1.4, gate: 1.3 };
+// 1.2.0 (#24 「敵の動きが早すぎる」): 2.5 m/s (you run 3.8), and only 2.0 for the first 15 s of the chase (time to understand what is behind you)
+export const SPEED = { walk: 2.5, start: 2.0, lesson: 1.3, gate: 1.3 };
 export function installChimera(ext, G) {
   let ctx = null, fig = null, route = [], cum = [], glow = null;
   const H = G.gh = { mode: 'off', s: 0, wait: 0, lunge: 6, hiddenT: 0, rise: 0, fade: 0, shown: false, onCatch: null, onStop: null };
@@ -46,9 +47,22 @@ export function installChimera(ext, G) {
     if (G.mouthShut && G.mouthShut()) { const s = G.mouthS; if (s > from - 0.05 && s < to + 1) out.push({ s, door: true }); }
     return out.sort((a, b) => a.s - b.s);
   }
-  G.ghostStart = (mode, s, o = {}) => { H.mode = mode; H.s = s; H.wait = o.wait || 0; H.lunge = 6; H.hiddenT = 0; H.rise = o.rise || 0; H.fade = 0; H.speed = o.speed; H.onStop = o.onStop || null; H.onCatch = o.onCatch || null; H.stopAt = o.stopAt ?? null; };
-  G.ghostStop = () => { H.mode = 'off'; if (fig) fig.root.visible = false; if (glow) glow.intensity = 0; for (const P of G.posts.values()) P.press = false; };
+  G.ghostStart = (mode, s, o = {}) => { H.mode = mode; H.s = s; H.wait = o.wait || 0; H.lunge = 9; H.t = 0; H.pressT = 0; H.sunk = 0; H.sinkAnim = 0; H.hiddenT = 0; H.rise = o.rise || 0; H.fade = 0; H.speed = o.speed; H.onStop = o.onStop || null; H.onCatch = o.onCatch || null; H.stopAt = o.stopAt ?? null; };
+  G.ghostStop = () => { H.mode = 'off'; H.sunk = 0; H.sinkAnim = 0; if (fig) fig.root.visible = false; if (glow) glow.intensity = 0; for (const P of G.posts.values()) P.press = false; };
   G.ghostFade = () => { H.fade = 0.0001; };
+  // she goes under (the figure sinks for 1 s, then nothing) and comes back up at s = back after sec seconds
+  function sinkFor(sec, back) { H.fade = 0; H.sinkAnim = 1; H.sunk = sec + 1; H.back = back; for (const P of G.posts.values()) P.press = false; ctx.sound('noise', 'splash'); }
+  G.ghostSink = sinkFor;
+  // 1.2.0 (#21 「最初の止水弁しか効かない」): a valve turned while she is in its band or just past it (up to 5 m on your side) drains the
+  // water under her: she goes down and comes back up behind the band. Further past it the dry band is behind her; story.js says so.
+  ext.on('minase:valve', ({ id }) => {
+    if (H.mode !== 'chase' || H.sunk > 0) return;
+    const P = G.posts.get(id); if (!P) return;
+    const vs = P.s ?? (P.s = project(P.def.x, P.def.z).s);
+    const cam = ctx.camera.position, ps = project(cam.x, cam.z).s;
+    if (H.s > vs - 1.6 && H.s < vs + 5 && ps > H.s) { sinkFor(4, vs - 5); ext.emit('minase:ghost-sank', { id, on: true }); }
+    else if (H.s >= vs + 5) ext.emit('minase:valve-behind', { id });
+  });
 
   let T = 0;
   function update(dt, active) {
@@ -62,6 +76,13 @@ export function installChimera(ext, G) {
     if (H.wait > 0) { H.wait -= dt; }
     // sinking away (drained, the lesson over, lost you)
     if (H.fade > 0) { H.fade += dt; if (H.fade > 1.4) { const m = H.mode; G.ghostStop(); ext.emit('minase:ghost-gone', { mode: m }); return; } }
+    if (H.sunk > 0) {   // under the water after a dry band or a valve turned on her: nothing to see, she comes back up at H.back
+      H.sunk -= dt;
+      if (H.sinkAnim > 0) { H.sinkAnim -= dt; const q = at(H.s); fig.root.visible = true; fig.root.position.set(q.x, ctx.world.floorY(0) + 0.15 - (1 - H.sinkAnim) * 1.8, q.z); glow.position.set(q.x, ctx.world.floorY(0) + 1.0, q.z); glow.intensity = 2.4 * H.sinkAnim; for (const a of fig.arms) a.rotation.x += (-1.6 - a.rotation.x) * Math.min(1, dt * 4); }
+      else { fig.root.visible = false; glow.intensity = 0; }
+      if (H.sunk <= 0) { H.s = Math.max(0, H.back); H.rise = 1.2; ctx.sound('noise', 'splash'); }
+      return;
+    }
     if (H.rise > 0) { H.rise -= dt; }
     else if (H.wait <= 0 && H.fade <= 0) {
       const chase = H.mode === 'chase';
@@ -69,17 +90,24 @@ export function installChimera(ext, G) {
         H.hiddenT += dt; H.s = Math.max(0, H.s - dt * 0.6);
         if (H.hiddenT > 5) { H.wait = 7; H.s = Math.max(0, ps - 28); H.hiddenT = 0; ext.emit('minase:ghost-lost', {}); }
       } else {
-        H.hiddenT = 0;
+        H.hiddenT = 0; H.t = (H.t || 0) + dt;
         const bl = blockers(H.s, ps), stop = bl.length ? bl[0].s - 0.5 : H.stopAt != null ? H.stopAt : ps - 0.2;
-        const base = (H.speed || SPEED.walk) * (ctx.calm ? 0.8 : 1) * (chase ? slowAt(H.s) : 1);
+        const walk = H.speed != null ? H.speed : chase && H.t < 15 ? SPEED.start : SPEED.walk;
+        const base = walk * (ctx.calm ? 0.8 : 1) * (chase ? slowAt(H.s) : 1);
         H.s = Math.min(Math.max(H.s, stop), H.s + base * dt);
-        if (bl.length && H.s >= bl[0].s - 0.55) { if (bl[0].P) bl[0].P.press = true; if (!H.pressing) { H.pressing = true; ext.emit('minase:ghost-press', { id: bl[0].P ? bl[0].P.def.id : bl[0].gate ? 'gate' : 'door' }); } } else H.pressing = false;
+        if (bl.length && H.s >= bl[0].s - 0.55) { if (bl[0].P) bl[0].P.press = true; if (!H.pressing) { H.pressing = true; H.pressT = 0; ext.emit('minase:ghost-press', { id: bl[0].P ? bl[0].P.def.id : bl[0].gate ? 'gate' : 'door' }); } } else H.pressing = false;
+        // 1.2.0 (#21, #23 「止水弁で足止めしても敵が消えずに」): held at a dry band she claws at it for 3.5 s, then sinks under; she comes back
+        // up 6 m behind the band 6 s later (the water still seeps back while she is under). Stopped is now visibly "gone for now".
+        if (chase && H.pressing && bl[0].P) { H.pressT += dt; if (H.pressT > 3.5) { H.pressing = false; sinkFor(6, bl[0].s - 6); ext.emit('minase:ghost-sank', { id: bl[0].P.def.id }); } }
         if (bl.length && (bl[0].gate || bl[0].door) && H.s >= bl[0].s - 0.55 && H.onStop) { const f = H.onStop; H.onStop = null; f(bl[0]); }
         // the lunge: she surges forward through the water when nothing stands between (never across a dry band)
         if (chase) {
           H.lunge -= dt;
           const gap = ps - H.s;
-          if (H.lunge <= 0 && gap > 6 && !bl.length && slowAt(H.s) > 0.5) { H.s = Math.min(ps - 3, H.s + (gap > 25 ? 7 : ctx.calm ? 2 : 3.5)); H.lunge = (ctx.calm ? 11 : 7) + Math.random() * 3; ctx.sound('glitch'); ctx.sound('noise', 'splash'); }
+          if (H.lunge <= 0 && gap > 6 && !bl.length && slowAt(H.s) > 0.5 && H.t > 15) { H.s = Math.min(ps - 4, H.s + (gap > 25 ? 6 : ctx.calm ? 1.5 : 2.5)); H.lunge = (ctx.calm ? 13 : 9) + Math.random() * 3; ctx.sound('glitch'); ctx.sound('noise', 'splash'); }
+          // her presence when she is out of sight: wading behind you, louder as she comes (#21 「逃げすぎるとよくわからない」)
+          H.wade = (H.wade || 0) - dt;
+          if (H.wade <= 0 && gap < 45) { const q = at(H.s); ctx.audio && ctx.audio.noise && ctx.audio.noise('splash', { pos: { x: q.x, y: 0.3, z: q.z }, n: 1 }); H.wade = gap < 10 ? 0.9 : gap < 25 ? 1.5 : 2.4; }
         }
         if (ps - H.s < 1.1 && !bl.length && ctx.floor === 0) { const f = H.onCatch; if (f) f(); }
       }
@@ -87,7 +115,7 @@ export function installChimera(ext, G) {
     // the figure (her hips under the water line; rising out of the tank, she comes up from below)
     const p = at(H.s);
     fig.root.visible = vis;
-    glow.position.set(p.x, ctx.world.floorY(0) + 1.3, p.z); glow.intensity = vis ? (H.fade > 0 ? Math.max(0, 1 - H.fade / 1.4) : 1) * (2.0 + Math.sin(T * 7) * 0.4) : 0;
+    glow.position.set(p.x, ctx.world.floorY(0) + 1.3, p.z); glow.intensity = vis ? (H.fade > 0 ? Math.max(0, 1 - H.fade / 1.4) : 1) * (5.0 + Math.sin(T * 7) * 0.8) : 0;
     const sink = H.fade > 0 ? H.fade * 1.1 : 0, up = H.rise > 0 ? Math.max(0, H.rise - 0.4) * 0.9 : 0;
     fig.root.position.set(p.x, ctx.world.floorY(0) + 0.15 - sink - up + Math.sin(T * 1.3) * 0.03, p.z);
     fig.root.rotation.y = p.yaw;
@@ -115,7 +143,7 @@ export function installChimera(ext, G) {
     G.routeLen = cum[cum.length - 1];
     G.gateS = project(-4, -81.8).s;
     G.mouthS = project(2.6, -1.2).s;
-    glow = new THREE.PointLight(0xc2c48a, 0, 5.5, 2); ctx.scene.add(glow);
+    glow = new THREE.PointLight(0xc2c48a, 0, 12, 1.3); ctx.scene.add(glow);   // 1.2.0 (#20): she lights the water round her, so you see her coming
     fig = buildChimera(); fig.root.visible = false; ctx.world.group.add(fig.root); G.chimera = fig;
     // warm-up: her materials compiled before play
     const warm = new THREE.Group(); warm.visible = false; warm.add(buildChimera().root); ctx.scene.add(warm); ctx.warmObjects = [...(ctx.warmObjects || []), warm];
