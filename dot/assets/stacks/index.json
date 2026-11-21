@@ -160,6 +160,13 @@
   "src": "miru-delivery-pickup-tag",
   "mpp": 0.007
  },
+ "news-clipping": {
+  "w": 25,
+  "d": 19,
+  "n": 4,
+  "src": "game-newspaper",
+  "mpp": 0.007
+ },
  "iv-dried": {
   "w": 25,
   "d": 24,
@@ -172,13 +179,6 @@
   "d": 24,
   "n": 33,
   "src": "atmos-k2-iv-fallen",
-  "mpp": 0.025
- },
- "gurney-slipped": {
-  "w": 30,
-  "d": 77,
-  "n": 32,
-  "src": "atmos-k2-gurney-slipped",
   "mpp": 0.025
  },
  "wheelchair-blanket": {
@@ -551,5 +551,89 @@
   "n": 18,
   "src": "minase-m2-emlamp-on",
   "mpp": 0.025
+ },
+ "gurney-empty": {
+  "w": 64,
+  "d": 154,
+  "n": 70,
+  "src": "minase-m2-gurney-empty",
+  "mpp": 0.0125
+ },
+ "keybox": {
+  "w": 27,
+  "d": 21,
+  "n": 31,
+  "src": "minase-m2-keybox",
+  "mpp": 0.025
+ },
+ "panel-off": {
+  "w": 33,
+  "d": 12,
+  "n": 65,
+  "src": "minase-m2-panel-off",
+  "mpp": 0.025
+ },
+ "panel-on": {
+  "w": 33,
+  "d": 12,
+  "n": 65,
+  "src": "minase-m2-panel-on",
+  "mpp": 0.025
+ },
+ "lamp-switch": {
+  "w": 17,
+  "d": 19,
+  "n": 30,
+  "src": "minase-m2-lamp-switch",
+  "mpp": 0.025
+ },
+ "notice": {
+  "w": 33,
+  "d": 3,
+  "n": 42,
+  "src": "minase-m2-notice",
+  "mpp": 0.025
+ },
+ "map-board": {
+  "w": 53,
+  "d": 7,
+  "n": 41,
+  "src": "minase-m2-map-board",
+  "mpp": 0.025
+ },
+ "karte-7": {
+  "w": 31,
+  "d": 47,
+  "n": 6,
+  "src": "minase-m2-karte-7",
+  "mpp": 0.007
+ },
+ "pump-log": {
+  "w": 49,
+  "d": 36,
+  "n": 5,
+  "src": "minase-m2-pump-log",
+  "mpp": 0.007
+ },
+ "diary-pages": {
+  "w": 41,
+  "d": 37,
+  "n": 5,
+  "src": "minase-m2-diary-pages",
+  "mpp": 0.007
+ },
+ "ren-paper": {
+  "w": 31,
+  "d": 44,
+  "n": 2,
+  "src": "minase-m2-ren-paper",
+  "mpp": 0.007
+ },
+ "ledger-book": {
+  "w": 57,
+  "d": 41,
+  "n": 6,
+  "src": "minase-m2-ledger-book",
+  "mpp": 0.007
  }
 }

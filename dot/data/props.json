@@ -41,7 +41,7 @@
   },
   {
    "room": "ROKA",
-   "k": "gurney-slipped",
+   "k": "gurney-empty",
    "x": 12.6,
    "z": 15.5,
    "face": 1.5708,
@@ -128,11 +128,12 @@
   {
    "room": "GENKAN",
    "k": "ceiling-sag",
-   "x": 4.2,
-   "z": 20.2,
+   "x": 4.4,
+   "z": 20.4,
    "face": 0,
    "mount": "ceiling",
-   "m2": true
+   "m2": true,
+   "drip": true
   },
   {
    "room": "MACHI",

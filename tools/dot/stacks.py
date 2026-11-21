@@ -30,9 +30,9 @@ PLAIN = {
     'gurney-shape': 'atmos-k2-gurney-shape',
     # the items lying in the world (data/items.json; dot/js/dot/index.js ITEM_STACK)
     'flashlight': 'game-flashlight', 'key': 'game-kouguchi-lockerKey', 'paper': 'miru-delivery-pickup-paper-sheet', 'letter': 'game-whitepigeon-nurseLetter',
-    'jar': 'atmos-k5-jar-sealed', 'tag': 'miru-delivery-pickup-tag',
+    'jar': 'atmos-k5-jar-sealed', 'tag': 'miru-delivery-pickup-tag', 'news-clipping': 'game-newspaper',
     # the mood props (dot/data/props.json)
-    'iv-dried': 'atmos-k2-iv-dried', 'iv-fallen': 'atmos-k2-iv-fallen', 'gurney-slipped': 'atmos-k2-gurney-slipped',
+    'iv-dried': 'atmos-k2-iv-dried', 'iv-fallen': 'atmos-k2-iv-fallen',
     'wheelchair-blanket': 'atmos-k2-wheelchair-blanket', 'wheelchair-overturned': 'atmos-k2-wheelchair-overturned', 'wheelchair-tipped': 'atmos-k3-wheelchair-tipped',
     'trolley-rounds': 'atmos-k2-trolley-rounds', 'trolley-disinfect': 'atmos-k2-trolley-disinfect', 'exam-lamp': 'atmos-k2-exam-lamp',
     'ward-screen-stain': 'atmos-k2-ward-screen-stain', 'ward-screen-torn': 'atmos-k2-ward-screen-torn',
@@ -46,7 +46,10 @@ M2 = ['hina-backpack', 'hina-camera', 'bucket-leak', 'number-display', 'receptio
       'record-boxes', 'bedside', 'chain-padlock', 'lift-indicator', 'call-off', 'pipe-ceiling', 'floating-debris',
       'hina-tape-arrow', 'breaker', 'fuel-tank', 'fuel-can', 'tool-board', 'hina-lantern', 'card-cabinet', 'toe-tag-tray', 'morgue-sink',
       'hina-glowsticks', 'foot-guide', 'valve-sign', 'valve-sign-plain', 'jar-rack-wall', 'jar-crate', 'organ-scale', 'instrument-stand', 'ceiling-sag',
-      'call-lit', 'emlamp-off', 'emlamp-on']
+      'call-lit', 'emlamp-off', 'emlamp-on',
+      # 1.4.2: the gurney nobody lies on, the stations' own models and the documents as dot parts
+      'gurney-empty', 'keybox', 'panel-off', 'panel-on', 'lamp-switch', 'notice', 'map-board', 'karte-7', 'pump-log', 'diary-pages',
+      'ren-paper', 'ledger-book']
 
 
 def load(kit, lib_id):
