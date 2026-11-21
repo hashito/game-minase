@@ -49,7 +49,9 @@ M2 = ['hina-backpack', 'hina-camera', 'bucket-leak', 'number-display', 'receptio
       'call-lit', 'emlamp-off', 'emlamp-on',
       # 1.4.2: the gurney nobody lies on, the stations' own models and the documents as dot parts
       'gurney-empty', 'keybox', 'panel-off', 'panel-on', 'lamp-switch', 'notice', 'map-board', 'karte-7', 'pump-log', 'diary-pages',
-      'ren-paper', 'ledger-book']
+      'ren-paper', 'ledger-book',
+      # 1.4.3: the large machines of the pump room as fine (res 2) dot parts
+      'generator-off', 'generator-on', 'pump-unit']
 
 
 def load(kit, lib_id):

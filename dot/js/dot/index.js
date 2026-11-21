@@ -14,6 +14,7 @@ import * as THREE from 'three';
 import { loadFrameSet, createFigure, buildStackGeometry, loadPixels, stripVolume } from '../kit/sprite-stack-mesh.js';
 import { turnToward } from '../kit/sprite-stack-anim.js';
 import { installPhotoHooks, preparePhotos } from './photos.js';
+import { palette, dotifyScene } from '../kit/dot-world.js';
 import { HINA } from '../../../js/ext/hina.js';
 import { standSpots, roomAt } from './hina-spots.js';
 
@@ -161,6 +162,26 @@ export default async function dotLayer(ext, { manifest, data }) {
         if (L.mark) marks.push({ m, task: L.mark });
         D.swapped.push([id, L.k, r ? r.on : L.top ? 'not on a support' : 'wall']);
       }
+      // 1.4.3 「発電機など大きなものは解像度が高いドット絵にするべき」: the generator (off / running) and the drain pump of the pump room
+      // as fine dot parts filling the boxes of the normal version's models (js/ext/hospital.js), which are hidden
+      const GM = window.__mn || {};
+      const machine = (k, k2, near, r) => {
+        if (!stackIndex[k]) { D.swapped.push([k, 'no stack']); return null; }
+        const hide = []; W.group.traverse((o) => { if (!o.isMesh || String(o.name).startsWith('dot-') || o.name) return; const b = new THREE.Box3().setFromObject(o), c = b.getCenter(new THREE.Vector3()); if (Math.hypot(c.x - near.x, c.z - near.z) < r && c.y > near.y - 0.1 && c.y < near.y + 2.2 && b.getSize(new THREE.Vector3()).y < 2.4) hide.push({ o, b }); });
+        if (!hide.length) return null;
+        const box = new THREE.Box3(); for (const h of hide) { box.union(h.b); h.o.visible = false; }
+        box.min.y = Math.max(box.min.y, near.y);
+        const lx = box.max.x - box.min.x, lz = box.max.z - box.min.z;
+        const g0 = cgeo(k).boundingBox.getSize(new THREE.Vector3()), face = (g0.x >= g0.z) === (lx >= lz) ? 0 : Math.PI / 2;
+        const m = fitStack(k, box, { face, hmax: (box.max.y - box.min.y) * 1.1 }); m.name = `dot-part:${k}`; W.group.add(m);
+        let m2 = null; if (k2 && stackIndex[k2]) { m2 = fitStack(k2, box, { face, hmax: (box.max.y - box.min.y) * 1.1 }); m2.name = `dot-part:${k2}`; m2.visible = false; W.group.add(m2); }
+        D.swapped.push([k, 'machine', hide.length]);
+        return { m, m2 };
+      };
+      const fyP = (W.floorY ? W.floorY(-1) : 0);
+      if (GM.genBody) { GM.genBody.updateMatrixWorld(true); const gp = new THREE.Vector3(); GM.genBody.getWorldPosition(gp); D.gen = machine('generator-off', 'generator-on', { x: gp.x, y: gp.y - 0.5, z: gp.z }, 0.95); }
+      if (GM.genBody) { const gp = new THREE.Vector3(); GM.genBody.getWorldPosition(gp); D.pump = machine('pump-unit', null, { x: 1.0, y: gp.y - 0.5, z: 9.9 }, 0.45); }
+      void fyP;
       // the documents: their paper model -> the dot part, standing on the wall or lying on the desk
       for (const pk of W.interactables || []) {
         const nm = String(pk.name || ''), id = nm.slice(4), k = nm.startsWith('doc:') && DOC_STACK[id];
@@ -343,6 +364,13 @@ export default async function dotLayer(ext, { manifest, data }) {
     D.lights = { amb, near };
     installBeacon(ctx, G);
     if (ctx.pixelStyle) ctx.pixelStyle.sweep();
+    // ---- 1.4.3 one palette, every surface dot (「壁もドット絵でないです。全てドットで再構築してください」「非常灯などがドットでないです」
+    // 「全体の色合いを合わせる処理をしてください」): walls, floors, ceilings, doors, lamps, glow planes and the normal version's remaining models are
+    // redrawn as dot tiles / quantized pictures in the ward palette (game-kit js/dot-world.js, as 札の家); later things are caught every 2 s
+    const PAL = D.palette = palette((manifest.dot && manifest.dot.palette) || 'ward');
+    const dotify = () => { const s = dotifyScene(THREE, scene, { pal: PAL }); for (const w of warm) dotifyScene(THREE, w, { pal: PAL }); return s; };
+    D.dotify = dotify(); D.dotifyLog = [];
+    setInterval(() => { const t1 = performance.now(); const s = dotify(); const ms = performance.now() - t1; if (ms > 16 && D.dotifyLog.length < 40) D.dotifyLog.push({ ms: Math.round(ms), room: ctx.state && ctx.state.room, s }); }, 2000);
     D.timings.dress = Math.round(performance.now() - t);
   });
 
@@ -395,6 +423,7 @@ export default async function dotLayer(ext, { manifest, data }) {
   let T = 0, goalT = 0, goal = null;
   ext.registerSystem('dot-figures', {
     update(dt, ctx) {
+      if (D.gen && D.gen.m2) { const on = !!(window.__mn || {}).genOn; D.gen.m.visible = !on; D.gen.m2.visible = on; }
       for (const w of (D.swaps || [])) if (!w.done && ctx.state && ctx.state.tasks.includes(w.p.after.task)) { w.m.geometry = w.g2; if (w.m2) w.m.material = w.m2; w.done = true; }
       for (const d of (D.drips || [])) {
         d.t += dt; const H = d.top.y - d.floorY;

@@ -635,5 +635,26 @@
   "n": 6,
   "src": "minase-m2-ledger-book",
   "mpp": 0.007
+ },
+ "generator-off": {
+  "w": 150,
+  "d": 78,
+  "n": 134,
+  "src": "minase-m2-generator-off",
+  "mpp": 0.0125
+ },
+ "generator-on": {
+  "w": 150,
+  "d": 70,
+  "n": 150,
+  "src": "minase-m2-generator-on",
+  "mpp": 0.0125
+ },
+ "pump-unit": {
+  "w": 84,
+  "d": 40,
+  "n": 82,
+  "src": "minase-m2-pump-unit",
+  "mpp": 0.0125
  }
 }

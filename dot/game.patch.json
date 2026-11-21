@@ -14,15 +14,16 @@
       "vignette": 0.45
     }
   },
-  "sprites": {
-    "res": 1
-  },
-  "_sprites": "1.4.1: the people are still the coarse (res 1) figures; the fine (res 2) ひなた and あれ come in the next version (check-playtest P34 warns until then)",
   "theme": "dark-industrial",
   "controls": {
     "flashlight": {
       "intensity": 12
     }
   },
-  "_flashlight": "dot: the pixel walls burn white close up at 18 (a wall 1 m away was a white disc); 12 plus the near glow (dot/js/dot/index.js)"
+  "_flashlight": "dot: the pixel walls burn white close up at 18 (a wall 1 m away was a white disc); 12 plus the near glow (dot/js/dot/index.js)",
+  "dotPost": "soft",
+  "dot": {
+    "palette": "ward"
+  },
+  "_dot": "1.4.3: every surface dot in the ward palette (dot/js/dot/index.js dotifyScene), the soft dot look of 札の家 (kit js/dot-post.js), the people at res 2"
 }
