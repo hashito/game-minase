@@ -51,6 +51,9 @@
 //   P40 (1.21.5) a picture in a reading panel / document smaller than the room allows, or words that do not fit or one cut out of its own shape (the talk picture too, beside its words) (an error), at 390 x 844,
 //       375 x 667, 844 x 390, 844 x 340, 1366 x 768 and 1920 x 1080 (「十分に画面が大きい場合は大きな画像で表示するべきです」)
 //   P41 (1.21.5) a sprite-stack body holding one pose other than idle / walk / run / crouch / sit for 3 s or more (「ひなたがずっと手をあげてます」)
+//   1.22.0 (the 鏡屋 dot play test rolled out): P42 a mark (▼, arrow, the next-place pointer, a glow) drawn through a wall, every room
+//   (tools/mark-sight.mjs; js/mark-sight.js markSight().clear() fixes it); P43 a pickup cut into by another thing - a wall clock over an
+//   item (tools/pick-overlap.mjs)
 //   P21+ a wall paper that flickers on a still picture (tools/frame-flicker.mjs, the dot layers too: 「張り紙よりも大きな枠が見えて、ちらついている」)
 //   1.21.0: P33 (dot games) a visible material in a room that is not dot: a photo texture, a plain material, a smooth texture - walls,
 //     floors and ceilings included (tools/dot-scene.mjs; js/dot-world.js dotifyScene draws them as dot tiles in the palette) (error)
@@ -60,7 +63,7 @@
 //     content spilling out of a frame (error); an inner line drawn as a negative outline, a squashed picture (warning) (tools/frame-nest.mjs)
 //   1.21.0: P31 phone layout at 844x390 / 667x375 (landscape) and 390x844 (portrait): the HUD covers more than PHONE_HUD_MAX of the screen,
 //       two panels overlap (errors), the portrait notice is missing (tools/phone-layout.mjs: 「メッセージや通知で領域を使いすぎている」)
-// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -76,6 +79,8 @@ import { flickerSource, FLICKER_MAX } from './frame-flicker.mjs';
 import { phoneLayoutSource, PHONE_HUD_MAX } from './phone-layout.mjs';
 import { closeTapSource, mgStableSource, picFitSource } from './hud-checks.mjs';
 import { menuPicturesSource, headButtonsSource, pictureRoomSource } from './menu-checks.mjs';
+import { markSightSource } from './mark-sight.mjs';
+import { pickOverlapSource } from './pick-overlap.mjs';
 // P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
 const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
 
@@ -348,6 +353,8 @@ try {
       const m = L && L.points && L.points.player && L.points.player.on ? L.points.player.mean : null;
       if (L && L.frame < LUMA_DARK.frame) Wn('P27', `room "${r.id}": the picture is black (frame mean ${L.frame.toFixed(1)} < ${LUMA_DARK.frame}): a dim floor light, a lit radius round the player, a glow at the goal`);
       else if (m != null && m < LUMA_DARK.player) Wn('P27', `room "${r.id}": black round the player (mean ${m.toFixed(1)} < ${LUMA_DARK.player})`);
+      // P42 (1.22.0): no mark draws through a wall from the middle of this room
+      { const M = await G(markSightSource('g.scene', '(window.__dot && window.__dot.mode === "top" && window.__dot.topCam) || g.camera')); for (const x of ((M && M.through) || []).slice(0, 4)) E('P42', `room "${r.id}": the mark "${x.name}" at ${JSON.stringify(x.at)} shows through "${x.wall}" (depthTest on, or js/mark-sight.js markSight().clear())`); }
       // P33 (1.21.0, dot games): every visible material in this room is a sprite stack or a dot tile (no photo texture, walls included)
       if (isDot) {
         await sleep(400);
@@ -465,6 +472,8 @@ try {
     } catch (e) { Wn('P24', `${w}x${h}: the phone pass could not run: ${e.message}`); }
     finally { await q.close(); }
   }
+  // P43 (1.22.0): pickups clear of other things
+  { const O = await G(pickOverlapSource()); for (const x of (Array.isArray(O) ? O : []).slice(0, 12)) E('P43', `pickup "${x[0]}": "${x[1]}" cuts into it by ${JSON.stringify(x[2])} m at ${JSON.stringify(x[3])}`); }
   // P39 (1.21.4, 鏡屋): the picture of a card / document as large as the room its text leaves, on a PC and on a phone
   for (const [w, h, mob] of [[1366, 768], [1920, 1080], [390, 844, 1], [844, 390, 1], [844, 340, 1]]) {
     const q = await launch(mob ? { width: w, height: h, mobile: true, dpr: 2 } : { width: w, height: h });

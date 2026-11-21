@@ -90,7 +90,9 @@
   :root[data-dot] .wm-body:not(.wm-flush) { padding: 14px 20px !important; }
   :root[data-dot] .wm-head { padding-top: 4px !important; padding-bottom: 4px !important; min-height: 0 !important; }
 }
-:root[data-dot] .btn, :root[data-dot] .gf-sb-btn, :root[data-dot] .wm-btn { padding-left: max(16px, 1em) !important; padding-right: max(16px, 1em) !important; }
+:root[data-dot] .btn, :root[data-dot] .gf-sb-btn { padding-left: max(16px, 1em) !important; padding-right: max(16px, 1em) !important; }
+/* 1.4.2 (鏡屋 rollout #5, kit P38): the header ⓘ / × keep their icon in the middle - no side padding on these square buttons */
+:root[data-dot] .wm-btn { padding: 0 !important; display: inline-grid !important; place-items: center !important; }
 :root[data-dot] #t-right button, :root[data-dot] .t-btn { padding-left: 10px !important; padding-right: 10px !important; }
 :root[data-dot] .tm-tabs { padding-left: 18px !important; padding-right: 18px !important; }
 :root[data-dot] .wm-body.wm-flush { padding-left: 8px !important; padding-right: 8px !important; }

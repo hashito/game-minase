@@ -65,14 +65,14 @@ export const pictureRoomSource = () => `(async () => {
   const bad = [], info = [], raf = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
   for (const box of document.querySelectorAll('.gf-doc-main, #gf-reader .tl-body, .gf-talk-body, .wm-body, .gf-talk *')) {
     const F = box._gfFit; if (!F || box.getBoundingClientRect().width < 4) continue;
-    const s = F.steps.find((x) => /photo|img|pic|side/.test(x.prop)); if (!s) continue;
+    const s = F.steps.find((x) => /photo|img|pic|side/.test(x.prop)); if (!s) continue; const mx = s.max ?? (s.unit === "%" ? 75 : 1e9);
     const pic = [...box.querySelectorAll('.pd-photo img, .gf-doc-img, .iv-photo:not(.iv-nopic), .gf-talk-img, .gf-talk img, img')].find((e) => e.getBoundingClientRect().width > 8);
     if (!pic) continue;
     const area = () => { const r = pic.getBoundingClientRect(); if (pic.tagName !== 'IMG' || !pic.naturalWidth) return r.width * r.height; const k = Math.min(r.width / pic.naturalWidth, r.height / pic.naturalHeight); return pic.naturalWidth * k * pic.naturalHeight * k; };
     const over = () => box.scrollHeight > box.clientHeight + 1, a0 = area(), at = F.at[s.prop] ?? s.from;
     const text = [...box.querySelectorAll('p, .pd-body, .gf-doc-text, .tl-text, .gf-talk-text')].filter((e) => !e.contains(pic)).reduce((t, e) => { const r = e.getBoundingClientRect(); return t + r.width * r.height; }, 0);
     const B = box.getBoundingClientRect(), share = +(a0 / Math.max(1, B.width * B.height - text)).toFixed(2);
-    const up = s.unit === '%' ? Math.min(75, at + Math.abs(s.step)) : Math.min(box.clientHeight, at + Math.abs(s.step));
+    const up = Math.min(mx, s.unit === '%' ? 100 : box.clientHeight, at + Math.abs(s.step));
     let grows = false;
     if (up > at && !over()) { s.el.style.setProperty(s.prop, up + s.unit); await raf(); grows = !over() && area() > a0 + 4; s.el.style.setProperty(s.prop, at + s.unit); await raf(); }
     const where = (box.className || box.id || 'panel').toString().slice(0, 30);

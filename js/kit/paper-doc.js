@@ -1,4 +1,4 @@
-/* game-kit 3620b8c1: js/paper-doc.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 3da996da: js/paper-doc.js — edit in game-kit and run tools/kit-sync.js */
 // Documents as paper (standard 1.17.0, from 水無瀬病院 #1: 「紙類について、みる風車を真似た雰囲気に」「書類系は書類の形状で見せる」).
 // The feel of みる風車's documents (its js/paper.js: aged, stained, creased paper drawn on a canvas, ink that wavers, a photo pinned on):
 // a docs.json entry opens as a sheet of the kind it is, not as a plain window of paragraphs.
@@ -180,7 +180,7 @@ export function fitDoc(main) {
   const split = !!pic && typeof getComputedStyle !== 'undefined' && getComputedStyle(sheet).display === 'grid';
   const h0 = Math.max(60, Math.round(main.clientHeight * 0.62));   // 1.21.4: the picture starts large (「十分に画面が大きい場合は大きな画像で」)
   const steps = [];
-  if (pic) steps.push(split ? { el: sheet, prop: '--pd-photo-w', from: 60, to: 16, step: -2, unit: '%' } : { el: sheet, prop: '--pd-photo-h', from: h0, to: 56, step: -12, unit: 'px' });
+  if (pic) steps.push(split ? { el: sheet, prop: '--pd-photo-w', from: 60, to: 16, step: -2, unit: '%', max: 75 } : { el: sheet, prop: '--pd-photo-h', from: h0, to: 56, step: -12, unit: 'px', max: Math.max(h0, main.clientHeight) });
   steps.push({ el: sheet, prop: '--pd-scale', from: 1, to: 0.8, step: -0.04, unit: '' });
   return fitPanel(main, steps);
 }

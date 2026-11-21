@@ -1,4 +1,4 @@
-/* game-kit 1f0919c9: css/kit.css — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 3da996da: css/kit.css — edit in game-kit and run tools/kit-sync.js */
 /* game-kit: shared styles for first-person browser games (windows, HUD, buttons, touch controls,
    status chips, steppers, kanban, app-like software screens, tabs, stamps, share buttons; at the end
    progression pg-*, sim UI nt-/tb-/dl-/ch-*, journal jr-* / stream veil st-* / hiding hd-*, chat cx-*).
@@ -3661,7 +3661,10 @@ body.touch #say.on { pointer-events: auto; }   /* a tap on the thought band open
 .mgx-photo-read span { padding: 2px 8px; border-radius: 6px; background: rgba(0, 0, 0, 0.35); /* pair-ok */ color: #ffc2a8; /* pair-ok */ }
 .mgx-photo-read span.mgx-photo-good { color: #a8f0b4; /* pair-ok */ }
 @media (max-height: 500px) { .mgx-photo-read { font-size: 14px; } }
-/* 1.21.4 (鏡屋 P36 at 390x844): on a narrow screen the readings and the message keep two lines of room, so a longer line never pushes
+/* 1.21.4 (鏡屋 P36 at 390x844): the readings and the message have a fixed two-line box (a longer text scrolls inside it), so it never pushes
    the ring, the buttons or the shutter */
-@media (max-width: 560px) { .mgx-photo-read { min-height: calc(3em + 12px); align-content: flex-start; } .mgx-photo .mgx-msg, .mgx-msg { min-height: 3.2em; } }
+.mgx-photo-read { height: calc(3em + 12px); overflow-y: auto; align-content: flex-start; }
+.mgx:has(.mgx-photo) .mgx-msg { height: 3.4em; overflow-y: auto; }
 .ms-pin--next { fill: var(--gf-danger, #d0603a); }
+/* 1.22.0: a dot thumbnail (inventory-ui setItemThumbs) is shown whole and sharp */
+.iv-dotthumb { background-size: contain !important; background-repeat: no-repeat; background-position: center; image-rendering: pixelated; }

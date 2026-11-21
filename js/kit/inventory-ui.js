@@ -1,4 +1,4 @@
-/* game-kit 1f0919c9: js/inventory-ui.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 1554dab9: js/inventory-ui.js — edit in game-kit and run tools/kit-sync.js */
 // The item-management UI shared by every game (rule U17, with progress-ui.js taskScreen and journal-ui.js createJournal):
 // owned items as a grid (photo + name), a detail pane (large photo, short description, "why needed" (S6), the protagonist's
 // one-line feeling), use / examine buttons, selected + NEW states, a related-items link (opens the related items / papers
@@ -52,13 +52,18 @@ export const picHtml = (img, cls, extra = "") => (img
   ? `<span class="${cls}"${extra} data-nopic="${esc(NOPIC_SVG)}" style="background-image:url('${esc(img).replace(/'/g, "%27")}')"><img class="gf-pic-probe" src="${esc(img)}" alt="" hidden onerror="${PIC_FAIL}"></span>`
   : `<span class="${cls} iv-nopic"${extra} aria-hidden="true">${NOPIC_SVG}</span>`);
 // no picture: a small mark beside the name (never the name's first letters in a big empty box); the text stays at the top
-const pic = (img, cls) => picHtml(img, cls);
+// 1.22.0: before the mark, the item's own dot thumbnail when the game gives one (setItemThumbs(fn): id -> url, e.g. sprite-stack-mesh's
+// stackThumb of its stack), so a dot game's menu shows the thing itself instead of a blank mark
+let thumbOf = null;
+export function setItemThumbs(fn) { thumbOf = typeof fn === "function" ? fn : null; }
+const thumbFor = (id) => { try { return (thumbOf && id && thumbOf(id)) || null; } catch { return null; } };
+const pic = (img, cls, id) => { if (img) return picHtml(img, cls); const t = thumbFor(id); return t ? picHtml(t, `${cls} iv-dotthumb`) : picHtml(null, cls); };
 
 // the object card (U19): the photo card (photo + name + description + why) and, SEPARATE from it, the protagonist's feeling
 // as its own bordered block (the inner-voice card, 未然調書's 物の見え方). Stacked vertically by default (portrait / narrow);
 // { side: true } puts the feeling beside the photo card on wide containers. Data shape unchanged: { photo, title, text, feeling }.
-export function viewItemHtml({ photo, title, text, feeling, tag, why, meta, side } = {}, L = INV_LABELS) {
-  const card = `<div class="iv-photocard">${pic(photo, "iv-photo", title)}<div class="iv-info">${tag ? `<em class="iv-tag">${esc(tag)}</em>` : ""}<b class="iv-name">${esc(title || "")}</b>${meta ? `<span class="iv-meta">${esc(meta)}</span>` : ""}${text ? `<p class="iv-text">${esc(text)}</p>` : ""}${why ? `<p class="iv-why"><span>${esc(L.why)}</span>${esc(why)}</p>` : ""}</div></div>`;
+export function viewItemHtml({ photo, title, text, feeling, tag, why, meta, side, id } = {}, L = INV_LABELS) {
+  const card = `<div class="iv-photocard">${pic(photo, "iv-photo", id)}<div class="iv-info">${tag ? `<em class="iv-tag">${esc(tag)}</em>` : ""}<b class="iv-name">${esc(title || "")}</b>${meta ? `<span class="iv-meta">${esc(meta)}</span>` : ""}${text ? `<p class="iv-text">${esc(text)}</p>` : ""}${why ? `<p class="iv-why"><span>${esc(L.why)}</span>${esc(why)}</p>` : ""}</div></div>`;
   const voice = feeling ? `<aside class="iv-voice" aria-label="${esc(L.feeling)}"><span class="iv-voice-l">${esc(L.feeling)}</span><p class="iv-feel">「${esc(feeling)}」</p></aside>` : "";
   return `<div class="iv-view${side ? " iv-side" : ""}">${card}${voice}</div>`;
 }
@@ -71,7 +76,7 @@ export function viewItem(o = {}, parent = null, L = INV_LABELS) {
   return el;
 }
 export const cellHtml = (i, { sel = false, fresh = false, pick = false, L = INV_LABELS } = {}) =>
-  `<button type="button" class="iv-cell${sel ? " sel" : ""}${pick ? " pick" : ""}" role="option" aria-selected="${sel}" data-id="${esc(i.id)}" title="${esc(i.name)}">${pic(i.img, "iv-th", i.name)}<span class="iv-nm">${esc(i.name)}</span>${i.count > 1 ? `<span class="iv-n">×${i.count}</span>` : ""}${fresh ? `<span class="iv-new">${esc(L.newb)}</span>` : ""}</button>`;
+  `<button type="button" class="iv-cell${sel ? " sel" : ""}${pick ? " pick" : ""}" role="option" aria-selected="${sel}" data-id="${esc(i.id)}" title="${esc(i.name)}">${pic(i.img, "iv-th", i.id)}<span class="iv-nm">${esc(i.name)}</span>${i.count > 1 ? `<span class="iv-n">×${i.count}</span>` : ""}${fresh ? `<span class="iv-new">${esc(L.newb)}</span>` : ""}</button>`;
 
 const safeStorage = () => {
   try {
@@ -166,7 +171,7 @@ export function createInventory(o = {}) {
       let acts = "";
       const extra = it && o.actions ? o.actions(it) || [] : [];
       if (it) {
-        detail = viewItemHtml({ photo: it.img, title: it.name, text: it.desc, feeling: it.feeling, why: it.why, tag: it.tag, meta: it.meta }, L);
+        detail = viewItemHtml({ photo: it.img, id: it.id, title: it.name, text: it.desc, feeling: it.feeling, why: it.why, tag: it.tag, meta: it.meta }, L);
         const rel = (it.related || []).map((r) => list.find((x) => x.id === r)).filter(Boolean);
         acts = `${it.canUse !== false && o.onUse ? `<button type="button" class="btn primary" data-act="use">${esc(it.useLabel || L.use)}</button>` : ""}${o.onExamine && it.examine !== false ? `<button type="button" class="btn" data-act="examine">${esc(it.examineLabel || L.examine)}</button>` : ""}${extra.map((a, n) => `<button type="button" class="btn ${esc(a.cls || "")}" data-extra="${n}">${esc(a.t)}</button>`).join("")}${rel.length ? `<span class="iv-rel"><small>${esc(L.related)}</small>${rel.map((r) => `<button type="button" class="iv-chip" data-rel="${esc(r.id)}">${pic(r.img, "iv-th s", r.name)}${esc(r.name)}</button>`).join("")}</span>` : ""}`;
       }

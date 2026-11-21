@@ -178,7 +178,8 @@ export function installHospital(ext, G) {
       // the notice board by the door, a shoe rack, the umbrella stand
       // 1.3.0 (2nd play test #1 「チラチラ正方形の図が見えます」): the board stood with its face exactly on the plaster (x 0.08) and the two
       // fought for the same pixels. It now hangs 4.5 cm proud of the wall, on two screws; the notice is pasted on its face.
-      box('GENKAN', 0.105, 21.0, 0.045, 0.8, 1.1, std(0x5a4a3a), 1.1, false);
+      // 1.4.2: named 'frame:' - it is what the notice (DOC_HEISA) is pasted on, its support (kit P43 skips frames)
+      box('GENKAN', 0.105, 21.0, 0.045, 0.8, 1.1, std(0x5a4a3a), 1.1, false).name = 'frame:notice-board';
       cyl('GENKAN', 5.4, 19.0, 0.18, 0.16, 0.5, M.steel, 0, true);
     }
     // ---------------- 外来の待合: the sagging ceiling panels, threads of rain falling through ----------------
