@@ -1,5 +1,5 @@
 {
-  "kit": "8bda952",
+  "kit": "1d506003",
   "dest": "js/kit",
   "modules": [
     "game-core",
@@ -102,7 +102,9 @@
     "paper-doc",
     "low-zone",
     "wall-paste",
-    "timed-shot"
+    "timed-shot",
+    "voice-queue",
+    "npc-audit"
   ],
   "css": "css/kit.css",
   "cssExtra": [
@@ -137,7 +139,7 @@
     "check-playtest.mjs"
   ],
   "hashes": {
-    "js\\kit\\game-core.js": "373d8d2ee562",
+    "js\\kit\\game-core.js": "fae0b9737708",
     "js\\kit\\item-kinds.js": "9b67d808c2f3",
     "js\\kit\\item-models.js": "5cc334f5801e",
     "js\\kit\\prop-geo.js": "89b9dabf8cf4",
@@ -149,10 +151,10 @@
     "js\\kit\\spot-fx.js": "c2d68181790f",
     "js\\kit\\stage-look.js": "343b7bada156",
     "js\\kit\\step-sound.js": "494148270486",
-    "js\\kit\\talk-ui.js": "01867ce022ec",
+    "js\\kit\\talk-ui.js": "68e9436ad9f8",
     "js\\kit\\render-presets.js": "a8b57a44a086",
     "js\\kit\\render-budget.js": "8a9c44ea3077",
-    "js\\kit\\controller.js": "096ab15eff7c",
+    "js\\kit\\controller.js": "8e00b1675364",
     "js\\kit\\ui.js": "13dac8fbc8c2",
     "js\\kit\\toast-lane.js": "270f5a52418c",
     "js\\kit\\gf-test.js": "c3a2410e057c",
@@ -163,10 +165,10 @@
     "js\\kit\\inventory-ui.js": "8fe3da2d1a4d",
     "js\\kit\\release-notes.js": "e4e611c4c130",
     "js\\kit\\store.js": "07393043c4c5",
-    "js\\kit\\audio.js": "7e7ec47f4feb",
+    "js\\kit\\audio.js": "43115ee45529",
     "js\\kit\\audio-at.js": "a428ea521924",
     "js\\kit\\task-minigames.js": "52a2184c2c63",
-    "js\\kit\\world-from-plan.js": "4afaecc46fa2",
+    "js\\kit\\world-from-plan.js": "57b3af4f8573",
     "js\\kit\\interact-select.js": "991c2592e2a4",
     "js\\kit\\room-types.js": "56b0fe6c1e35",
     "js\\kit\\barrier-look.js": "ecfa4b40086f",
@@ -205,7 +207,7 @@
     "js\\kit\\monster-std.js": "db0e7c2357e6",
     "js\\kit\\monster-nav.js": "629ed7bf22ca",
     "js\\kit\\monster-looks.js": "d08d0bdcca05",
-    "js\\kit\\character.js": "48d9693cee75",
+    "js\\kit\\character.js": "d1854e2f1874",
     "js\\kit\\motion.js": "782e55c36615",
     "js\\kit\\monster-escape.js": "5a484fc15bc7",
     "js\\kit\\fx.js": "a1bb58e2cc14",
@@ -274,12 +276,14 @@
     "js\\kit\\mg-tune-radio.js": "3ae08e1413c7",
     "js\\kit\\mg-sort-items.js": "0d3e7f4c8e66",
     "js\\kit\\mg-rotate-pipes.js": "670890f2238b",
-    "js\\kit\\control-help.js": "9c4eebfb5285",
+    "js\\kit\\control-help.js": "b52fc06522cb",
     "js\\kit\\paper-doc.js": "965fa796adf3",
     "js\\kit\\low-zone.js": "7df668d66e88",
-    "tools/check-playtest.mjs": "af2e2d3b7c41",
+    "tools/check-playtest.mjs": "0639e7d32d58",
     "js\\kit\\wall-paste.js": "261910056d54",
-    "js\\kit\\timed-shot.js": "48aed0a40506"
+    "js\\kit\\timed-shot.js": "48aed0a40506",
+    "js\\kit\\voice-queue.js": "a353c5a24022",
+    "js\\kit\\npc-audit.js": "a694626e0470"
   },
   "textures": [
     "tile_hospital_large",

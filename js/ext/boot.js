@@ -6,6 +6,9 @@ import { prewarm, auditScene } from '../kit/frame-guard.js';
 
 export function installBoot(ext, G) {
   ext.registerBoot('minase-shaders', async (ctx, report) => {
+    // the title in two lines: 「七番の瓶」 under the hospital's name
+    const h1 = document.querySelector('#title .gf-title-box h1');
+    if (h1 && !h1.dataset.mnLines) { h1.dataset.mnLines = '1'; h1.innerHTML = '水無瀬病院<br><span class="mn-title-sub">― 七番の瓶</span>'; }
     const R = ctx.renderer, S = ctx.scene, C = ctx.camera;
     if (!R || !S || !C || !R.render) return;
     const frame = () => new Promise((r) => requestAnimationFrame(() => r()));

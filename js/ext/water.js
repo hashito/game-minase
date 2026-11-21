@@ -61,19 +61,33 @@ export function installWater(ext, G) {
     }
     // the floor grate across the passage (always there) and the dry band over the water (shown while the valve holds)
     const g = add(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.1 : 0.6, def.along === 'z' ? 0.6 : across - 0.1), grateM, def.x, fy + 0.012, def.z); g.rotation.x = -Math.PI / 2;
-    const mat = new THREE.MeshStandardMaterial({ color: 0x4a4d4a, roughness: 0.95 });
+    // 1.3.0 (2nd play test #10): the dry band is wet concrete that shows as the water runs into the grate (soft ragged edges, a sheen), not a grey
+    // rectangle that appears at once
+    const mat = new THREE.MeshStandardMaterial({ color: 0x3a3e3b, roughness: 0.28, metalness: 0.25, alphaMap: bandAlpha(), transparent: true, depthWrite: false });
+    if (def.along !== 'z' && mat.alphaMap) { mat.alphaMap = mat.alphaMap.clone(); mat.alphaMap.center.set(0.5, 0.5); mat.alphaMap.rotation = Math.PI / 2; mat.alphaMap.needsUpdate = true; }   // the soft edges at the ends of the band, along the passage
     const band = add(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.04 : 3.2, def.along === 'z' ? 3.2 : across - 0.04), mat, def.x, fy + 0.13, def.z); band.rotation.x = -Math.PI / 2; band.visible = false; band.renderOrder = 2;
     // 1.2.0 (#21): the [E] box spans the passage from wheel to wheel (either wheel, or the grate between, turns it)
     const hit = new THREE.Mesh(new THREE.BoxGeometry(def.along === 'z' ? across - 0.1 : 0.8, 1.2, def.along === 'z' ? 0.8 : across - 0.1), hidden);
     hit.position.set(def.x, fy + 1.15, def.z); hit.name = `valvehit:${def.id}`; hit.userData.interact = { kind: 'valve', id: def.id };
     ctx.world.group.add(hit); ctx.world.interactables.push(hit);
-    const P = { def, wheels, lamps, band, mat, hit, on: false, burn: 0, press: false, turn: 0, fy, along: def.along };
+    // the swirl over the grate while the water goes down it
+    const swirl = add(new THREE.RingGeometry(0.08, 0.34, 24, 1, 0, Math.PI * 1.6), new THREE.MeshStandardMaterial({ color: 0x0c1312, roughness: 0.05, metalness: 0.7, transparent: true, opacity: 0, depthWrite: false }), def.x, fy + 0.135, def.z); swirl.rotation.x = -Math.PI / 2; swirl.renderOrder = 3;
+    const P = { def, wheels, lamps, band, mat, hit, swirl, fill: 0, on: false, burn: 0, press: false, turn: 0, fy, along: def.along };
     posts.set(def.id, P);
     return P;
   }
+  function bandAlpha() {
+    if (bandAlpha.t || typeof document === 'undefined') return bandAlpha.t || null;
+    const c = document.createElement('canvas'); c.width = 64; c.height = 256; const g = c.getContext('2d');
+    const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(0.14, '#fff'); gr.addColorStop(0.86, '#fff'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 64, 256);
+    for (let i = 0; i < 60; i++) { const y = Math.random() < 0.5 ? Math.random() * 46 : 210 + Math.random() * 46; g.fillStyle = `rgba(0,0,0,${0.3 + Math.random() * 0.6})`; g.beginPath(); g.arc(Math.random() * 64, y, 3 + Math.random() * 9, 0, Math.PI * 2); g.fill(); }
+    for (let i = 0; i < 40; i++) { g.fillStyle = `rgba(255,255,255,${0.4 + Math.random() * 0.5})`; g.beginPath(); g.arc(Math.random() * 64, 40 + Math.random() * 176, 2 + Math.random() * 6, 0, Math.PI * 2); g.fill(); }
+    return (bandAlpha.t = new THREE.CanvasTexture(c));
+  }
   G.setPost = (id, on, burn = 0) => {
     const P = posts.get(id); if (!P) return;
-    P.on = on; P.burn = burn; P.band.visible = on; P.band.scale.set(1, 1, 1);
+    P.on = on; P.burn = burn; P.band.visible = on; P.band.scale.set(1, 1, 1); P.fill = on && burn === 0 && !G.restoring ? 0 : 1;
     G.postsOn[id] = on; G.showValve();
   };
   function buildGrate(def) {
@@ -105,7 +119,7 @@ export function installWater(ext, G) {
       if (P.press) { ctx.answer('あれが、乾いた床の向こうで止まっている。今開けたら、すぐに来る。'); return; }
       G.setPost(id, false); P.turn = -1; ctx.sound('creak'); ext.emit('minase:unvalve', { id }); ctx.save(); return;
     }
-    G.setPost(id, true); P.turn = 1; ctx.sound('noise', 'splash'); ctx.sound('creak');
+    G.setPost(id, true); P.turn = 1; ctx.sound('noise', 'splash'); ctx.sound('creak'); if (G.gurgle) G.gurgle({ x: P.def.x, y: P.fy + 0.1, z: P.def.z }, 1.8);
     ext.emit('minase:valve', { id }); ctx.save();
   }
   G.turnValve = postRun;
@@ -132,8 +146,10 @@ export function installWater(ext, G) {
       const slow = G.grated.length >= 3 ? 1.5 : 1;
       const life = (P.def.id === 'K_LESSON' ? 8 : ctx.calm ? 18 : 12) * slow;
       P.burn = Math.min(1, P.burn + dt / (P.press ? life : life * 5));
-      const k = 1 - P.burn;
+      P.fill = Math.min(1, P.fill + dt / 1.6);   // the water runs off from the grate outward
+      const k = Math.min(1 - P.burn, P.fill);
       if (P.along === 'z') P.band.scale.y = Math.max(0.05, k); else P.band.scale.x = Math.max(0.05, k);
+      P.swirl.material.opacity = P.fill < 1 ? 0.7 * (1 - P.fill) : 0; P.swirl.rotation.z -= dt * 7;
       P.mat.color.setRGB(0.29 * k + 0.12, 0.3 * k + 0.16, 0.29 * k + 0.17);
       if (P.burn >= 1) {
         G.setPost(P.def.id, false); P.press = false;

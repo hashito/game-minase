@@ -4,24 +4,26 @@
 // Waiting, she leans on a wall; [E] on her gives the task she is part of, or one of her lines for this moment (data/talk.json hw_<place>).
 import * as THREE from 'three';
 
-// where she waits: [x, z, floor, look toward (x, z), pose, y above the floor]. Lean spots are 0.28 m off a wall, facing away from it.
+// where she waits: [x, z, floor, look toward (x, z), pose, y above the floor]. Lean spots are 0.36 m off the wall's FACE, facing away from it
+// (1.3.0, 2nd play test #4 #6 「日向がかべに埋まっています」: at 0.2 m from the face the lean pose put half her head and her shoulders in the
+// plaster - the pose leans the head 18 cm back. js/kit/npc-audit.js checks every spot and every corridor below: tools/play/hina-check.mjs).
 export const HINA = {
   genkan: [1.0, 21.2, 1, [3, 21.6], 'idle'],
-  roka: [4.6, 17.72, 1, [4.6, 15], 'lean'],
-  kaidan: [15.0, 17.72, 1, [15.0, 15], 'lean'],
+  roka: [4.6, 17.56, 1, [4.6, 15], 'lean'],
+  kaidan: [15.0, 17.56, 1, [15.0, 15], 'lean'],
   bstair: [15.6, 11.3, 0, [15.4, 13], 'crouch'],
-  pump: [5.72, 12.55, 0, [3, 12.55], 'lean'],
+  pump: [5.56, 12.55, 0, [3, 12.55], 'lean'],
   rescue: [3.6, 14.55, 0, [3, 10], 'scared', 0.76],
-  jimu: [6.28, 12.4, 0, [9, 12.4], 'lean'],
+  jimu: [6.44, 12.4, 0, [9, 12.4], 'lean'],
   drain: [9.75, 12.1, 0, [9, 11.6], 'crouch'],
-  reian: [12.6, 5.72, 0, [12.6, 3], 'lean'],
+  reian: [12.6, 5.56, 0, [12.6, 3], 'lean'],
 };
 // the corridors she walks: nodes [x, z] per floor and the edges between them (doors are nodes of their own: she opens them)
 const NODES = {
   1: { g: [2.4, 21.0], gd: [3, 18.6], r3: [3, 16.5], r46: [4.6, 16.6], r9: [9, 16.5], r11: [11, 16.5], r15: [15, 16.5] },
-  0: { bs: [15.5, 11.5], bd: [16, 9.7], b16: [16, 7.5], b10: [10, 7.5], b9: [9, 7.5], b3: [3, 7.5], pd: [3, 9.7], pc: [3.4, 12.4], jd: [9, 9.7], jc: [8.2, 12.2], rd: [10, 5.4], rc: [11.5, 3.6] },
+  0: { bs: [15.5, 11.5], bd: [16, 9.7], b16: [16, 7.5], b10: [10, 7.5], b9: [9, 7.5], b3: [3, 7.5], pd: [3, 9.7], pc: [3.4, 12.4], jd: [9, 9.7], jc: [8.2, 12.2], rd: [10, 5.4], r1: [9.9, 3.0], rc: [12.2, 3.0] },   // 1.3.0: round the trolley (x 10.5-11.5, z 3.6-5.6), not through it
 };
-const EDGES = { 1: ['g-gd', 'gd-r3', 'r3-r46', 'r46-r9', 'r9-r11', 'r11-r15'], 0: ['bs-bd', 'bd-b16', 'b16-b10', 'b10-b9', 'b9-b3', 'b3-pd', 'pd-pc', 'b9-jd', 'jd-jc', 'b10-rd', 'rd-rc'] };
+const EDGES = { 1: ['g-gd', 'gd-r3', 'r3-r46', 'r46-r9', 'r9-r11', 'r11-r15'], 0: ['bs-bd', 'bd-b16', 'b16-b10', 'b10-b9', 'b9-b3', 'b3-pd', 'pd-pc', 'b9-jd', 'jd-jc', 'b10-rd', 'rd-r1', 'r1-rc'] };
 const DOORS = { gd: 'D_ROKA1', pd: 'D_PUMP', jd: 'D_JIMU', rd: 'D_REIAN', bd: 'D_BSTAIR' };
 // what she says as she sets off (data/talk.json hm_<place>)
 const GOING = { roka: 'hm_roka', kaidan: 'hm_kaidan', pump: 'hm_pump', jimu: 'hm_jimu', drain: 'hm_drain', reian: 'hm_reian' };
@@ -46,9 +48,11 @@ export function installHina(ext, G) {
     H.noteMove && H.noteMove();   // a cut, not a walk (a resumed game, a test scene, the ladder)
     H.root.visible = true; H.root.position.set(x, ctx.world.floorY(floor) + (dy || 0), z); H.root.rotation.y = Math.atan2(tx - x, tz - z);
     H.root.rotation.x = 0;   // the lean pose itself puts her back on the wall (a tilted root put her head into it)
+    H.root.userData.perch = !!dy;   // on the pump-room desk out of the water: meant (js/kit/npc-audit.js); she steps down before she walks
     H.set(pose); G.hinaAt = key; G.hinaFloor = floor; walk = null;
   }
   G.placeHina = place;
+  G.hinaGraph = { HINA, NODES, EDGES, nearest };   // tools/play/hina-check.mjs walks every spot and corridor through ctx.npcAudit
   G.hinaGo = (key) => {
     if (!H || G.hinaAt === key || (walk && walk.key === key)) return;
     const p = HINA[key];
@@ -57,15 +61,20 @@ export function installHina(ext, G) {
     const f = p[2], r = H.root.position, a = nearest(f, r.x, r.z), b = nearest(f, p[0], p[1]);
     const nodes = pathOn(f, a, b); if (!nodes) { place(key); return; }
     const pts = [...nodes.map((n) => ({ x: NODES[f][n][0], z: NODES[f][n][1], door: DOORS[n] })), { x: p[0], z: p[1] }];
-    walk = { key, pts, i: 0, speed: f === 0 ? 0.95 : 1.15 };   // in the basement she limps (the ankle)
-    G.hinaAt = null; H.root.rotation.x = 0; H.set('walk');
+    // 1.3.0 (2nd play test #11 「日向が机の上に登って、その後空中を歩きます」): from the desk she steps down first (a point beside it), and the
+    // walk keeps her feet on the floor (step() lowers her to it); before, she walked off at desk height
+    const fy = ctx.world.floorY(f);
+    if (r.y > fy + 0.05) { const n0 = pts[0], d0 = Math.hypot(n0.x - r.x, n0.z - r.z) || 1; pts.unshift({ x: r.x + ((n0.x - r.x) / d0) * 0.7, z: r.z + ((n0.z - r.z) / d0) * 0.7, down: true }); H.set('crouch'); }
+    walk = { key, pts, i: 0, speed: f === 0 ? 0.95 : 1.15, fy };   // in the basement she limps (the ankle)
+    G.hinaAt = null; H.root.rotation.x = 0; if (!(pts[0] && pts[0].down)) H.set('walk');
     const line = GOING[key] && (ctx.data.talk[GOING[key]] || [])[0];
-    if (line && !said[key]) { said[key] = true; if (line.voice && ctx.voiceLine) ctx.voiceLine(line.voice); ctx.ui.say(`<span class="who">ひなた</span>${line.text}`, 5); }
+    if (line && !said[key]) { said[key] = true; if (line.voice && ctx.voiceLine) ctx.voiceLine(line.voice, null, { prio: 'hint' }); ctx.ui.say(`<span class="who">ひなた</span>${line.text}`, 5); }   // 1.3.0 (#3): one voice at a time (js/kit/voice-queue.js)
   };
   function step(dt) {
     if (!walk) return;
     const P = walk.pts[walk.i], r = H.root.position, dx = P.x - r.x, dz = P.z - r.z, d = Math.hypot(dx, dz);
     if (P.door && d < 1.3) { const D = ctx.world.doors.get(P.door); if (D && !D.isOpen && !(D.locked && D.locked())) D.open(); }
+    if (r.y > walk.fy) { r.y = Math.max(walk.fy, r.y - dt * 1.5); if (r.y <= walk.fy) { H.root.userData.perch = false; H.set('walk'); } }   // down off the desk, onto the floor
     if (d < 0.08) { walk.i++; if (walk.i >= walk.pts.length) { const k = walk.key; walk = null; place(k); } return; }
     const v = Math.min(d, walk.speed * dt); r.x += (dx / d) * v; r.z += (dz / d) * v;
     const yaw = Math.atan2(dx, dz); let dy = yaw - H.root.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); H.root.rotation.y += dy * Math.min(1, dt * 6);

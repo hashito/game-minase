@@ -11,3 +11,4 @@
 .mn-seal-bar i { display: block; height: 100%; width: 0; background: #4fb3b0; /* pair-ok */ }
 .mn-bootbar { width: min(320px, 70vw); height: 4px; margin: 8px auto 0; background: rgba(255, 255, 255, 0.12); border-radius: 2px; overflow: hidden; /* pair-ok */ }
 .mn-bootbar i { display: block; height: 100%; width: 0; background: var(--accent, #9fc4b0); /* pair-ok */ }
+.mn-title-sub { display: inline-block; margin-top: 0.15em; font-size: 0.72em; letter-spacing: 0.12em; /* pair-ok */ }

@@ -59,7 +59,9 @@ export function installStory(ext, G) {
     const flood = done('T_JAR') && !done('T_SEAL');
     for (const r of ['P1', 'P2', 'P4A', 'P5']) G.setWater(r, flood || (r === 'P4A' && done('T_JAR')) ? 0.1 : null);
     G.setWater('PUMP', done('T_SEAL') && !done('T_RESCUE') ? 0.62 : null);
-    G.setWater('JIMU', done('T_LEDGER') && !done('T_THINK') ? 0.06 + (G.wrong || 0) * 0.18 : null);
+    G.setWater('JIMU', done('T_LEDGER') && !done('T_THINK') ? 0.06 + (G.wrong || 0) * 0.18 : null, { drain: done('T_THINK') });
+    if (done('T_RESCUE')) G.waterResidue('PUMP', 0.62);   // 1.3.0 (#10): the line the flood left, also in a resumed game
+    if (done('T_THINK') && (G.wrong || 0) > 0) G.waterResidue('JIMU', 0.06 + G.wrong * 0.18);
     G.drainWater.visible = done('T_LEDGER') && !done('T_RETURN');
     G.drainHands.visible = done('T_THINK') && !done('T_RETURN');
     // the doors
@@ -238,7 +240,7 @@ export function installStory(ext, G) {
   });
   ext.registerTask('T_RESCUE', {
     canStart: () => (done('T_SEAL') ? true : done('T_GEN') ? W.pump_ok : W.pump_early),
-    onDone: () => { G.setWater('PUMP', null); ctx.sound('noise', 'splash'); apply(); later(() => talk('rescue_done', 'ポンプ室')); },
+    onDone: () => { G.setWater('PUMP', null, { drain: true, sec: 7, at: { x: 2.2, y: 0.1, z: 10.1 } }); ctx.sound('noise', 'splash'); apply(); later(() => talk('rescue_done', 'ポンプ室')); },   // 1.3.0 (#10): the pump draws it down
   });
 
   // ---------------- L5: the ledger, the questions under the water, the return, the endings ----------------
@@ -252,10 +254,18 @@ export function installStory(ext, G) {
     G.wrong = G.wrong || 0;
     for (const [i, q] of Q.questions.entries()) {
       for (;;) {
-        const v = await ctx.choose({ who: '私', title: `確かめる（${i + 1} / ${Q.questions.length}）`, text: q.q, options: q.options.map((o) => ({ id: o.id, label: o.label })) });
+        // 1.3.0 (2nd play test #14 #15): the questions are the old 照合票 of the pathology office (paper, a stamp on the answer), and while the
+        // player reads, ひなた holds the check valve: a bar runs down and she urges them on. Running out costs nothing but nerves: the water
+        // rises a little (never past the wrong-answer level, never a death) and the bar starts again; it never answers for the player.
+        const urge = (ctx.data.talk.think_urge || []);
+        const v = await ctx.choose({ who: '私', title: `標本照合票（${i + 1} / ${Q.questions.length}）`, text: q.q, look: 'form',
+          form: { org: '水無瀬病院　病理科　標本室', title: '標 本 照 合 票', no: `第七号　問 ${i + 1} / ${Q.questions.length}`, stamp: '照合', paper: 'ledger' },
+          timer: { seconds: 24, urge: urge.slice(0, 2).map((L, k) => ({ ...L, at: k ? 0.25 : 0.6 })), out: urge[2],
+            onOut: () => { G.press = Math.min(0.12, (G.press || 0) + 0.04); G.setWater('JIMU', 0.06 + (G.wrong || 0) * 0.18 + G.press); ctx.sound('noise', 'splash'); } },
+          options: q.options.map((o) => ({ id: o.id, label: o.label })) });
         if (!v) return false;
         const o = q.options.find((x) => x.id === v);
-        if (o.ok) { await ctx.talk([{ who: '私', text: o.why }], { title: '事務机' }); break; }
+        if (o.ok) { G.press = 0; await ctx.talk([{ who: '私', text: o.why }], { title: '事務机' }); break; }
         G.wrong++; G.setWater('JIMU', 0.06 + G.wrong * 0.18); ctx.sound('noise', 'splash'); ctx.fx && ctx.fx.spook && ctx.fx.spook(0.5);
         await ctx.talk([{ who: '私', text: `……ちがう。${o.why}` }, { who: 'ひなた', text: G.wrong >= 3 ? '湊……もう、押さえきれない……！' : '水が……上がってきた。湊、落ち着いて。もう一回。' }], { title: '事務机' });
         if (G.wrong >= 3) { ans('think_flood'); later(() => ctx.die('flood'), 600); return false; }
@@ -362,8 +372,8 @@ export function installStory(ext, G) {
       case 'clink': noise('tap', { x: 9, y: 1.2, z: -104 }, 5); voice('whisper2'); say('ev_clink', 4); break;
     }
   }
-  function voice(key) { const L = (ctx.data.talk[key] || [])[0]; if (!L) return; if (L.voice && ctx.voiceLine) ctx.voiceLine(L.voice); ctx.ui.say(`<span class="who">女の声</span>${L.text}`, 3); }
-  function radio(key) { const L = (ctx.data.talk[key] || [])[0]; if (!L) return; ctx.sound('pickupPhone'); if (L.voice && ctx.voiceLine) ctx.voiceLine(L.voice, 'phone'); ctx.ui.say(`<span class="who">ひなた（無線）</span>${L.text}`, 6); }
+  function voice(key) { const L = (ctx.data.talk[key] || [])[0]; if (!L) return; if (L.voice && ctx.voiceLine) ctx.voiceLine(L.voice, null, { prio: 'story' }); ctx.ui.say(`<span class="who">女の声</span>${L.text}`, 3); }
+  function radio(key) { const L = (ctx.data.talk[key] || [])[0]; if (!L) return; ctx.sound('pickupPhone'); if (L.voice && ctx.voiceLine) ctx.voiceLine(L.voice, 'phone', { prio: 'story' }); ctx.ui.say(`<span class="who">ひなた（無線）</span>${L.text}`, 6); }
 
   ext.registerPersist('story', {
     serialize: () => ({ ev: G.ev, lampsOut: G.lampsOut, lightOut: !!G.lightOut, wrong: G.wrong || 0 }),

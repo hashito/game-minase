@@ -57,7 +57,60 @@ export function installHospital(ext, G) {
       G.water[r.id] = m;
     }
     G.waterAt = {};
-    G.setWater = (room, y) => { const m = G.water[room]; if (!m) return; m.visible = y != null; if (y != null) m.position.y = fy(room) + y; G.waterAt[room] = y; };
+    // 1.3.0 (2nd play test #10 「水がなくなったときの表現が雑すぎます」): water no longer vanishes. G.setWater(room, y, { drain: true }) lowers it
+    // over a few seconds (a gurgle at the drain, the surface going down the walls), and what it leaves stays: a dark water line on every wall at
+    // the height it stood, a wet sheen on the floor with puddles in the low spots, drips from the walls. A resumed game gets the after-state at once.
+    G.draining = {}; G.residue = {};
+    const wetAlpha = (seed) => { const c = document.createElement('canvas'); c.width = c.height = 256; const g2 = c.getContext('2d'); let r0 = seed * 9301 + 49297; const rnd = () => ((r0 = (r0 * 9301 + 49297) % 233280) / 233280);
+      g2.fillStyle = '#5a5a5a'; g2.fillRect(0, 0, 256, 256);   // the whole floor a little wet
+      for (let i = 0; i < 9; i++) { const x = rnd() * 256, y = rnd() * 256, rad = 20 + rnd() * 50, gr = g2.createRadialGradient(x, y, rad * 0.2, x, y, rad); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.7, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g2.fillStyle = gr; g2.beginPath(); g2.ellipse(x, y, rad, rad * (0.5 + rnd() * 0.5), rnd() * 3, 0, Math.PI * 2); g2.fill(); }   // puddles in the low spots
+      for (let i = 0; i < 300; i++) { g2.fillStyle = `rgba(0,0,0,${rnd() * 0.35})`; g2.fillRect(rnd() * 256, rnd() * 256, 2 + rnd() * 8, 1 + rnd() * 3); }
+      const t = new THREE.CanvasTexture(c); return t; };
+    const lineTex = (() => { const c = document.createElement('canvas'); c.width = 8; c.height = 128; const g2 = c.getContext('2d'); const gr = g2.createLinearGradient(0, 0, 0, 128);
+      gr.addColorStop(0, 'rgba(150,132,96,0)'); gr.addColorStop(0.03, 'rgba(160,140,100,.9)'); gr.addColorStop(0.07, 'rgba(120,100,66,.85)'); gr.addColorStop(0.1, 'rgba(36,30,20,.9)'); gr.addColorStop(0.3, 'rgba(26,26,20,.6)'); gr.addColorStop(1, 'rgba(18,20,16,.7)');   // a pale crust of scum at the top, the wet dark below
+      g2.fillStyle = gr; g2.fillRect(0, 0, 8, 128); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; })();
+    const residue = (room, level) => {
+      if (G.residue[room] || level == null || level < 0.03) return;
+      const R = ctx.data.plan.rooms.find((r) => r.id === room); if (!R) return;
+      const y0 = fy(room), g2 = new THREE.Group(); g2.name = `residue:${room}`; grp.add(g2);
+      // the water line: a stained band from the floor to where the water stood, sharp at the top
+      const lm = new THREE.MeshStandardMaterial({ map: lineTex, transparent: true, depthWrite: false, roughness: 0.6 });
+      const H = level + 0.05, o = 0.086;
+      for (const [x, z, w, ry] of [[R.x + R.w / 2, R.z + o, R.w, 0], [R.x + R.w / 2, R.z + R.d - o, R.w, Math.PI], [R.x + o, R.z + R.d / 2, R.d, Math.PI / 2], [R.x + R.w - o, R.z + R.d / 2, R.d, -Math.PI / 2]]) {
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(w - 0.2, H), lm); m.position.set(x, y0 + H / 2, z); m.rotation.y = ry; m.renderOrder = 2; m.raycast = () => {}; m.name = 'waterline'; g2.add(m);
+      }
+      // the wet floor: a thin sheen with puddles in it
+      const wm = new THREE.MeshStandardMaterial({ color: 0x18201e, roughness: 0.06, metalness: 0.6, transparent: true, opacity: 0.7, alphaMap: wetAlpha(room.length * 7 + 3), depthWrite: false });
+      const f = new THREE.Mesh(new THREE.PlaneGeometry(R.w - 0.2, R.d - 0.2), wm); f.rotation.x = -Math.PI / 2; f.position.set(R.x + R.w / 2, y0 + 0.009, R.z + R.d / 2); f.renderOrder = 1; f.raycast = () => {}; f.name = 'wet-floor'; g2.add(f);
+      // drips running off the walls for a while
+      const n = 10, pos = new Float32Array(n * 3), dr = []; for (let i = 0; i < n; i++) { const side = i % 4, t = (i * 0.37) % 1; dr.push({ x: side < 2 ? R.x + 0.3 + t * (R.w - 0.6) : side === 2 ? R.x + 0.14 : R.x + R.w - 0.14, z: side >= 2 ? R.z + 0.3 + t * (R.d - 0.6) : side === 0 ? R.z + 0.14 : R.z + R.d - 0.14, y: y0 + 0.4 + (i % 3) * 0.6, t: (i * 0.29) % 1 }); }
+      const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const pts = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xaec6c2, size: 0.03, transparent: true, opacity: 0.75, depthWrite: false })); pts.frustumCulled = false; g2.add(pts);
+      G.residue[room] = { g: g2, dr, pos, dg, y0, t: 0, R };
+    };
+    G.setWater = (room, y, o = {}) => {
+      const m = G.water[room]; if (!m) return;
+      const cur = G.waterAt[room], D = G.draining[room];
+      if (D && D.to === (y ?? null)) return;   // already going there
+      if (o.drain && cur != null && (y == null || y < cur - 0.02)) {
+        if (!m.userData.ownMat) { m.material = m.material.clone(); m.userData.ownMat = true; }   // the rooms share one water material
+        G.draining[room] = { from: cur, to: y ?? null, t: 0, sec: o.sec || Math.max(4, cur * 9), m, room };
+        G.waterAt[room] = y;
+        const R = ctx.data.plan.rooms.find((r) => r.id === room); const at = o.at || (R ? { x: R.x + R.w / 2, y: fy(room) + 0.1, z: R.z + R.d / 2 } : null);
+        G.gurgle && G.gurgle(at, G.draining[room].sec);
+        return;
+      }
+      if (D) delete G.draining[room];
+      if (cur != null && y == null && o.left !== false && o.residue) residue(room, cur);
+      m.visible = y != null; if (y != null) m.position.y = fy(room) + y; m.scale.set(1, 1, 1); G.waterAt[room] = y;
+    };
+    G.waterResidue = residue;   // story.js: a resumed game puts the after-state of a drained room straight away
+    // the gurgle of water going down a drain: low bubbling bursts at the drain for as long as it runs, then the last suck
+    G.gurgle = (at, sec) => {
+      if (!ctx.audio || !ctx.audio.ctx) return; const A = ctx.audio, n = Math.round(sec * 3.5);
+      for (let i = 0; i < n; i++) A.noiseBurst({ at: i / 3.5 + Math.random() * 0.15, dur: 0.12 + Math.random() * 0.1, freq: 180 + Math.random() * 260, q: 6, gain: 0.32 * (1 - (i / n) * 0.5), pos: at, wet: 0.5 });
+      A.noiseBurst({ at: sec - 0.2, dur: 0.6, freq: 260, q: 3, gain: 0.5, sweep: -0.6, pos: at, wet: 0.6 });
+    };
 
     // ---------------- pipes along the walls of the passage and the basement: one merged mesh ----------------
     {
@@ -96,7 +149,7 @@ export function installHospital(ext, G) {
       const wheels = [];
       for (const f of [-1, 1]) { const wh = new THREE.Group(); wh.position.set(0, 1.0, f * 0.1); const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.025, 6, 18), M.red); wh.add(ring); for (let k = 0; k < 3; k++) { const sp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.03, 0.03), M.red); sp.rotation.z = (k * Math.PI) / 3; wh.add(sp); } slab.add(wh); wheels.push(wh); }
       // the heavy frame round the opening
-      for (const s of [-1, 1]) { const o = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.3, 0.3), M.rust); o.position.set(s * (w / 2 + 0.08), 1.15, 0); g.add(o); }
+      for (const s of [-1, 1]) { const o = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.3, 0.3), M.rust); o.position.set(s * (w / 2 + 0.084), 1.15, 0); g.add(o); }   // 4 mm back from the wall's end face (1.3.0: they shared one plane)
       const top = new THREE.Mesh(new THREE.BoxGeometry(w + 0.32, 0.2, 0.3), M.rust); top.position.set(0, 2.2, 0); g.add(top);
       G.wt[id] = { d, slab, wheels, open: d.isOpen ? 1 : 0, spin: 0, w };
     };
@@ -123,11 +176,13 @@ export function installHospital(ext, G) {
       G.torch = plane('GENKAN', x - 0.3, z + 0.3, 1.5, 1.5, M.torch, 1.2, Math.PI);
       { const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'), r = g.createRadialGradient(32, 32, 2, 32, 32, 32); r.addColorStop(0, 'rgba(255,250,220,1)'); r.addColorStop(1, 'rgba(255,250,220,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); M.torch.map = new THREE.CanvasTexture(cv); M.torch.needsUpdate = true; }
       // the notice board by the door, a shoe rack, the umbrella stand
-      box('GENKAN', 0.06, 21.0, 0.04, 0.8, 1.1, std(0x5a4a3a), 1.1, false);
+      // 1.3.0 (2nd play test #1 「チラチラ正方形の図が見えます」): the board stood with its face exactly on the plaster (x 0.08) and the two
+      // fought for the same pixels. It now hangs 4.5 cm proud of the wall, on two screws; the notice is pasted on its face.
+      box('GENKAN', 0.105, 21.0, 0.045, 0.8, 1.1, std(0x5a4a3a), 1.1, false);
       cyl('GENKAN', 5.4, 19.0, 0.18, 0.16, 0.5, M.steel, 0, true);
     }
     // ---------------- 外来の待合: the sagging ceiling panels, threads of rain falling through ----------------
-    for (const [x, z, r] of [[12.0, 22.1, 0.35], [8.0, 19.8, -0.2], [14.6, 24.5, 0.5]]) { const p = box('MACHI', x, z, 1.2, 0.03, 0.6, M.cream, 2.62, false); p.rotation.z = r * 0.4; p.rotation.x = r * 0.2; }
+    // 1.3.0 (2nd play test #12): the broken ceiling is built in js/ext/dress.js (a torn hole with joists and a pipe; stains elsewhere)
     for (let i = 0; i < 4; i++) plane('MACHI', 7.2 + i * 0.25, 25.4, 0.12, 0.28, M.cream, 0.01, 0.2 * i, -Math.PI / 2);
     // ---------------- 受付: papers on the floor, the window with the hand prints (a thing to look at) ----------------
     for (let i = 0; i < 6; i++) flat('UKE', 17.4 + (i % 3) * 0.6, 22.3 + Math.floor(i / 3) * 1.1, 0.21, 0.3, M.paper, 0.01 + i * 0.001, i * 0.7);
@@ -140,7 +195,7 @@ export function installHospital(ext, G) {
     flat('B_ROKA', 8.0, 7.5, 0.5, 0.5, G.grateM || M.dark, 0.01);
     // ---------------- ポンプ室: the generator, the pump, the water gauge ----------------
     {
-      box('PUMP', 0.75, 12.0, 1.1, 1.0, 1.6, M.green); cyl('PUMP', 0.75, 12.0, 0.3, 0.3, 0.5, M.dark, 1.0, false, 14).rotation.z = Math.PI / 2;
+      G.genBody = box('PUMP', 0.75, 12.0, 1.1, 1.0, 1.6, M.green); cyl('PUMP', 0.75, 12.0, 0.3, 0.3, 0.5, M.dark, 1.0, false, 14).rotation.z = Math.PI / 2;
       cyl('PUMP', 0.4, 11.0, 0.05, 0.05, 1.9, M.pipe, 1.0); box('PUMP', 1.3, 12.6, 0.1, 0.3, 0.3, M.steel, 0.55, false);
       G.genFly = cyl('PUMP', 1.33, 11.4, 0.22, 0.22, 0.06, M.steel, 0.5, false, 18); G.genFly.rotation.z = Math.PI / 2;
       G.genLamp = box('PUMP', 1.32, 12.3, 0.02, 0.06, 0.06, M.emergOff, 0.9, false);
@@ -148,7 +203,7 @@ export function installHospital(ext, G) {
       cyl('PUMP', 1.0, 9.9, 0.32, 0.32, 0.8, M.steel, 0, true, 16); cyl('PUMP', 1.0, 9.9, 0.08, 0.08, 1.9, M.pipe, 0.8);
       flat('PUMP', 2.2, 10.1, 0.8, 0.8, G.grateM || M.dark, 0.01);
       // the gauge on the north wall
-      plane('PUMP', 1.6, 9.07, 0.3, 0.3, M.white, 1.5); G.gaugeNeedle = box('PUMP', 1.6, 9.06, 0.01, 0.12, 0.01, M.red, 1.44, false);
+      box('PUMP', 1.6, 9.1, 0.34, 0.34, 0.03, M.steel, 1.33, false); plane('PUMP', 1.6, 9.117, 0.3, 0.3, M.white, 1.5); G.gaugeNeedle = box('PUMP', 1.6, 9.125, 0.01, 0.12, 0.01, M.red, 1.44, false);   // 1.3.0: the dial sat 1 cm inside the wall
     }
     // ---------------- 病理事務室: the ledger cabinet (locked), the floor drain, the staff photo ----------------
     {
@@ -273,7 +328,7 @@ export function installHospital(ext, G) {
     }
 
     // ---------------- drips: water falling from the ceiling here and there (one Points draw) ----------------
-    const DRIPS = [['GENKAN', 4.4, 20.4], ['MACHI', 12.0, 22.1], ['MACHI', 8.0, 19.8], ['ROKA', 9.5, 16.5], ['KAIDAN', 15.0, 11.0], ['B_ROKA', 5.0, 7.5], ['B_ROKA', 12.5, 7.4], ['MOUTH', 2.0, 2.5], ['P1', 2.4, -12], ['P1', 2.8, -30], ['P3', -17.8, -52], ['P3', -17.4, -70], ['P4B', 4.0, -81.8], ['P5', 9.2, -90], ['HYOHON', 10.0, -103], ['REIAN', 8.0, 4.0]];
+    const DRIPS = [['GENKAN', 4.4, 20.4], ['MACHI', 8.0, 19.8], ['ROKA', 9.5, 16.5], ['KAIDAN', 15.0, 11.0], ['B_ROKA', 5.0, 7.5], ['B_ROKA', 12.5, 7.4], ['MOUTH', 2.0, 2.5], ['P1', 2.4, -12], ['P1', 2.8, -30], ['P3', -17.8, -52], ['P3', -17.4, -70], ['P4B', 4.0, -81.8], ['P5', 9.2, -90], ['HYOHON', 10.0, -103], ['REIAN', 8.0, 4.0]];
     const dp = new Float32Array(DRIPS.length * 3), dv = DRIPS.map((d, i) => ({ x: d[1], z: d[2], y0: fy(d[0]) + 2.9, y1: fy(d[0]) + 0.05, t: (i * 0.37) % 1 }));
     const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(dp, 3));
     const drips = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xaac4c0, size: 0.035, transparent: true, opacity: 0.7, depthWrite: false })); drips.frustumCulled = false; grp.add(drips);
@@ -287,6 +342,18 @@ export function installHospital(ext, G) {
       // the drips fall, the tap runs, the torch outside sways
       dv.forEach((d, i) => { d.t = (d.t + dt * 0.9) % 1; dp[i * 3] = d.x; dp[i * 3 + 1] = d.y0 + (d.y1 - d.y0) * d.t * d.t; dp[i * 3 + 2] = d.z; });
       dg.attributes.position.needsUpdate = true;
+      for (const [room, D] of Object.entries(G.draining)) {
+        D.t += dt; const k = Math.min(1, D.t / D.sec), e = 1 - (1 - k) * (1 - k), lv = D.from + ((D.to ?? 0.004) - D.from) * e;
+        D.m.position.y = fy(room) + lv; D.m.material.opacity = 0.8 - (D.to == null ? 0.25 * e : 0);
+        if (D.to == null && k > 0.15) residue(room, D.from);   // the line shows on the walls as the water goes down from it
+        if (k >= 1) { delete G.draining[room]; if (D.to == null) D.m.visible = false; D.m.material.opacity = 0.8; if (ctx.sound) ctx.sound('noise', 'drip', { pos: D.m.position }); }
+      }
+      for (const Rd of Object.values(G.residue)) {
+        Rd.t += dt; const fade = Math.max(0.15, 1 - Rd.t / 90);   // the walls drip for a minute and a half, then now and then
+        Rd.dr.forEach((d, i) => { d.t = (d.t + dt * 0.8) % 1; Rd.pos[i * 3] = d.x; Rd.pos[i * 3 + 1] = d.y - (d.y - Rd.y0) * d.t * d.t; Rd.pos[i * 3 + 2] = d.z; });
+        Rd.dg.attributes.position.needsUpdate = true; Rd.g.children[Rd.g.children.length - 1].material.opacity = 0.75 * fade;
+        if (Math.random() < dt * 0.6 * fade && ctx.floor === 0 && ctx.audio && ctx.audio.noise) { const d = Rd.dr[Math.floor(Math.random() * Rd.dr.length)]; ctx.audio.noise('drip', { pos: { x: d.x, y: Rd.y0 + 0.05, z: d.z } }); }
+      }
       if (G.tap) G.tap.scale.x = 1 + Math.sin(t * 30) * 0.2;
       M.torch.opacity = G.kurokiThere === false ? 0 : 0.5 + Math.sin(t * 1.3) * 0.12 + Math.sin(t * 4.1) * 0.06;
       // the watertight doors slide; their wheels spin while worked
@@ -295,6 +362,10 @@ export function installHospital(ext, G) {
         D.slab.position.x = -D.open * (D.w + 0.05);
         if (D.spin > 0) { D.spin -= dt; for (const w of D.wheels) w.rotation.z += dt * 6; }
       }
+      // 1.3.0 (2nd play test #8 「発電機の唸る音がありません」): the generator hums where it stands while it runs (a positional loop: the mains
+      // hum, its harmonics, the rattle of the housing), and its housing shivers
+      if (ctx.audio && ctx.audio.hum && ctx.audio.ctx) { const on = !!G.genOn, has = !!(ctx.audio.loops && ctx.audio.loops['mn-gen']); if (on && !has) ctx.audio.hum('mn-gen', { x: 0.75, y: fy('PUMP') + 0.8, z: 12.0 }, { freq: 50, gain: 0.55, rattle: 0.8, ref: 1.4 }); else if (!on && has) ctx.audio.stopLoop('mn-gen', 0.8); }
+      if (G.genBody) G.genBody.position.x = 0.75 + (G.genOn ? Math.sin(t * 157) * 0.0025 : 0);
       if (G.genOn) { G.genFly.rotation.x += dt * 18; G.gaugeNeedle.rotation.z = -0.4 + Math.sin(t * 0.3) * 0.05; } else G.gaugeNeedle.rotation.z = 0.9 + Math.sin(t * 7) * 0.04;
       if (G.hearseOpen != null) for (const L of G.hearse) L.hold.rotation.y = L.s * -G.hearseOpen * 1.3;
       if (G.hina && G.hina.root.visible) { if (G.hinaFloor === ctx.floor && ctx.camera.position.distanceTo(G.hina.root.position) < 7) G.hina.lookAt(ctx.camera.position); else G.hina.lookAt(null); G.hina.update(dt); }

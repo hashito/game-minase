@@ -489,6 +489,26 @@
       "voice": "assets/voice/ledger_done-6.mp3"
     }
   ],
+  "think_urge": [
+    {
+      "who": "ひなた",
+      "text": "湊……水が、上がってきてる。",
+      "id": "think_urge-1",
+      "voice": "assets/voice/think_urge-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "早く……！　もう、手が……！",
+      "id": "think_urge-2",
+      "voice": "assets/voice/think_urge-2.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "湊、決めて……！　押さえきれない……！",
+      "id": "think_urge-3",
+      "voice": "assets/voice/think_urge-3.mp3"
+    }
+  ],
   "think_done": [
     {
       "who": "私",

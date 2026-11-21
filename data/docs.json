@@ -4,7 +4,7 @@
     "paper": "notice",
     "title": "閉院のお知らせ（玄関の掲示）",
     "room": "GENKAN",
-    "x": 0.06,
+    "x": 0.3,
     "z": 21,
     "y": 1.5,
     "stage": "L1",

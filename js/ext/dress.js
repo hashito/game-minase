@@ -193,18 +193,91 @@ export function installDress(ext, G) {
       for (let i = 0; i < 5; i++) { const s = boxAt('B_STAIR', 13.0 + i * 0.25, 9.8 + i * 0.22, 1.2, 0.18, 0.3, conc, 0.05 + (i % 2) * 0.2, false); s.rotation.set(0.3 * (i - 2), 0.4 * i, 0.5 - i * 0.2); }
       for (let i = 0; i < 14; i++) { const r = mesh(new THREE.DodecahedronGeometry(0.1 + (i % 4) * 0.06, 0), conc, 12.6 + (i % 5) * 0.35, yb + 0.1 + (i % 3) * 0.08, 9.4 + Math.floor(i / 5) * 0.45); r.rotation.set(i, i * 1.3, i * 0.7); }
       solids.push(boxAt('B_STAIR', 13.4, 10.15, 1.9, 1.0, 1.6, new THREE.MeshBasicMaterial({ visible: false })));
-      // the lift on the south wall: the doors stuck a hand's width apart, dark behind; the call buttons dead
+      // the lift: the doors stuck a hand's width apart, dark behind; the call buttons dead. 1.3.0 (2nd play test #5 「エレベーターのいちが
+      // おかしいです。裏面に通路があります」): it stood on the north wall, and in the basement the corridor runs right behind that wall - the
+      // shaft had no depth. It is on the east wall now (the outside of the building behind it on both floors), beside the ladder, with a shaft
+      // box behind the gap, so the dark between the doors is the shaft.
       for (const [room, yy, gap] of [['KAIDAN', y1, 0.32], ['B_STAIR', yb, 0.05]]) {
-        const lx = 18.0, lz = 9.08;   // clear of the B1 opening D_BSTAIR (x 15.2..16.8), on the wall's face
-        for (const s of [-1, 1]) { const leaf = mesh(new THREE.BoxGeometry(0.5, 2.05, 0.05), steel, lx + s * (0.25 + gap / 2), yy + 1.03, lz + 0.05); leaf.name = 'lift-door'; }
-        mesh(new THREE.PlaneGeometry(gap + 0.02, 2.0), black, lx, yy + 1.02, lz + 0.03);
-        for (const [w, h, dx, dy] of [[1.4 + gap, 0.12, 0, 2.12], [0.1, 2.15, -0.75 - gap / 2, 1.07], [0.1, 2.15, 0.75 + gap / 2, 1.07]]) mesh(new THREE.BoxGeometry(w, h, 0.08), steel, lx + dx, yy + dy, lz + 0.04);
-        mesh(new THREE.BoxGeometry(0.1, 0.22, 0.03), std(0x2b2f2e), lx + 1.0, yy + 1.15, lz + 0.03);
-        for (const dy of [0.05, -0.05]) mesh(new THREE.CircleGeometry(0.018, 10), std(0x5a5145, { roughness: 0.5 }), lx + 1.0, yy + 1.15 + dy, lz + 0.046);
-        if (room === 'KAIDAN') { const cab = new THREE.CatmullRomCurve3([[0, 2.1, 0], [0.04, 1.4, -0.02], [-0.03, 0.6, 0], [0.02, 0.1, 0.02]].map(([a, b, c]) => new THREE.Vector3(lx + a, yy + b, lz + 0.01 + c))); mesh(new THREE.TubeGeometry(cab, 20, 0.008, 5), std(0x111111), 0, 0, 0); }
-        else for (let i = 0; i < 3; i++) mesh(new THREE.PlaneGeometry(1.4, 0.02), std(0x3c3a30, { transparent: true, opacity: 0.6 }), lx, yy + 0.35 + i * 0.12, lz + 0.081);   // water lines on the shut doors
-        solids.push(mesh(new THREE.BoxGeometry(1.6, 2.2, 0.2), new THREE.MeshBasicMaterial({ visible: false }), lx, yy + 1.1, lz + 0.1));
+        const L = new THREE.Group(); L.position.set(19.92, yy, 13.95); L.rotation.y = -Math.PI / 2; grp.add(L); L.name = `lift:${room}`;
+        const at = (geo, mat, x, y, z) => mesh(geo, mat, x, y, z, L);
+        for (const s of [-1, 1]) { const leaf = at(new THREE.BoxGeometry(0.5, 2.05, 0.05), steel, s * (0.25 + gap / 2), 1.03, 0.05); leaf.name = 'lift-door'; }
+        // the shaft: a dark box behind the doors (the wall is cut by the gap only in the eye: nothing but the shaft shows through it)
+        at(new THREE.BoxGeometry(1.5, 2.2, 0.02), black, 0, 1.1, -0.05);
+        at(new THREE.PlaneGeometry(gap + 0.02, 2.0), black, 0, 1.02, 0.025);
+        for (const [w, h, dx, dy] of [[1.4 + gap, 0.12, 0, 2.12], [0.1, 2.15, -0.75 - gap / 2, 1.07], [0.1, 2.15, 0.75 + gap / 2, 1.07]]) at(new THREE.BoxGeometry(w, h, 0.08), steel, dx, dy, 0.045);
+        // the call buttons beside it (toward the ladder), dead
+        at(new THREE.BoxGeometry(0.1, 0.22, 0.03), std(0x2b2f2e), -1.05, 1.15, 0.025);
+        for (const dy of [0.05, -0.05]) at(new THREE.CircleGeometry(0.018, 10), std(0x5a5145, { roughness: 0.5 }), -1.05, 1.15 + dy, 0.042);
+        // the floor indicator above the doors, its glass cracked
+        at(new THREE.BoxGeometry(0.5, 0.12, 0.03), std(0x1a1c1b), 0, 2.32, 0.03);
+        if (room === 'KAIDAN') { const cab = new THREE.CatmullRomCurve3([[0, 2.1, 0], [0.04, 1.4, -0.02], [-0.03, 0.6, 0], [0.02, 0.1, 0.02]].map(([a, b, c]) => new THREE.Vector3(a, b, c - 0.02))); at(new THREE.TubeGeometry(cab, 20, 0.008, 5), std(0x111111), 0, 0, 0); }
+        else for (let i = 0; i < 3; i++) at(new THREE.PlaneGeometry(1.4, 0.02), std(0x3c3a30, { transparent: true, opacity: 0.6 }), 0, 0.35 + i * 0.12, 0.081);   // water lines on the shut doors
+        solids.push(at(new THREE.BoxGeometry(1.6, 2.2, 0.2), new THREE.MeshBasicMaterial({ visible: false }), 0, 1.1, 0.1));
       }
+    }
+
+    // ---------------- 1.3.0 (2nd play test #12 「天井が壊れて水が滴っているのだと思いますが、壊れ方がおかしい」): the waiting room's ceiling ----------------
+    // Before: three thin boards tilted at odd angles under an intact ceiling. Now the ceiling is really open there: the slab is cut, a dark
+    // cavity sits above (the joists and a rusted pipe in it, seen only through the hole), the hole's edge is ragged (a board face with a torn
+    // opening pasted under the cut), two torn pieces hang down from its rim, the fallen board lies broken on the floor in plaster crumbs, and
+    // the pipe joint weeps a thread of drops into the puddle (rings spread on it). Elsewhere: water stains only.
+    {
+      const y = fy('MACHI'), CY = y + 3.0, hx = 12.0, hz = 22.1, HW = 0.55, HD = 0.4;   // the cut: 1.1 x 0.8 m
+      const slab = W.group.getObjectByName('ceil:MACHI');
+      let slabMat = std(0xcfc8b4, { roughness: 0.95 });
+      if (slab && slab.geometry && slab.geometry.parameters) {
+        slabMat = slab.material;
+        const { width: w, height: h, depth: dd } = slab.geometry.parameters, X0 = slab.position.x - w / 2, X1 = slab.position.x + w / 2, Z0 = slab.position.z - dd / 2, Z1 = slab.position.z + dd / 2;
+        const x0 = hx - HW, x1 = hx + HW, z0 = hz - HD, z1 = hz + HD;
+        for (const [a0, a1, b0, b1] of [[X0, x0, Z0, Z1], [x1, X1, Z0, Z1], [x0, x1, Z0, z0], [x0, x1, z1, Z1]]) {
+          if (a1 - a0 < 0.01 || b1 - b0 < 0.01) continue;
+          const p = new THREE.Mesh(new THREE.BoxGeometry(a1 - a0, h, b1 - b0), slab.material); p.position.set((a0 + a1) / 2, slab.position.y, (b0 + b1) / 2); p.receiveShadow = slab.receiveShadow; p.name = 'ceil:MACHI:part'; slab.parent.add(p);
+        }
+        slab.parent.remove(slab);
+      }
+      // the cavity above: dark inside faces only (seen from below through the hole), the joists and the pipe in it
+      const cav = mesh(new THREE.BoxGeometry(HW * 2 + 0.3, 0.6, HD * 2 + 0.3), new THREE.MeshStandardMaterial({ color: 0x16120e, roughness: 1, side: THREE.BackSide }), hx, CY + 0.3, hz); cav.raycast = () => {};
+      const joist = std(0x4a3a28, { roughness: 0.95 }), rusty = std(0x5a3a26, { roughness: 0.75, metalness: 0.45 });
+      for (const dz of [-0.28, 0.12, 0.5]) mesh(new THREE.BoxGeometry(HW * 2 + 0.28, 0.14, 0.07), joist, hx, CY + 0.24, hz + dz);
+      const pipe = mesh(new THREE.CylinderGeometry(0.04, 0.04, HW * 2 + 0.28, 10), rusty, hx, CY + 0.1, hz - 0.15); pipe.rotation.z = Math.PI / 2; pipe.name = 'ma-pipe';
+      const joint = mesh(new THREE.CylinderGeometry(0.058, 0.058, 0.09, 10), rusty, hx + 0.25, CY + 0.1, hz - 0.15); joint.rotation.z = Math.PI / 2;
+      // the ragged edge: a board face with a torn opening, just under the cut; its opening lies inside the cut everywhere
+      const PW = HW * 2 + 0.36, PD = HD * 2 + 0.3;
+      const tornA = canvas(256, 192, (g, w, h) => { const r = rng(21); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.fillStyle = '#000'; g.beginPath();
+        for (let i = 0; i <= 40; i++) { const a = (i / 40) * Math.PI * 2, k = 0.62 + r() * 0.3 + (i % 7 === 0 ? 0.08 : 0); const x = w / 2 + Math.cos(a) * (HW / PW) * w * Math.min(1, k), yy = h / 2 + Math.sin(a) * (HD / PD) * h * Math.min(1, k); i ? g.lineTo(x, yy) : g.moveTo(x, yy); } g.closePath(); g.fill(); });
+      const edgeM = (slabMat.clone ? slabMat.clone() : std(0xcfc8b4)); edgeM.alphaMap = tornA; edgeM.alphaTest = 0.5; edgeM.side = THREE.DoubleSide;
+      const edge = mesh(new THREE.PlaneGeometry(PW, PD), edgeM, hx, CY - 0.004, hz); edge.rotation.x = Math.PI / 2; edge.raycast = () => {};
+      // a brown rim of soaked board round it
+      const stainT = canvas(256, 256, (g) => { const r = rng(5); g.fillStyle = '#000'; g.fillRect(0, 0, 256, 256); for (let k = 0; k < 4; k++) { const rad = 110 - k * 22 - r() * 10; g.strokeStyle = `rgba(255,255,255,${0.5 + k * 0.1})`; g.lineWidth = 3 + r() * 4; g.beginPath(); g.ellipse(128 + r() * 10, 128 + r() * 10, rad, rad * (0.7 + r() * 0.2), r(), 0, Math.PI * 2); g.stroke(); } const gr = g.createRadialGradient(128, 128, 10, 128, 128, 100); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); });
+      const under = (w, d, mat, x, z, dy, rz = 0) => { const m = mesh(new THREE.PlaneGeometry(w, d), mat, x, CY - dy, z); m.rotation.set(Math.PI / 2, 0, rz); m.raycast = () => {}; m.renderOrder = 2; return m; };
+      const rimM = new THREE.MeshStandardMaterial({ color: 0x3f2f1a, transparent: true, opacity: 0.6, alphaMap: stainT, depthWrite: false, roughness: 0.9 });
+      under(PW + 0.7, PD + 0.6, rimM, hx, hz, 0.007);
+      // two torn pieces still hanging from the rim by one side, swung down (their free ends torn, a strip of paper face hanging off)
+      const board = std(0x857a63, { roughness: 0.95, side: THREE.DoubleSide }), soaked = std(0x6a5f4b, { roughness: 0.95, side: THREE.DoubleSide });
+      for (const [ex, ez, w, L, tilt, mat] of [[hx - HW + 0.05, hz - 0.05, 0.34, 0.42, 1.25, soaked], [hx + 0.2, hz + HD - 0.04, 0.3, 0.3, 1.05, board]]) {
+        const pv = new THREE.Group(); pv.position.set(ex, CY - 0.012, ez); pv.rotation.y = Math.atan2(hx - ex, hz - ez); grp.add(pv);
+        const b = new THREE.Mesh(new THREE.BoxGeometry(w, 0.012, L), mat); b.position.set(0, 0, L / 2); const hang = new THREE.Group(); hang.add(b); pv.add(hang); hang.rotateX(tilt);
+        const tear = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.6, 0.09), new THREE.MeshStandardMaterial({ color: 0xd8d0b9, roughness: 1, side: THREE.DoubleSide })); tear.position.set(w * 0.1, 0, L + 0.04); tear.rotation.x = Math.PI / 2 - 0.2; hang.add(tear);
+      }
+      // the board that fell: two broken pieces and plaster crumbs on the floor
+      for (const [x, z, ry, w] of [[hx - 0.5, hz + 0.6, 0.4, 0.55], [hx - 0.05, hz + 0.95, -0.3, 0.4]]) { const p = boxAt('MACHI', x, z, w, 0.012, 0.42, soaked, 0.003); p.rotation.set(0.02, ry, 0.03); }
+      for (let i = 0; i < 16; i++) { const r = rng(40 + i)(); const c = mesh(new THREE.DodecahedronGeometry(0.01 + r * 0.022, 0), std(0x9c937e, { roughness: 1 }), hx - 0.6 + (i % 6) * 0.22 + r * 0.1, y + 0.02, hz + 0.3 + Math.floor(i / 6) * 0.3 + r * 0.2); c.rotation.set(i, i * 2, 0); c.scale.y = 0.45; c.position.y = y + 0.008; }
+      // the thread of drops from the joint into the puddle (dress #4 puddle at 12.0, 22.1), and the rings they make
+      const dN = 7, dpos = new Float32Array(dN * 3), dgeo = new THREE.BufferGeometry(); dgeo.setAttribute('position', new THREE.BufferAttribute(dpos, 3));
+      const drops = new THREE.Points(dgeo, new THREE.PointsMaterial({ color: 0xbfd6d2, size: 0.03, transparent: true, opacity: 0.85, depthWrite: false })); drops.frustumCulled = false; grp.add(drops);
+      const ringM = new THREE.MeshBasicMaterial({ color: 0x9fb8b4, transparent: true, opacity: 0, depthWrite: false });
+      const rings = [0, 1, 2].map(() => { const r = mesh(new THREE.RingGeometry(0.03, 0.036, 24), ringM.clone(), hx + 0.25, y + 0.016, hz - 0.15); r.rotation.x = -Math.PI / 2; r.raycast = () => {}; r.renderOrder = 3; return r; });
+      let ti = 0, ring = 0; const top = CY + 0.05;
+      const drip = { update: (dt) => {
+        ti += dt;
+        for (let i = 0; i < dN; i++) { const t = ((ti * 0.9 + i / dN) % 1); dpos[i * 3] = hx + 0.25; dpos[i * 3 + 1] = top - (top - y) * t * t; dpos[i * 3 + 2] = hz - 0.15; }
+        dgeo.attributes.position.needsUpdate = true;
+        const k = Math.floor(ti * 0.9 * dN); if (k !== ring) { ring = k; const r = rings[k % 3]; r.userData.t = 0; if (ctx.floor === 1 && ctx.audio && ctx.audio.noise && k % 2 === 0) ctx.audio.noise('drip', { pos: { x: hx, y: y + 0.1, z: hz } }); }
+        for (const r of rings) { r.userData.t = (r.userData.t ?? 9) + dt; const t = r.userData.t; r.scale.setScalar(1 + t * 9); r.material.opacity = Math.max(0, 0.3 - t * 0.5); }
+      } };
+      ctx.systems.push({ id: 'mn-ceiling', def: { update: (dt) => drip.update(dt) }, inst: null });
+      // the other two places: the board only stained, no hole
+      for (const [x, z] of [[8.0, 19.8], [14.6, 24.5]]) under(1.3, 1.0, new THREE.MeshStandardMaterial({ color: 0x4a3a22, transparent: true, opacity: 0.6, alphaMap: stainT, depthWrite: false }), x, z, 0.002, x);
     }
 
     // ---------------- #3 the things you can look at get something to see ----------------
