@@ -3,6 +3,7 @@
 // and whether the body text of a document / talk is cut (clipped by its scroller):
 //   node tools/probe.mjs --public --path dot-fps/ --mobile --size 844x340 --out <dir> --steps tools/dot/panels-steps.mjs   (also 844x390, 667x375)
 import { helpers } from '../play/lib.mjs';
+import { picFitSource } from '../hud-checks.mjs';
 export default async (api) => {
   const { G, sleep, log, shot } = api, H = helpers(api);
   const audit = (tag) => G(`(() => {
@@ -17,9 +18,10 @@ export default async (api) => {
     for (const s of document.querySelectorAll('.wm-body, .gf-doc-main, .tl-read > .tl-body')) if (vis(s) && s.scrollHeight > s.clientHeight + 2) out.scroll.push((s.className + '').split(' ')[0] + ' +' + (s.scrollHeight - s.clientHeight));
     const img = document.querySelector('.wm-win .gf-talk-img, .wm-win .pd-photo img, .tl-read .iv-photo'); if (img && vis(img)) { const r = img.getBoundingClientRect(); out.pic = Math.round(r.width) + 'x' + Math.round(r.height); }
     return out; })()`.replace('{ tag,', '{ tag: ' + JSON.stringify(tag) + ','));
-  const snap = async (tag) => { log('panel', await audit(tag)); await shot(tag); };
+  // P37 (kit 1.21.3): the picture as large as the room left after the words allows
+  const snap = async (tag) => { log('panel', await audit(tag)); const pf = await G(picFitSource()); for (const x of pf || []) if (x.over || x.grow) log('P37', tag, JSON.stringify(x)); await shot(tag); };
   await sleep(2000);
-  await G(`(([...document.querySelectorAll('.ph-sheet button')].find((b) => /このまま/.test(b.textContent)) || { click() {} }).click(), 1)`); await sleep(300);
+  await G(`(([...document.querySelectorAll('.ph-sheet button, #gf-rotate button')].find((b) => /このまま/.test(b.textContent)) || { click() {} }).click(), 1)`); await sleep(300);
   await G(`(document.getElementById('start-btn').click(), 1)`); await sleep(3500);
   // the opening talk, page by page
   for (let i = 1; i <= 8; i++) {

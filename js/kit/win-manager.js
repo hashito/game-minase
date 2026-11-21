@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/win-manager.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 1f0919c9: js/win-manager.js — edit in game-kit and run tools/kit-sync.js */
 // The window manager of the standard UI shell (rules U12 / U14 / U21): ONE window at a time, a fixed size per breakpoint
 // (never changed by tabs or content: the content scrolls inside), larger on big screens (>= 900 x 700), ALWAYS top-anchored
 // (windows shown one after another keep their top edge in one place: a size s window after a size m one does not jump down),
@@ -57,11 +57,17 @@ const MEDIA = "img, canvas, video, iframe, table, textarea, select, input:not([t
 // a picture in a window is never blown up past 1.3x its own pixels (a big PC window made 448-720 px photos look rough; 1.10.9). SVG scales freely.
 export const IMG_UPSCALE = 1.3;
 export const imgCap = (naturalW) => (naturalW > 1 ? `min(100%, ${Math.round(naturalW * IMG_UPSCALE)}px)` : "");
+const pixelArt = (im) => {
+  try { if (document.documentElement.dataset.style === "pixel") return true; const r = getComputedStyle(im).imageRendering; return r === "pixelated" || r === "crisp-edges"; } catch (e) { return false; }
+};
 function capImages(body) {
   if (!body.querySelectorAll) return;
   for (const im of body.querySelectorAll("img:not([data-wm-cap])")) {
     im.setAttribute("data-wm-cap", "");
     if (/\.svg(\?|#|$)|^data:image\/svg/i.test(im.getAttribute("src") || "")) continue;
+    // pixel art (game.json style "pixel" sets <html data-style="pixel">, or a picture drawn pixelated) scales cleanly: no cap
+    // (1.21.5, 水無瀬病院 ドット版 「絵が小さすぎる」: a 210 px dot picture was held to 273 px in a 430 px column)
+    if (pixelArt(im)) continue;
     const f = () => { if (!im.style.maxWidth && imgCap(im.naturalWidth)) im.style.maxWidth = imgCap(im.naturalWidth); };
     if (im.complete) f();
     else im.addEventListener("load", f, { once: true });

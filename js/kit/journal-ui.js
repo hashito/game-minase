@@ -1,4 +1,4 @@
-/* game-kit 8e20d97: js/journal-ui.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 1f0919c9: js/journal-ui.js — edit in game-kit and run tools/kit-sync.js */
 // The journal / collection screen for js/sidestory.js: tabs 進行中・完了・気になること・収集, stories with
 // their progress (done steps, the next one and what it still needs, the rest hidden), locked ones as
 // "？？？" silhouettes, open threads with what was noticed and solved ones with their answer, a reward
@@ -12,7 +12,7 @@
 import { KitUI, esc } from "./ui.js";
 import { icon } from "./icons.js";
 import { gfRegister, gfEmit, gfOk, gfFail, gfUnknown } from "./gf-test.js";
-import { viewItemHtml } from "./inventory-ui.js";
+import { viewItemHtml, picHtml, NOPIC_SVG } from "./inventory-ui.js";
 
 const TABS = [
   ["active", "進行中"],
@@ -40,7 +40,7 @@ export class Journal {
   }
   pic(kind, id, fallback = "") {
     const u = this.o.img ? this.o.img(kind, id) : null;
-    return u ? `<div class="jr-pic" style="background-image:url('${esc(u).replace(/'/g, "%27")}')"></div>` : `<div class="jr-pic jr-nopic">${esc(fallback)}</div>`;
+    return u ? picHtml(u, "jr-pic").replace(/^<span/, "<div").replace(/<\/span>$/, "</div>") : `<div class="jr-pic jr-nopic" aria-hidden="true">${NOPIC_SVG}</div>`;
   }
   isNew(key) {
     return this.ss.isFresh(key) ? `<span class="jr-new">${esc(this.L.newb)}</span>` : "";
@@ -233,7 +233,7 @@ export const entryHtml = (e, { pinned = false, fresh = false, open = false, hasO
   const more = !!(e.text || e.img || hasOpen);
   const text = e.text ? String(e.text).split("\n").filter(Boolean).map((t) => `<p>${esc(t)}</p>`).join("") : "";
   const btn = e.img || e.text || hasOpen ? `<button type="button" class="btn small jn-go" data-open="${esc(e.id)}">${esc(e.img || e.text ? L.more : L.reread)}</button>` : "";
-  return `<div class="jn-row${open ? " open" : ""}${e.img ? "" : " jn-nopic"}" data-e="${esc(e.id)}"><div class="jn-card"><button type="button" class="jn-main" data-toggle="${esc(e.id)}" aria-expanded="${open}">${e.img ? `<span class="jn-th" style="background-image:url('${esc(e.img).replace(/'/g, "%27")}')"></span>` : ""}<span class="jn-tx">${e.tag ? `<em>${esc(e.tag)}</em>` : ""}<b>${fresh ? `<span class="jr-new">${esc(L.newb)}</span>` : ""}${esc(e.title || "")}</b>${e.line ? `<small class="jn-line">${esc(e.line)}</small>` : ""}</span><span class="jn-chev" aria-hidden="true">${icon("chevron", { size: 20 })}</span></button>${more ? `<div class="jn-more"${open ? "" : " hidden"}>${text}${btn}</div>` : ""}</div><button type="button" class="jn-star${pinned ? " on" : ""}" data-pin="${esc(e.id)}" aria-pressed="${pinned}" aria-label="${esc(L.pin)}" title="${esc(L.pin)}">${icon("star", { size: 22 })}</button></div>`;
+  return `<div class="jn-row${open ? " open" : ""}${e.img ? "" : " jn-nopic"}" data-e="${esc(e.id)}"><div class="jn-card"><button type="button" class="jn-main" data-toggle="${esc(e.id)}" aria-expanded="${open}">${e.img ? picHtml(e.img, "jn-th") : ""}<span class="jn-tx">${e.tag ? `<em>${esc(e.tag)}</em>` : ""}<b>${fresh ? `<span class="jr-new">${esc(L.newb)}</span>` : ""}${esc(e.title || "")}</b>${e.line ? `<small class="jn-line">${esc(e.line)}</small>` : ""}</span><span class="jn-chev" aria-hidden="true">${icon("chevron", { size: 20 })}</span></button>${more ? `<div class="jn-more"${open ? "" : " hidden"}>${text}${btn}</div>` : ""}</div><button type="button" class="jn-star${pinned ? " on" : ""}" data-pin="${esc(e.id)}" aria-pressed="${pinned}" aria-label="${esc(L.pin)}" title="${esc(L.pin)}">${icon("star", { size: 22 })}</button></div>`;
 };
 
 // the entry view (U19): the photo card (img, title, text) and the protagonist's line as its own panel. Used by the default tap action.

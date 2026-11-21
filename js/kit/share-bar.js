@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/share-bar.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit a72383b9: js/share-bar.js — edit in game-kit and run tools/kit-sync.js */
 // The share row of the title screen and of the ending (all-games rule A21, kit 1.16): X で共有 / 共有 (the phone's share sheet, when there is one) /
 // リンクをコピー / 他のゲームを遊ぶ (https://games.autoarticles.net/ in the same tab). No other kit module is needed: the chat site, the 3D standard
 // and games of their own make (欠番放送, 工場) use the same file. Its CSS comes with it (injected once, tokens with fallbacks), so a game whose
@@ -85,7 +85,7 @@ export function mountShareBar(el, o = {}) {
   bar.dataset.place = place;
   bar.setAttribute("role", "group");
   bar.setAttribute("aria-label", "共有と他のゲーム");
-  bar.innerHTML = `<a class="gf-sb-btn gf-sb-x" data-sb="x" href="${esc(xPostUrl(text, info.url, o.tags))}" target="_blank" rel="noopener noreferrer">${X_SVG}<span>X で共有</span></a>`
+  bar.innerHTML = `<a class="gf-sb-btn gf-sb-x" data-sb="x" href="${esc(xPostUrl(text, info.url, o.tags))}" target="_blank" rel="noopener noreferrer" aria-label="X で共有">${X_SVG}<span>で共有</span></a>`
     + (native ? `<button type="button" class="gf-sb-btn" data-sb="native">共有…</button>` : "")
     + `<button type="button" class="gf-sb-btn" data-sb="copy">リンクをコピー</button>`
     + `<a class="gf-sb-btn gf-sb-more" data-sb="more" href="${PORTAL_URL}">${PORTAL_LABEL}</a>`

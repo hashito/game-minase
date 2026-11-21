@@ -1,4 +1,4 @@
-/* game-kit afcbe2c2: js/talk-ui.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit eb5bf688: js/talk-ui.js — edit in game-kit and run tools/kit-sync.js */
 // The 3D conversation window (standard 1.7): who speaks, where, an optional picture, the line, and 次へ (tap / click / Enter; S11:
 // the player sends each line). A choice is the same window with buttons. Both open in the ONE window of win-manager (U12), so the game
 // pauses and the pointer is free while they are open; the protagonist's thoughts stay in the thought band (ctx.monologue).
@@ -67,8 +67,21 @@ export function fitTalk(body) {
   const img = t.querySelector('.gf-talk-img');
   t.classList.add('gf-fit');
   const steps = [];
-  if (img) {
-    const w = t.clientWidth || 600, h0 = Math.round(Math.min(w * 9 / 16, body.clientHeight * 0.5));
+  // a low, wide window (phone landscape, 1.21.2): the picture on the left as tall as the window allows, the words on the right; the picture
+  // narrows only as far as the words need (「絵が小さすぎる」 - stacked, a 340 px high screen left it a tenth of the width)
+  const side = !!img && typeof innerHeight !== 'undefined' && innerHeight < 520 && body.clientWidth > body.clientHeight * 1.6;
+  t.classList.toggle('gf-talk--side', side);
+  if (side) {
+    t.style.removeProperty('--talk-img-h');
+    // the picture as tall as the window's inside, its column as wide as that height needs (at most 60 %), then narrower only for the words
+    const cs = getComputedStyle(body), innerH = body.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+    const innerW = t.clientWidth || body.clientWidth, ar = img.naturalWidth && img.naturalHeight ? img.naturalWidth / img.naturalHeight : 16 / 9;
+    t.style.setProperty('--talk-side-h', `${Math.max(60, Math.floor(innerH))}px`);
+    const w0 = Math.max(22, Math.min(60, Math.floor((innerH * ar) / Math.max(1, innerW) * 100)));
+    steps.push({ el: t, prop: '--talk-side-w', from: w0, to: 22, step: -2, unit: '%' });
+  } else if (img) {
+    t.style.removeProperty('--talk-side-w');
+    const w = t.clientWidth || 600, h0 = Math.round(Math.min(w * 9 / 16, body.clientHeight * 0.78));
     steps.push({ el: t, prop: '--talk-img-h', from: Math.max(48, h0), to: 48, step: -8, unit: 'px' });
   }
   const face = t.querySelector('.gf-talk-face');

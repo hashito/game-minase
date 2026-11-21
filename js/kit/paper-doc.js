@@ -1,4 +1,4 @@
-/* game-kit afcbe2c2: js/paper-doc.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 3620b8c1: js/paper-doc.js — edit in game-kit and run tools/kit-sync.js */
 // Documents as paper (standard 1.17.0, from 水無瀬病院 #1: 「紙類について、みる風車を真似た雰囲気に」「書類系は書類の形状で見せる」).
 // The feel of みる風車's documents (its js/paper.js: aged, stained, creased paper drawn on a canvas, ink that wavers, a photo pinned on):
 // a docs.json entry opens as a sheet of the kind it is, not as a plain window of paragraphs.
@@ -99,7 +99,7 @@ const CSS = `
 .pd-ledger .pd-body p{border-bottom:1px solid rgba(120,40,30,.25);padding-bottom:2px}
 .pd-note{transform:rotate(1.2deg)}
 .pd-photo{position:relative;margin:2px auto 14px;width:fit-content;max-width:86%;transform:rotate(-2deg);box-shadow:2px 3px 10px rgba(0,0,0,.45);background:#eee;padding:6px 6px 16px}
-.pd-photo img{display:block;max-width:100%;max-height:var(--pd-photo-h,34vh);height:auto}
+.pd-photo img{display:block;width:100%;max-width:100%;max-height:var(--pd-photo-h,70vh);height:auto;object-fit:contain}
 .pd-photo::before,.pd-photo::after{content:"";position:absolute;top:-9px;width:62px;height:20px;background:rgba(236,230,200,.72);box-shadow:0 1px 2px rgba(0,0,0,.2)}
 .pd-photo::before{left:-12px;transform:rotate(-24deg)}.pd-photo::after{right:-12px;transform:rotate(22deg)}
 .pd-tape::before{content:"";position:absolute;top:-10px;left:50%;width:90px;height:22px;margin-left:-45px;background:rgba(236,230,200,.7);transform:rotate(-3deg);box-shadow:0 1px 2px rgba(0,0,0,.2)}
@@ -109,9 +109,9 @@ const CSS = `
 html[data-gf-calm="1"] .pd-sheet,html[data-gf-calm="1"] .pd-photo{transform:none}
 /* 1.21.1 a low landscape screen (a phone held sideways, 水無瀬病院 ドット版): the picture LEFT of the text (about a third), the text on the right;
    renderDocWindow shrinks the picture (--pd-photo-w) before the text (--pd-scale) until the whole text shows without scrolling */
-@media (orientation:landscape) and (max-height:600px){
+@media (orientation:landscape) and (max-height:820px) and (min-aspect-ratio:4/3){
 .pd-wrap{padding:2px 0}
-.pd-sheet:has(>.pd-photo){width:100%;display:grid;grid-template-columns:var(--pd-photo-w,34%) minmax(0,1fr);column-gap:20px;align-items:start;padding:16px 22px 14px}
+.pd-sheet:has(>.pd-photo){width:100%;box-sizing:border-box;display:grid;grid-template-columns:var(--pd-photo-w,34%) minmax(0,1fr);column-gap:20px;align-items:start;padding:16px 22px 14px}
 .pd-sheet:has(>.pd-photo)>.pd-photo{grid-column:1;grid-row:1 / span 8;margin:6px 0 0;max-width:100%;width:auto;justify-self:center}
 .pd-sheet:has(>.pd-photo)>.pd-photo img{width:100%;max-height:none}
 .pd-sheet:has(>.pd-photo)>:not(.pd-photo):not(.pd-stamp){grid-column:2}
@@ -122,11 +122,11 @@ html[data-gf-calm="1"] .pd-sheet,html[data-gf-calm="1"] .pd-photo{transform:none
 }
 /* the document window (renderDocWindow): the text scrolls in its own box (only as the fallback), 読んだ stays under it and never covers it */
 .wm-body.gf-doc{overflow:hidden}
-.gf-doc-main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.gf-doc-main{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .wm-body.gf-doc>.gf-doc-done{position:static!important;box-shadow:none!important;background:none!important;flex:none;margin:10px 0 0}
-.gf-doc-plain .gf-doc-img{display:block;max-width:100%;max-height:var(--pd-photo-h,34vh);margin:0 auto 12px}
+.gf-doc-plain .gf-doc-img{display:block;width:100%;max-width:100%;max-height:var(--pd-photo-h,70vh);object-fit:contain;margin:0 auto 12px}
 .gf-doc-plain{font-size:calc(1em * var(--pd-scale,1))}
-@media (orientation:landscape) and (max-height:600px){
+@media (orientation:landscape) and (max-height:820px) and (min-aspect-ratio:4/3){
 .gf-doc-plain:has(>.gf-doc-img){display:grid;grid-template-columns:var(--pd-photo-w,34%) minmax(0,1fr);column-gap:18px;align-items:start}
 .gf-doc-plain>.gf-doc-img{width:100%;max-height:none;margin:4px 0 0}
 .wm-body.gf-doc>.gf-doc-done{margin-top:6px}
@@ -178,9 +178,9 @@ export function fitDoc(main) {
   if (!sheet) return null;
   const pic = sheet.querySelector(':scope > .pd-photo, :scope > .gf-doc-img');
   const split = !!pic && typeof getComputedStyle !== 'undefined' && getComputedStyle(sheet).display === 'grid';
-  const h0 = Math.max(60, Math.round(main.clientHeight * 0.55));
+  const h0 = Math.max(60, Math.round(main.clientHeight * 0.62));   // 1.21.4: the picture starts large (「十分に画面が大きい場合は大きな画像で」)
   const steps = [];
-  if (pic) steps.push(split ? { el: sheet, prop: '--pd-photo-w', from: 34, to: 16, step: -2, unit: '%' } : { el: sheet, prop: '--pd-photo-h', from: h0, to: 56, step: -12, unit: 'px' });
+  if (pic) steps.push(split ? { el: sheet, prop: '--pd-photo-w', from: 60, to: 16, step: -2, unit: '%' } : { el: sheet, prop: '--pd-photo-h', from: h0, to: 56, step: -12, unit: 'px' });
   steps.push({ el: sheet, prop: '--pd-scale', from: 1, to: 0.8, step: -0.04, unit: '' });
   return fitPanel(main, steps);
 }

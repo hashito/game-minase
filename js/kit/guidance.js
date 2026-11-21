@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/guidance.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 1f0919c9: js/guidance.js — edit in game-kit and run tools/kit-sync.js */
 // Guiding the player, from what several games built on their own (standard 1.13). All opt-in from game.json except ctx.lookTo and task "reach" / when().
 //   "pointer": true | { "range": 60 }     a diamond in the world over the next place: the station of the first required task that can start, or, from another
 //                                         room, the door to walk through. ctx.nextPlace() -> { task, room, x, y, z, door } | null (未然調書 1.6.0)
@@ -121,7 +121,8 @@ export function installGuidance(ctx, { manifest = {}, tasks = [], plan = null, s
     g.translate(32, 32); g.rotate(Math.PI / 4); g.fillStyle = '#ffae12'; g.strokeStyle = '#1a1408'; g.lineWidth = 5; g.fillRect(-15, -15, 30, 30); g.strokeRect(-15, -15, 30, 30);
     const tex = new T.CanvasTexture(c);
     if (T.SRGBColorSpace) tex.colorSpace = T.SRGBColorSpace;
-    const mark = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, toneMapped: false }));
+    // 1.21.5 (鏡屋 → every dot game: 「▼や矢印が壁を透けて見える」): the mark is hidden by walls (depth test); at a door it floats in the opening
+    const mark = new T.Sprite(new T.SpriteMaterial({ map: tex, transparent: true, depthTest: true, depthWrite: false, toneMapped: false }));
     mark.name = 'next-place'; mark.renderOrder = 999; mark.visible = false; ctx.scene.add(mark);
     let again = 0, now = null;
     sys.push((dt, active) => {

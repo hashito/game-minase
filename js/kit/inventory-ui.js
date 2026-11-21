@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/inventory-ui.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 1f0919c9: js/inventory-ui.js — edit in game-kit and run tools/kit-sync.js */
 // The item-management UI shared by every game (rule U17, with progress-ui.js taskScreen and journal-ui.js createJournal):
 // owned items as a grid (photo + name), a detail pane (large photo, short description, "why needed" (S6), the protagonist's
 // one-line feeling), use / examine buttons, selected + NEW states, a related-items link (opens the related items / papers
@@ -44,7 +44,15 @@ export function moveSelection(ids, cur, step) {
   const i = ids.indexOf(cur);
   return ids[Math.min(ids.length - 1, Math.max(0, (i < 0 ? 0 : i) + step))];
 }
-const pic = (img, cls, fallback) => (img ? `<span class="${cls}" style="background-image:url('${esc(img).replace(/'/g, "%27")}')"></span>` : `<span class="${cls} iv-nopic">${esc(String(fallback || "？").slice(0, 2))}</span>`);
+// A picture drawn as a background, with a hidden probe <img>: a missing file / a failed load turns the box into the no-picture mark
+// (standard 1.21.3, 鏡屋 「画像がない場合におかしくないですか？」: a thing without a picture showed a huge empty box with 「ラン」 in its corner).
+export const PIC_FAIL = "var b=this.parentNode;if(b){b.classList.add('iv-nopic');b.style.backgroundImage='none';b.innerHTML=b.dataset.nopic||''}";
+export const NOPIC_SVG = `<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" focusable="false" shape-rendering="crispEdges"><g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14"/><path d="M3 16l5-5 4 4 3-3 6 6"/></g><rect x="15" y="8" width="3" height="3" fill="currentColor"/></svg>`;
+export const picHtml = (img, cls, extra = "") => (img
+  ? `<span class="${cls}"${extra} data-nopic="${esc(NOPIC_SVG)}" style="background-image:url('${esc(img).replace(/'/g, "%27")}')"><img class="gf-pic-probe" src="${esc(img)}" alt="" hidden onerror="${PIC_FAIL}"></span>`
+  : `<span class="${cls} iv-nopic"${extra} aria-hidden="true">${NOPIC_SVG}</span>`);
+// no picture: a small mark beside the name (never the name's first letters in a big empty box); the text stays at the top
+const pic = (img, cls) => picHtml(img, cls);
 
 // the object card (U19): the photo card (photo + name + description + why) and, SEPARATE from it, the protagonist's feeling
 // as its own bordered block (the inner-voice card, 未然調書's 物の見え方). Stacked vertically by default (portrait / narrow);

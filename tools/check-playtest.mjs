@@ -41,6 +41,16 @@
 //   P35 a close button that a finger cannot tap: something else is on top at its centre, or a real tap leaves its box there (an error)
 //       (「上の通知でしゃがむの案内を閉じるで閉じられないです」)
 //   P36 a library mini game whose controls move when a caption / message gets longer (an error) (「文字が改行されると回す位置が変わってハンチングする」)
+//   1.21.3 (鏡屋, the user's play 2026-11-21; tools/menu-checks.mjs):
+//   P37 every entry of the menu opened (所持品, 気になること・写真, 覚え書き ...): a picture that does not load, a no-picture box taller than
+//       100 px, letters standing in for a picture (an error) (「画像がない場合におかしくないですか？」)
+//   P38 the window header's ⓘ / ×: the icon off the middle of its button, the button outside the header or over the frame (an error),
+//       PC and the phone sizes (「一時停止のインフォメーションマークやバツボタンがズレています」)
+//   P39 (1.21.4) the picture of a card / document as large as the room its text leaves (1366x768, 1920x1080, 390x844, 844x390, 844x340): grown one step
+//       it would still fit and get larger = an error; its share of the free room under 0.6 = a warning (tools/menu-checks.mjs pictureRoomSource)
+//   P40 (1.21.5) a picture in a reading panel / document smaller than the room allows, or words that do not fit or one cut out of its own shape (the talk picture too, beside its words) (an error), at 390 x 844,
+//       375 x 667, 844 x 390, 844 x 340, 1366 x 768 and 1920 x 1080 (「十分に画面が大きい場合は大きな画像で表示するべきです」)
+//   P41 (1.21.5) a sprite-stack body holding one pose other than idle / walk / run / crouch / sit for 3 s or more (「ひなたがずっと手をあげてます」)
 //   P21+ a wall paper that flickers on a still picture (tools/frame-flicker.mjs, the dot layers too: 「張り紙よりも大きな枠が見えて、ちらついている」)
 //   1.21.0: P33 (dot games) a visible material in a room that is not dot: a photo texture, a plain material, a smooth texture - walls,
 //     floors and ceilings included (tools/dot-scene.mjs; js/dot-world.js dotifyScene draws them as dot tiles in the palette) (error)
@@ -50,7 +60,7 @@
 //     content spilling out of a frame (error); an inner line drawn as a negative outline, a squashed picture (warning) (tools/frame-nest.mjs)
 //   1.21.0: P31 phone layout at 844x390 / 667x375 (landscape) and 390x844 (portrait): the HUD covers more than PHONE_HUD_MAX of the screen,
 //       two panels overlap (errors), the portrait notice is missing (tools/phone-layout.mjs: 「メッセージや通知で領域を使いすぎている」)
-// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -64,7 +74,8 @@ import { wallDoorSource } from './wall-door.mjs';
 import { talkRingSource, TALK_RING_MIN } from './talk-ring.mjs';
 import { flickerSource, FLICKER_MAX } from './frame-flicker.mjs';
 import { phoneLayoutSource, PHONE_HUD_MAX } from './phone-layout.mjs';
-import { closeTapSource, mgStableSource } from './hud-checks.mjs';
+import { closeTapSource, mgStableSource, picFitSource } from './hud-checks.mjs';
+import { menuPicturesSource, headButtonsSource, pictureRoomSource } from './menu-checks.mjs';
 // P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
 const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
 
@@ -361,6 +372,23 @@ try {
       if (f && f.paper && f.paper.on && f.paper.share > FLICKER_MAX) Wn('P21', `wall paper "${w.n}" flickers on a still picture (${f.paper.share} of its square jumps between frames: polygonOffset / one plane)`);
     }
   }
+  // P37 (1.21.3): every entry of the menu opened - no broken picture, no big empty picture box, no letters standing in for a picture
+  {
+    const r = await G(menuPicturesSource());
+    for (const [k, d] of ((r && r.bad) || []).slice(0, 8)) E('P37', `menu: ${k}: ${d} (js/inventory-ui.js picHtml: a missing picture is a small mark beside the name)`);
+    if (r && r.skip) Wn('P37', r.skip);
+  }
+  // P38 (1.21.3): the window header's ⓘ / × centred in their buttons and inside the header and the frame (the menu open)
+  {
+    await G(`(g.tm && g.tm.open && g.tm.open('tasks'), 1)`); await sleep(400);
+    const r = await G(headButtonsSource());
+    for (const [k, d] of ((r && r.bad) || []).slice(0, 6)) E('P38', `the menu window: ${k}: ${d}`);
+    await G(`(g.tm && g.tm.close && g.tm.close(), 1)`); await sleep(200);
+  }
+  // P41 (1.21.5): a sprite-stack body that held a pose other than idle / walk / run / crouch / sit for 3 s or more during the run
+  // (js/sprite-stack-anim.js keeps the longest hold of each pose; a body's own holdOk poses are left out)
+  const held = (await G(`globalThis.__gfMotionHeld || {}`)) || {};
+  for (const [k, t] of Object.entries(held)) if (t >= 3) E('P41', `${k.replace('|', ' held the pose "')}" for ${t} s (a held pose looks stuck: back to idle after a moment)`);
   // P9: 操作方法 in the menu
   const ctl = await G(`(async () => { if (!g.pm) return 'no menu'; g.pm.open(); await new Promise((r) => setTimeout(r, 400)); const ok = [...document.querySelectorAll('.wm-layer button, .pm button')].some((b) => /操作方法/.test(b.textContent)); g.pm.close && g.pm.close(); return ok; })()`);
   if (ctl !== true) E('P9', `the menu has no 操作方法 (${ctl})`);
@@ -404,6 +432,7 @@ try {
         for (const m of r.moved) E('P36', `${w}x${h} task "${t}" (${r.type}): a longer text moves a control: ${m}`);
         for (let i = 0; i < 10 && (await Q('g.blocked ? g.blocked() : false')); i++) { await closeAll(); await sleep(400); }
       }
+      { await Q(`(g.tm && g.tm.open && g.tm.open('tasks'), 1)`); await sleep(400); const hb = await Q(headButtonsSource()); for (const [k, d] of ((hb && hb.bad) || []).slice(0, 4)) E('P38', `${w}x${h} the menu window: ${k}: ${d}`); await Q(`(g.tm && g.tm.close && g.tm.close(), 1)`); await sleep(200); }
       for (const x of (await Q(framePaddingSource())).slice(0, 12)) Wn('P23', `${w}x${h} ${x.sel} 「${x.text}」: text ${x.min} px from its frame (needs ${x.need[0]} px, gaps l${x.gap.l} r${x.gap.r} t${x.gap.t} b${x.gap.b})`);
       if (!(await Q('typeof g.useInteract === "function"'))) { Wn('P24', 'ctx.useInteract is missing (kit < 1.20.2): the cards and documents were not opened'); continue; }
       const list = await Q(`g.world.interactables.map((o) => o.userData.interact).filter((ia) => ia && (ia.kind === 'look' || ia.kind === 'thing' || ia.kind === 'doc')).map((ia) => ({ kind: ia.kind, id: ia.id }))`);
@@ -434,6 +463,41 @@ try {
       }
       if (!n) Wn('P24', `${w}x${h}: no thing or document to open`);
     } catch (e) { Wn('P24', `${w}x${h}: the phone pass could not run: ${e.message}`); }
+    finally { await q.close(); }
+  }
+  // P39 (1.21.4, 鏡屋): the picture of a card / document as large as the room its text leaves, on a PC and on a phone
+  for (const [w, h, mob] of [[1366, 768], [1920, 1080], [390, 844, 1], [844, 390, 1], [844, 340, 1]]) {
+    const q = await launch(mob ? { width: w, height: h, mobile: true, dpr: 2 } : { width: w, height: h });
+    const Q = async (expr) => { const s = await q.eval(`(async () => { const g = window.__game; return JSON.stringify(await (${expr})); })()`); return s === undefined ? undefined : JSON.parse(s); };
+    const closeAll = () => Q(`(g.lane && g.lane.clear && g.lane.clear('card'), g.wm && g.wm.isOpen && g.wm.close(), [...document.querySelectorAll('.wm-layer .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`);
+    try {
+      await q.goto(`${base}?test=1`);
+      await q.waitFor("window.__game && document.getElementById('start-btn') && !document.getElementById('start-btn').disabled || (window.__game && window.__game.state && window.__game.state.started)", 120000);
+      if (!(await Q('g.state.started'))) await Q(`(document.getElementById('start-btn').click(), 1)`);
+      await sleep(2500);
+      for (let i = 0; i < 30 && (await Q('g.blocked ? g.blocked() : false')); i++) { await closeAll(); await sleep(400); }
+      if (!(await Q('typeof g.useInteract === "function"'))) break;
+      const list = await Q(`g.world.interactables.map((o) => o.userData.interact).filter((ia) => ia && (ia.kind === 'look' || ia.kind === 'thing' || ia.kind === 'doc')).map((ia) => ({ kind: ia.kind, id: ia.id }))`);
+      let n = 0, low = 0;
+      for (const ia of list.slice(0, 60)) {
+        if (n >= 10) break;
+        await Q(`(g.useInteract(g.world.interactables.map((o) => o.userData.interact).find((x) => x && x.kind === ${JSON.stringify(ia.kind)} && x.id === ${JSON.stringify(ia.id)})), 1)`);
+        await sleep(800);
+        const r = await Q(pictureRoomSource());
+        if (r && r.n) {
+          n++;
+          for (const [k, d] of r.bad.slice(0, 2)) E('P39', `${w}x${h} ${ia.kind} "${ia.id}": ${k}: ${d}`);
+          for (const x of r.info) if (x.share < 0.6 && low++ < 4) Wn('P39', `${w}x${h} ${ia.kind} "${ia.id}": the picture fills ${x.share} of the free room (${x.where}, ${x.at})`);
+        }
+        // P40 (1.21.5, 水無瀬病院 ドット版): a picture cut out of its own shape (object-fit against a width cap), or smaller than the room
+        // beside / under its words (the talk picture beside its words in a low wide window too); words that scroll
+        for (const x of (await Q(picFitSource())) || []) {
+          if (x.over) E('P40', `${w}x${h} ${ia.kind} "${ia.id}": the text does not fit its ${x.where} (it scrolls)`);
+          else if (x.crop) E('P40', `${w}x${h} ${ia.kind} "${ia.id}": the picture (${x.pic.join(' x ')}) is cut out of its own shape (object-fit against a width cap)`);
+        }
+        await closeAll(); await sleep(250);
+      }
+    } catch (e) { Wn('P39', `${w}x${h}: the picture pass could not run: ${e.message}`); }
     finally { await q.close(); }
   }
   // P31 (1.21.0): the phone layout, landscape and portrait, with a notice on screen (the worst case the player meets)

@@ -1,4 +1,4 @@
-/* game-kit afcbe2c2: js/panel-fit.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 1f0919c9: js/panel-fit.js — edit in game-kit and run tools/kit-sync.js */
 // Fit a panel's content into its box without scrolling (standard 1.21.1, 水無瀬病院 ドット版 on an iPhone held sideways with the address bar
 // showing, 844x340: 「ズレてます」 and the document text hidden under its picture). The user's rule: shrink the PICTURE first, then the text;
 // scrolling is only the fallback for an unusually long text. Used by the document window (game-core), the talk window (talk-ui) and the
@@ -19,7 +19,10 @@ export function fitPanel(box, steps, o = {}) {
     if (!over()) break;
   }
   out.fits = !over();
+  box._gfFit = { steps: steps.filter(Boolean).map((s) => ({ el: s.el, prop: s.prop, from: s.from, to: s.to, step: s.step, unit: s.unit || '' })), at: out.at };   // for the check P39 (tools/menu-checks.mjs)
   box.toggleAttribute('data-fit-scroll', !out.fits);   // the fallback: the box scrolls (css may show a hint)
+  // the first step (the picture) gave way for the words: P40 (tools/hud-checks.mjs picFitSource) then accepts a picture smaller than the room
+  const s0 = steps.find((s) => s && s.el); box.toggleAttribute('data-fit-shrunk', !!s0 && out.at[s0.prop] !== undefined && out.at[s0.prop] !== s0.from);
   return out;
 }
 export function keepFitted(box, run) {

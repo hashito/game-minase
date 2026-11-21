@@ -1,4 +1,4 @@
-/* game-kit de49b0f7 (main 1.20.3): js/sprite-stack-anim.js — edit in game-kit */
+/* game-kit 3620b8c1 (main 1.21.5): js/sprite-stack-anim.js — edit in game-kit */
 // The generic motion player of sprite-stack characters (docs/sprite-motions.md). No three.js, no DOM: it only decides
 // which frame of a frame set shows now. The same player drives every character and monster, in 3D (sprite-stack-mesh.js)
 // or 2D (sprite-stack-library.js draw by frame id).
@@ -37,9 +37,16 @@ export function turnToward(a, target, dt, rate = 10) {
   return a + Math.sign(d) * m;
 }
 
+// the states a body may stay in (P41, 1.21.5: 「ひなたがずっと手をあげてます」 - any other pose held 3 s or more is a finding)
+export const REST_STATES = new Set(['idle', 'walk', 'run', 'crouch', 'crouch-walk', 'sit']);
+const heldLog = () => (globalThis.__gfMotionHeld = globalThis.__gfMotionHeld || {});
+
 export class MotionPlayer {
   constructor(set, o = {}) {
     this.set = set;
+    this.name = o.name || set.id || 'figure';
+    this.holdOk = new Set(o.holdOk || []);   // poses this body may hold on purpose (a monster pressing on a door)
+    this.since = 0;
     this.motions = set.motions || {};
     this.fallback = { ...DEFAULT_FALLBACK, ...(o.fallback || {}) };
     this.has = new Set(set.frames || []);
@@ -69,6 +76,7 @@ export class MotionPlayer {
   play(state, o = {}) {
     if (state === this.state && !o.restart) return this;
     const prev = this.motion;
+    if (state !== this.state) this.since = 0;
     this.state = state;
     this.motion = this.resolve(state);
     // a cycle keeps its phase when switching between gaits (walk <-> run), so the feet do not jump
@@ -89,6 +97,8 @@ export class MotionPlayer {
 
   /** advance; returns the frame name to show */
   update(dt, { moved = null, speed = null } = {}) {
+    this.since += dt;
+    if (this.state && !REST_STATES.has(this.state) && !this.holdOk.has(this.state)) { const L = heldLog(), k = `${this.name}|${this.state}`; if (!(L[k] >= this.since)) L[k] = +this.since.toFixed(2); }
     const d = this.def;
     if (!d) { this.frame = (this.set.frames || [])[0] || null; return this.frame; }
     const n = d.frames.length;

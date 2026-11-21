@@ -1,4 +1,4 @@
-/* game-kit de49b0f7 (main 1.20.3): js/sprite-stack-mesh.js — edit in game-kit */
+/* game-kit 3620b8c1 (main 1.21.5): js/sprite-stack-mesh.js — edit in game-kit */
 // Sprite stacks as three.js meshes (docs/sprite-motions.md): the horizontal slices are read as a voxel volume and turned
 // into one mesh per frame (faces only where a voxel meets air, coplanar faces of one colour merged into rectangles, colour
 // per vertex). The model reads the same from every angle, also at eye level where stacked slice planes would vanish.
@@ -130,7 +130,10 @@ export function buildFrameGeometry(THREE, set, frame, o = {}) {
 
 /** a character: one mesh whose geometry follows the motion player.
  *  o: { height (m: scales the set so its standing frame is this tall), scale, material, motions (only these get geometry),
- *       state, fallback } */
+ *       state, fallback,
+ *       lod: { set, far = 6, camera } }   1.21.0: a fine set (res 2, 1.25 cm a voxel: tools/sprite-stacks/motion_frames.py --res 2) near the
+ *       camera and this normal-resolution set of the same character farther than `far` metres (with a 1 m band so it does not flicker);
+ *       update(dt, { camera }) or o.lod.camera gives the camera. figure.res is the resolution in use, root.userData.res the finest it has. */
 export function createFigure(THREE, set, o = {}) {
   const m = set.meta;
   const motions = o.motions || Object.keys(m.motions);
@@ -145,19 +148,41 @@ export function createFigure(THREE, set, o = {}) {
   }
   const mat = o.material || new THREE.MeshLambertMaterial({ vertexColors: true });
   const geos = new Map(frames.map((f) => [f, buildFrameGeometry(THREE, set, f, { scale })]));
+  // the far (normal-resolution) frames: scaled to the same height
+  let far = null;
+  if (o.lod && o.lod.set) {
+    const L = o.lod.set, lm = L.meta;
+    const ref = lm.frames.find((f) => /^idle\.|^stand/.test(f)) || lm.frames[0];
+    const g = buildStackGeometry(THREE, stripVolume(L.px, lm.w, lm.d, lm.n, lm.frames.indexOf(ref) * lm.d), { mpp: lm.mpp, pivot: lm.pivot });
+    const ls = o.height ? o.height / Math.max(1e-6, g.boundingBox.max.y) : scale;
+    g.dispose();
+    far = new Map(frames.filter((f) => lm.frames.includes(f)).map((f) => [f, buildFrameGeometry(THREE, L, f, { scale: ls })]));
+  }
   const root = new THREE.Group(); root.name = `figure:${m.id}`;
+  root.userData.res = m.res || (m.mpp && m.mpp < 0.02 ? 2 : 1);
   const mesh = new THREE.Mesh(geos.get(frames[0]), mat); mesh.castShadow = true; root.add(mesh);
-  const anim = new MotionPlayer({ ...m, frames }, { state: o.state || 'idle', fallback: o.fallback });
+  const anim = new MotionPlayer({ ...m, frames }, { state: o.state || 'idle', fallback: o.fallback, name: o.name || set.id, holdOk: o.holdOk });
   // every frame once, for the warm-up (geometry uploads before play)
   const warm = new THREE.Group(); warm.name = `warm:${m.id}`;
   for (const g of geos.values()) warm.add(new THREE.Mesh(g, mat));
-  let shown = null;
-  const show = (f) => { if (f && f !== shown && geos.has(f)) { mesh.geometry = geos.get(f); shown = f; } return shown; };
+  if (far) for (const g of far.values()) warm.add(new THREE.Mesh(g, mat));
+  let shown = null, useFar = false;
+  const P = new THREE.Vector3();
+  const show = (f) => { const G = useFar && far && far.has(f) ? far : geos; const g = f && G.get(f); if (g && mesh.geometry !== g) { mesh.geometry = g; } if (f && G.has(f)) shown = f; return shown; };
   show(anim.update(0));
-  return {
-    root, mesh, anim, warm, scale, frames, material: mat,
+  const fig = {
+    root, mesh, anim, warm, scale, frames, material: mat, res: root.userData.res,
     show,
-    update(dt, u = {}) { return show(anim.update(dt, u)); },
-    dispose() { for (const g of geos.values()) g.dispose(); },
+    update(dt, u = {}) {
+      const cam = u.camera || (o.lod && o.lod.camera);
+      if (far && cam) {
+        root.getWorldPosition(P); const d = P.distanceTo(cam.position || cam), F = (o.lod.far ?? 6);
+        const next = useFar ? d > F - 0.5 : d > F + 0.5;
+        if (next !== useFar) { useFar = next; fig.res = useFar ? (o.lod.set.meta.res || 1) : root.userData.res; }
+      }
+      return show(anim.update(dt, u));
+    },
+    dispose() { for (const g of geos.values()) g.dispose(); if (far) for (const g of far.values()) g.dispose(); },
   };
+  return fig;
 }

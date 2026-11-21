@@ -1,4 +1,4 @@
-/* game-kit afcbe2c2: css/kit.css — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 1f0919c9: css/kit.css — edit in game-kit and run tools/kit-sync.js */
 /* game-kit: shared styles for first-person browser games (windows, HUD, buttons, touch controls,
    status chips, steppers, kanban, app-like software screens, tabs, stamps, share buttons; at the end
    progression pg-*, sim UI nt-/tb-/dl-/ch-*, journal jr-* / stream veil st-* / hiding hd-*, chat cx-*).
@@ -2655,6 +2655,12 @@ body.touch #mg .desk-only { display: none; }
 .iv-photocard { display: flex; flex-direction: column; gap: 8px; }
 .iv-photo { display: block; width: 100%; aspect-ratio: 16 / 10; max-height: 38vh; border-radius: 8px; background: var(--gf-surface-2, #ccc) center / cover no-repeat; border: 1px solid var(--gf-border, var(--line)); }
 .iv-photo.iv-nopic { font-size: 2em; }
+/* 1.21.3 no picture (none given, or it failed to load): a small mark beside the name, the text from the top - never a big empty box */
+.iv-nopic { display: grid !important; place-items: center; color: var(--gf-muted, #8a949a); background: var(--gf-surface-2, rgba(0, 0, 0, 0.25)) !important; }
+.iv-photo.iv-nopic, .tm-content .iv-photo.iv-nopic { width: 64px !important; height: 64px !important; max-height: 64px !important; aspect-ratio: 1 / 1 !important; flex: none; }
+.iv-photocard:has(> .iv-photo.iv-nopic) { display: grid !important; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: start; }
+.iv-photocard:has(> .iv-photo.iv-nopic) > .iv-photo { grid-row: 1; }
+.gf-pic-probe { display: none !important; }
 .iv-info { display: flex; flex-direction: column; gap: 3px; }
 .iv-name { font-size: 1.1em; }
 .iv-tag, .iv-meta { font-style: normal; font-size: 0.78em; color: var(--gf-text-dim, var(--dim)); }
@@ -2877,6 +2883,10 @@ html[data-gf-no-flash="1"] .wm-layer { animation: none; }
 .tm-content .iv-photo { aspect-ratio: 4 / 3; height: auto; max-height: min(52vh, 560px); width: 100%; background-size: contain; background-color: rgba(0, 0, 0, 0.45); }
 @media (max-height: 520px) { .tm-content .iv-photo { max-height: 58vh; aspect-ratio: 4 / 3; } }
 @media (max-height: 520px) and (min-width: 600px) { .pm { max-width: none; } .pm-list { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gf-space-2, 8px) var(--gf-space-3, 12px); } .pm-item { min-height: 48px; } }
+/* 1.21.5: a low landscape phone (844 x 340 under Safari's bar) keeps every item on screen: three columns once there are more than eight */
+/* 1.21.5: a PC screen no taller than 820 px (1366 x 768) - eight or more items in two columns, so the menu never scrolls */
+@media (max-height: 820px) and (min-width: 900px) { .pm { max-width: none; } .pm-list:has(> :nth-child(8)) { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gf-space-2, 8px) var(--gf-space-3, 12px); } }
+@media (max-height: 400px) and (min-width: 600px) { .pm-list:has(> :nth-child(9)) { grid-template-columns: 1fr 1fr 1fr; } .pm-item { min-height: 44px; } }
 /*@section chat*/
 /* ---- chat standard 1.2 (#35): home / title / call / backlog / drafts / album. Colours come from --cx-* (skins set them from --gfc-*) ---- */
 .cx-app .cx-stage { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
@@ -3072,6 +3082,13 @@ html[data-gf-no-flash="1"] .wm-layer { animation: none; }
 .gf-talk.gf-fit .gf-talk-img { height: var(--talk-img-h, auto); width: auto; max-width: 100%; max-height: none; align-self: center; }
 .gf-talk.gf-fit[style*="--talk-face-w"] .gf-talk-face { width: var(--talk-face-w); }
 .gf-talk.gf-fit .gf-talk-text { line-height: calc(1.9 - (1 - var(--talk-scale, 1)) * 2); }
+/* low wide window (1.21.2, talk-ui fitTalk adds gf-talk--side): picture left, words right, the foot under the words */
+.gf-talk.gf-talk--side { display: grid; grid-template-columns: minmax(0, var(--talk-side-w, 46%)) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr) auto; column-gap: var(--gf-space-4, 16px); row-gap: var(--gf-space-2, 8px); align-content: stretch; }
+.gf-talk.gf-talk--side > .gf-talk-img { grid-column: 1; grid-row: 1 / -1; width: 100%; height: auto; max-height: var(--talk-side-h, 100%); object-fit: contain; align-self: center; }
+.gf-talk.gf-talk--side > .gf-talk-who { grid-column: 2; grid-row: 1; }
+.gf-talk.gf-talk--side > .gf-talk-text { grid-column: 2; grid-row: 2; align-self: center; }
+.gf-talk.gf-talk--side > .gf-talk-row { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+.gf-talk.gf-talk--side > .gf-talk-foot { grid-column: 2; grid-row: 3; margin-top: 0; }
 .gf-talk-img { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; max-height: 30vh; object-fit: cover; background: #0b0e0f; border: 1px solid var(--gf-border, rgba(255,255,255,.2)); border-radius: var(--gf-radius, 4px); }   /* the box has its size before the picture arrives (1.11.1) */
 .gf-talk-img--kept { opacity: .72; filter: saturate(.75); }   /* the last picture, kept under a line without one (no jump) */
 .gf-talk-row { display: flex; gap: var(--gf-space-3, 12px); align-items: flex-start; }
@@ -3644,4 +3661,7 @@ body.touch #say.on { pointer-events: auto; }   /* a tap on the thought band open
 .mgx-photo-read span { padding: 2px 8px; border-radius: 6px; background: rgba(0, 0, 0, 0.35); /* pair-ok */ color: #ffc2a8; /* pair-ok */ }
 .mgx-photo-read span.mgx-photo-good { color: #a8f0b4; /* pair-ok */ }
 @media (max-height: 500px) { .mgx-photo-read { font-size: 14px; } }
+/* 1.21.4 (鏡屋 P36 at 390x844): on a narrow screen the readings and the message keep two lines of room, so a longer line never pushes
+   the ring, the buttons or the shutter */
+@media (max-width: 560px) { .mgx-photo-read { min-height: calc(3em + 12px); align-content: flex-start; } .mgx-photo .mgx-msg, .mgx-msg { min-height: 3.2em; } }
 .ms-pin--next { fill: var(--gf-danger, #d0603a); }

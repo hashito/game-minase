@@ -58,3 +58,36 @@ export function mgStableSource(id) {
     return { type: (t.minigame || {}).type, open: true, controls: ctl.length, texts: texts.length, moved: [...new Set(moved)].slice(0, 6) };
   })()`;
 }
+
+/** P40 (1.21.5, 「十分に画面が大きい場合は大きな画像で表示するべきです」): every open reading panel / document / talk window with a picture:
+ *  the text must fit (no overflow) and the picture must not be smaller than the room allows - an error when the panel has free space
+ *  left (slack) of a quarter of the picture's height or more and the picture is narrower than the column it sits in (it could grow). */
+export function picFitSource() {
+  return `(() => {
+    const out = [];
+    const boxes = [...document.querySelectorAll('#gf-reader .tl-read .tl-body, .wm-win .wm-body')].filter((b) => b.getBoundingClientRect().height > 20);
+    for (const body of boxes) {
+      const pic = [...body.querySelectorAll('img, .iv-photo, .pd-photo, .gf-doc-img, .gf-talk-img')].find((e) => { const r = e.getBoundingClientRect(); return r.width > 8 && r.height > 8 && !e.closest('.gf-talk-row') && !e.classList.contains('gf-talk-face') && getComputedStyle(e).visibility !== 'hidden'; });
+      if (!pic) continue;
+      const scroller = body.querySelector('.gf-doc-main') || body;
+      const over = scroller.scrollHeight > scroller.clientHeight + 2 && !scroller.hasAttribute('data-fit-scroll');
+      const B = body.getBoundingClientRect(), P = pic.getBoundingClientRect();
+      let bottom = B.top;
+      for (const e of body.querySelectorAll('*')) { if (!e.children.length || e === pic || e.tagName === 'IMG') { const r = e.getBoundingClientRect(); if (r.height > 0 && r.width > 0 && getComputedStyle(e).visibility !== 'hidden') bottom = Math.max(bottom, r.bottom); } }
+      const padB = parseFloat(getComputedStyle(body).paddingBottom) || 0;
+      const slack = Math.max(0, B.bottom - padB - bottom);
+      const col = pic.parentElement.getBoundingClientRect().width;
+      const innerH = B.height - (parseFloat(getComputedStyle(body).paddingTop) || 0) - padB;
+      const beside = [...body.querySelectorAll('p, .gf-talk-text, .pd-body, .iv-info')].some((e) => { const r = e.getBoundingClientRect(); return r.width > 20 && r.left >= P.right - 2 && r.top < P.bottom && r.bottom > P.top; });
+      // stacked: free room under the words and a picture narrower than its column; side by side: neither as tall as the panel nor half its width
+      // (a picture the fit made smaller for the words - data-fit-shrunk on a box from js/panel-fit.js - is as large as the words allow)
+      const shrunk = !!body.querySelector('[data-fit-shrunk]') || body.hasAttribute('data-fit-shrunk') || !!(body.closest('[data-fit-shrunk]'));
+      // a picture box out of its own shape (cut by object-fit: a width cap against a set height) is not shown whole (1.21.5)
+      const nat = pic.tagName === 'IMG' && pic.naturalWidth > 1 && pic.naturalHeight > 1 ? pic.naturalWidth / pic.naturalHeight : 0;
+      const crop = !!nat && /cover|none/.test(getComputedStyle(pic).objectFit) && Math.abs(P.width / P.height - nat) / nat > 0.12;
+      const grow = crop || !shrunk && (beside ? (P.height < innerH * 0.7 && P.width < B.width * 0.5) : (slack >= Math.max(24, P.height * 0.25) && P.width < col * 0.95 - 2));
+      out.push({ where: (body.closest('#gf-reader') ? 'reader' : (body.closest('.wm-win') || {}).dataset ? 'window' : 'panel') + ':' + (body.closest('[data-id]') ? body.closest('[data-id]').dataset.id : ''), over, slack: Math.round(slack), pic: [Math.round(P.width), Math.round(P.height)], col: Math.round(col), crop, grow });
+    }
+    return out;
+  })()`;
+}
