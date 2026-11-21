@@ -1,13 +1,14 @@
 {
  "id": "hinata",
- "w": 31,
- "d": 45,
- "n": 84,
+ "w": 60,
+ "d": 90,
+ "n": 168,
  "pivot": [
-  15,
-  19
+  29,
+  38
  ],
- "mpp": 0.025,
+ "mpp": 0.0125,
+ "res": 2,
  "frames": [
   "idle.1",
   "idle.2",
@@ -34,8 +35,6 @@
   "stand-up.2",
   "fear.1",
   "fear.2",
-  "lean.1",
-  "lean.2",
   "reach.1",
   "reach.2",
   "reach.3",
@@ -115,15 +114,6 @@
    "loop": true,
    "fallback": "crouch"
   },
-  "lean": {
-   "frames": [
-    "lean.1",
-    "lean.2"
-   ],
-   "fps": 1,
-   "loop": true,
-   "fallback": "idle"
-  },
   "reach": {
    "frames": [
     "reach.1",
@@ -148,14 +138,8 @@
   }
  },
  "src": {
-  "family": "character-hoodie",
-  "variant": "woman",
-  "params": {
-   "top": "#4c5a52",
-   "bottom": "#2a2f3a",
-   "shoes": "#d8d6cc",
-   "hair": "#241a14",
-   "hairstyle": "ponytail"
-  }
+  "family": "character",
+  "variant": "explorer-woman",
+  "params": {}
  }
 }

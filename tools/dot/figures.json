@@ -1,8 +1,8 @@
 [
- {"id": "hinata", "family": "character-hoodie", "variant": "woman",
-  "params": {"top": "#4c5a52", "bottom": "#2a2f3a", "shoes": "#d8d6cc", "hair": "#241a14", "hairstyle": "ponytail"},
-  "motions": ["idle", "walk", "crouch", "crouch-walk", "stand-up", "fear", "lean", "reach", "turn"]},
- {"id": "are", "family": "monster-specimen-chimera", "variant": "formalin",
+ {"id": "hinata", "family": "character", "variant": "explorer-woman", "res": 2,
+  "params": {},
+  "motions": ["idle", "walk", "crouch", "crouch-walk", "stand-up", "fear", "reach", "turn"]},
+ {"id": "are", "family": "monster-chimera", "variant": "sickly", "res": 2,
   "params": {},
   "motions": ["idle", "walk", "attack", "reach", "fear"]}
 ]

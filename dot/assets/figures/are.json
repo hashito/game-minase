@@ -1,13 +1,14 @@
 {
  "id": "are",
- "w": 45,
- "d": 46,
- "n": 92,
+ "w": 82,
+ "d": 118,
+ "n": 192,
  "pivot": [
-  22,
-  10
+  39,
+  38
  ],
- "mpp": 0.025,
+ "mpp": 0.0125,
+ "res": 2,
  "frames": [
   "idle.1",
   "idle.2",
@@ -88,8 +89,8 @@
   }
  },
  "src": {
-  "family": "monster-specimen-chimera",
-  "variant": "formalin",
+  "family": "monster-chimera",
+  "variant": "sickly",
   "params": {}
  }
 }
