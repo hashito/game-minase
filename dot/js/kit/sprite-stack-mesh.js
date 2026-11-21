@@ -1,0 +1,163 @@
+/* game-kit de49b0f7 (main 1.20.3): js/sprite-stack-mesh.js — edit in game-kit */
+// Sprite stacks as three.js meshes (docs/sprite-motions.md): the horizontal slices are read as a voxel volume and turned
+// into one mesh per frame (faces only where a voxel meets air, coplanar faces of one colour merged into rectangles, colour
+// per vertex). The model reads the same from every angle, also at eye level where stacked slice planes would vanish.
+// Axes: the stack's x right / +y the face / z up -> three.js x / +z / y. The pivot (the point between the feet) is the origin,
+// the lowest voxel sits on y 0.
+//
+//   import { loadFrameSet, buildFrameGeometry, createFigure } from './sprite-stack-mesh.js';
+//   const set = await loadFrameSet(THREE, 'assets/stacks/worker.json');      // JSON + atlas PNG (motion_frames.py)
+//   const fig = createFigure(THREE, set, { height: 1.7, material });        // { root, mesh, anim, show(frame), update(dt, o) }
+//   scene.add(fig.root); fig.anim.play('walk'); fig.update(dt, { moved });
+//   // a single prop from the library (slices.png + catalog sizes): buildStackGeometry(THREE, vol, { mpp })
+//
+// Every frame's geometry is built at load: put fig.warm (a group with every frame) through the game's warm-up so the first
+// sight of a motion uploads nothing during play (pixel games load first).
+import { MotionPlayer } from './sprite-stack-anim.js';
+
+/** RGBA pixels of an image URL */
+export async function loadPixels(url) {
+  const img = new Image();
+  img.decoding = 'async';
+  img.src = url;
+  await img.decode();
+  const c = document.createElement('canvas');
+  c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext('2d', { willReadFrequently: true });
+  g.drawImage(img, 0, 0);
+  return { data: g.getImageData(0, 0, c.width, c.height).data, width: c.width, height: c.height };
+}
+
+/** a volume view of one strip (rows y, columns z * w + x) inside an RGBA picture, starting at row `row` */
+export function stripVolume(px, w, d, n, row = 0) {
+  const W = px.width, data = px.data;
+  return {
+    w, d, n,
+    at(x, y, z) { const i = ((row + y) * W + z * w + x) * 4; return data[i + 3] > 127 ? i : -1; },
+    rgb(i) { return [data[i], data[i + 1], data[i + 2]]; },
+  };
+}
+
+const lin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+
+/** one merged mesh geometry of a volume. o: { mpp (metres per voxel), scale (extra), pivot [x, y] (voxels; default centre) } */
+export function buildStackGeometry(THREE, vol, o = {}) {
+  const { w, d, n } = vol;
+  const s = (o.mpp || 0.025) * (o.scale || 1);
+  const px = o.pivot ? o.pivot[0] + 0.5 : w / 2, py = o.pivot ? o.pivot[1] + 0.5 : d / 2;
+  // lowest solid slice -> y 0 (nothing sinks or floats whatever the strip's bottom margin)
+  let z0 = 0;
+  find: for (; z0 < n; z0++) for (let y = 0; y < d; y++) for (let x = 0; x < w; x++) if (vol.at(x, y, z0) >= 0) break find;
+  const key = (i) => (i < 0 ? -1 : vol.rgb(i).reduce((a, v) => a * 256 + v, 0));
+  const pos = [], nor = [], col = [], idx = [];
+  // directions: axis (0 x, 1 y, 2 z of the stack), sign
+  const dims = [w, d, n];
+  for (let ax = 0; ax < 3; ax++) for (const sg of [1, -1]) {
+    const u = (ax + 1) % 3, v = (ax + 2) % 3;
+    const U = dims[u], V = dims[v];
+    for (let k = 0; k < dims[ax]; k++) {
+      // the face mask of this layer: colour key where a voxel shows a face toward sg
+      const mask = new Float64Array(U * V).fill(-1);
+      const p = [0, 0, 0];
+      for (let b = 0; b < V; b++) for (let a = 0; a < U; a++) {
+        p[ax] = k; p[u] = a; p[v] = b;
+        const i = vol.at(p[0], p[1], p[2]);
+        if (i < 0) continue;
+        p[ax] = k + sg;
+        const out = p[ax] < 0 || p[ax] >= dims[ax] || vol.at(p[0], p[1], p[2]) < 0;
+        if (out) mask[b * U + a] = key(i);
+      }
+      // greedy rectangles of one colour
+      for (let b = 0; b < V; b++) for (let a = 0; a < U;) {
+        const c = mask[b * U + a];
+        if (c < 0) { a++; continue; }
+        let wa = 1; while (a + wa < U && mask[b * U + a + wa] === c) wa++;
+        let hb = 1;
+        grow: for (; b + hb < V; hb++) for (let t = 0; t < wa; t++) if (mask[(b + hb) * U + a + t] !== c) break grow;
+        for (let bb = 0; bb < hb; bb++) for (let t = 0; t < wa; t++) mask[(b + bb) * U + a + t] = -1;
+        // the quad in stack coordinates
+        const plane = sg > 0 ? k + 1 : k;
+        const corner = (da, db) => { const q = [0, 0, 0]; q[ax] = plane; q[u] = a + da; q[v] = b + db; return q; };
+        const quad = [corner(0, 0), corner(wa, 0), corner(wa, hb), corner(0, hb)];
+        const base = pos.length / 3;
+        const nrm = [0, 0, 0]; nrm[ax] = sg;
+        const r = lin(Math.floor(c / 65536)), g = lin(Math.floor(c / 256) % 256), bl = lin(c % 256);
+        for (const q of quad) {
+          // stack (x, y, z) -> three (x, z, y)
+          pos.push((q[0] - px) * s, (q[2] - z0) * s, (q[1] - py) * s);
+          nor.push(nrm[0], nrm[2], nrm[1]);
+          col.push(r, g, bl);
+        }
+        // winding from the geometry itself: the triangle's own normal must agree with the face normal
+        const P = (j) => [pos[(base + j) * 3], pos[(base + j) * 3 + 1], pos[(base + j) * 3 + 2]];
+        const p0 = P(0), p1 = P(1), p2 = P(2);
+        const e1 = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]], e2 = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
+        const cx = e1[1] * e2[2] - e1[2] * e2[1], cy = e1[2] * e2[0] - e1[0] * e2[2], cz = e1[0] * e2[1] - e1[1] * e2[0];
+        if (cx * nrm[0] + cy * nrm[2] + cz * nrm[1] > 0) idx.push(base, base + 1, base + 2, base, base + 2, base + 3);
+        else idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
+        a += wa;
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  geo.setIndex(pos.length / 3 > 65535 ? new THREE.Uint32BufferAttribute(idx, 1) : new THREE.Uint16BufferAttribute(idx, 1));
+  geo.computeBoundingBox(); geo.computeBoundingSphere();
+  geo.userData.voxels = { w, d, n, mpp: s };
+  return geo;
+}
+
+/** a frame set: { meta (the JSON), px (atlas pixels), url } */
+export async function loadFrameSet(THREE, jsonUrl) {
+  const meta = await (await fetch(jsonUrl)).json();
+  const px = await loadPixels(new URL(`${meta.id}.png`, new URL(jsonUrl, location.href)).href);
+  return { meta, px, url: jsonUrl };
+}
+
+/** the geometry of one frame of a set (cached on the set) */
+export function buildFrameGeometry(THREE, set, frame, o = {}) {
+  set.geo = set.geo || new Map();
+  const k = `${frame}|${o.scale || 1}`;
+  if (set.geo.has(k)) return set.geo.get(k);
+  const m = set.meta, i = m.frames.indexOf(frame);
+  if (i < 0) throw new Error(`${m.id}: no frame ${frame}`);
+  const g = buildStackGeometry(THREE, stripVolume(set.px, m.w, m.d, m.n, i * m.d), { mpp: m.mpp, scale: o.scale, pivot: m.pivot });
+  set.geo.set(k, g);
+  return g;
+}
+
+/** a character: one mesh whose geometry follows the motion player.
+ *  o: { height (m: scales the set so its standing frame is this tall), scale, material, motions (only these get geometry),
+ *       state, fallback } */
+export function createFigure(THREE, set, o = {}) {
+  const m = set.meta;
+  const motions = o.motions || Object.keys(m.motions);
+  const frames = [...new Set(motions.flatMap((k) => (m.motions[k] ? m.motions[k].frames : [])).filter((f) => m.frames.includes(f)))];
+  if (!frames.length) frames.push(m.frames[0]);
+  let scale = o.scale || 1;
+  if (o.height) {
+    const ref = frames.find((f) => /^idle\.|^stand/.test(f)) || frames[0];
+    const g = buildStackGeometry(THREE, stripVolume(set.px, m.w, m.d, m.n, m.frames.indexOf(ref) * m.d), { mpp: m.mpp, pivot: m.pivot });
+    scale = o.height / Math.max(1e-6, g.boundingBox.max.y);
+    g.dispose();
+  }
+  const mat = o.material || new THREE.MeshLambertMaterial({ vertexColors: true });
+  const geos = new Map(frames.map((f) => [f, buildFrameGeometry(THREE, set, f, { scale })]));
+  const root = new THREE.Group(); root.name = `figure:${m.id}`;
+  const mesh = new THREE.Mesh(geos.get(frames[0]), mat); mesh.castShadow = true; root.add(mesh);
+  const anim = new MotionPlayer({ ...m, frames }, { state: o.state || 'idle', fallback: o.fallback });
+  // every frame once, for the warm-up (geometry uploads before play)
+  const warm = new THREE.Group(); warm.name = `warm:${m.id}`;
+  for (const g of geos.values()) warm.add(new THREE.Mesh(g, mat));
+  let shown = null;
+  const show = (f) => { if (f && f !== shown && geos.has(f)) { mesh.geometry = geos.get(f); shown = f; } return shown; };
+  show(anim.update(0));
+  return {
+    root, mesh, anim, warm, scale, frames, material: mat,
+    show,
+    update(dt, u = {}) { return show(anim.update(dt, u)); },
+    dispose() { for (const g of geos.values()) g.dispose(); },
+  };
+}

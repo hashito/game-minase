@@ -27,6 +27,15 @@ Turning a valve (止水弁) in the passage drains a dry band across the floor; s
 - Plan: `docs/brief.md`.
 
 <!-- scene-links:start -->
+## ドット版（一人称）/dot-fps
+
+同じゲーム（物語・データ・声・写真）を、ドット絵の一人称3Dで描く版。`npm run build` が `public/` と `public/dot-fps/` の両方を作り、一度の firebase deploy で両方が出る（`tools/build-dot.mjs`, `dot/`）。
+
+- 家具・小物・M2の専用パーツ: game-kit スプライトスタック図鑑から `python tools/dot/stacks.py --kit <game-kit main>` で `dot/assets/stacks/` に書き出し、部屋ごとの置き場所は `dot/data/props.json`（`node tools/dot/check-props.mjs` で扉・ひなたの通り道との重なりを確認）
+- ひなたと「あれ」: kit の共通リグとモーション（`tools/dot/figures.json` → kit `motion_frames.py` → `dot/assets/figures/`）
+- 携帯: 横向きのすすめ、「目的」チップ、全画面（`dot/js/dot/phone.js`）
+- 確認: `node tools/probe.mjs --public --path dot-fps/ ...` に `tools/play/*.mjs`（結末3つ・ひなた・寄り道・捕まり・再開）と `tools/dot/*-steps.mjs`（壁の物・読む枠・小物・携帯）、`node tools/check-playtest.mjs . --root public --path dot-fps/`
+
 ## テスト用の場面リンク
 
 `?scene=<id>` を付けて開くと、テストモードでその場面から始まります（前の作業は済んだことになり、会話は飛ばします）。

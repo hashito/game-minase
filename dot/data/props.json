@@ -1,0 +1,586 @@
+{
+ "_doc": "The mood props of the dot version, room by room: library sprite stacks (tools/dot/stacks.py) that tell what kind of place this is before a word is read. x, z = the centre in the plan's metres; face = where the part's front looks (0 +z, 1.5708 +x, 3.1416 -z, -1.5708 -x); s = scale on the library's real size; solid = the player cannot walk through it; y = above the room's floor. Out of doorways, door swings, the routes of ひなた (js/ext/hina.js NODES) and the play scripts. The helper parts minase-m2-* (game-kit sprites-m2) join this list room by room when they land. mount: wall (back to the wall behind the point, 3 cm proud) | ceiling (hung under the ceiling above it); glow: true = unlit (a light-storing or lit part that reads in the dark: the way back in yellow-green); light: [colour, intensity, distance] a small lamp of its own. after: {task, k}: swapped for its other state (the kit swap pairs) once that task is done.",
+ "props": [
+  {
+   "room": "GENKAN",
+   "k": "wheelchair-blanket",
+   "x": 5.2,
+   "z": 19.3,
+   "face": 3.1416,
+   "solid": true
+  },
+  {
+   "room": "MACHI",
+   "k": "iv-dried",
+   "x": 15.45,
+   "z": 22.9,
+   "face": -1.5708,
+   "solid": true
+  },
+  {
+   "room": "MACHI",
+   "k": "wheelchair-overturned",
+   "x": 11.6,
+   "z": 25.35,
+   "face": 2.6,
+   "solid": true
+  },
+  {
+   "room": "MACHI",
+   "k": "tube-light-fallen",
+   "x": 12.1,
+   "z": 22.15,
+   "face": 0.4
+  },
+  {
+   "room": "MACHI",
+   "k": "leak-bucket",
+   "x": 11.2,
+   "z": 22.15,
+   "face": 0
+  },
+  {
+   "room": "ROKA",
+   "k": "gurney-slipped",
+   "x": 12.6,
+   "z": 15.5,
+   "face": 1.5708,
+   "solid": true
+  },
+  {
+   "room": "ROKA",
+   "k": "iv-fallen",
+   "x": 18.6,
+   "z": 17.4,
+   "face": 0
+  },
+  {
+   "room": "KARTE",
+   "k": "floor-charts",
+   "x": 3.4,
+   "z": 12.9,
+   "face": 0.3
+  },
+  {
+   "room": "SHIN",
+   "k": "exam-lamp",
+   "x": 10.0,
+   "z": 12.4,
+   "face": -1.5708,
+   "solid": true
+  },
+  {
+   "room": "SHIN",
+   "k": "ward-screen-stain",
+   "x": 9.75,
+   "z": 10.6,
+   "face": -1.5708,
+   "solid": true
+  },
+  {
+   "room": "KAIDAN",
+   "k": "wheelchair-tipped",
+   "x": 17.4,
+   "z": 9.55,
+   "face": 0.5,
+   "solid": true
+  },
+  {
+   "room": "HYOHON",
+   "k": "trolley-disinfect",
+   "x": 11.6,
+   "z": -101.2,
+   "face": -1.5708,
+   "solid": true
+  },
+  {
+   "room": "HYOHON",
+   "k": "specimen-broken",
+   "x": 11.7,
+   "z": -106.4,
+   "face": 0.8
+  },
+  {
+   "room": "GENKAN",
+   "k": "hina-backpack",
+   "x": 1.55,
+   "z": 20.35,
+   "face": 0.4,
+   "m2": true
+  },
+  {
+   "room": "GENKAN",
+   "k": "hina-camera",
+   "x": 0.75,
+   "z": 19.0,
+   "face": 0.7,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "GENKAN",
+   "k": "bucket-leak",
+   "x": 4.0,
+   "z": 19.85,
+   "face": 0,
+   "m2": true
+  },
+  {
+   "room": "GENKAN",
+   "k": "ceiling-sag",
+   "x": 4.2,
+   "z": 20.2,
+   "face": 0,
+   "mount": "ceiling",
+   "m2": true
+  },
+  {
+   "room": "MACHI",
+   "k": "number-display",
+   "x": 8.6,
+   "z": 25.95,
+   "y": 1.9,
+   "face": 3.1416,
+   "mount": "wall",
+   "m2": true,
+   "glow": true
+  },
+  {
+   "room": "MACHI",
+   "k": "reception-sign",
+   "x": 14.0,
+   "z": 21.2,
+   "face": -1.5708,
+   "mount": "ceiling",
+   "m2": true
+  },
+  {
+   "room": "MACHI",
+   "k": "wet-sign",
+   "x": 7.6,
+   "z": 24.7,
+   "face": 0.5,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "UKE",
+   "k": "nurse-board",
+   "x": 19.95,
+   "z": 21.7,
+   "y": 1.2,
+   "face": -1.5708,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "KARTE",
+   "k": "stepladder",
+   "x": 1.45,
+   "z": 10.25,
+   "face": 0.8,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "KARTE",
+   "k": "record-boxes",
+   "x": 5.25,
+   "z": 9.65,
+   "face": 3.1416,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "SHIN",
+   "k": "bedside",
+   "x": 11.55,
+   "z": 12.25,
+   "face": -1.5708,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "SHIN",
+   "k": "nurse-board",
+   "x": 6.05,
+   "z": 13.6,
+   "y": 1.2,
+   "face": 1.5708,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "KAIDAN",
+   "k": "chain-padlock",
+   "x": 14.2,
+   "z": 14.55,
+   "face": 0.3,
+   "m2": true
+  },
+  {
+   "room": "KAIDAN",
+   "k": "lift-indicator",
+   "x": 19.95,
+   "z": 13.95,
+   "y": 2.25,
+   "face": -1.5708,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "KAIDAN",
+   "k": "call-off",
+   "x": 19.95,
+   "z": 14.75,
+   "y": 1.0,
+   "face": -1.5708,
+   "mount": "wall",
+   "m2": true,
+   "after": {
+    "task": "T_GEN",
+    "k": "call-lit",
+    "glow": true
+   }
+  },
+  {
+   "room": "B_ROKA",
+   "k": "pipe-ceiling",
+   "x": 6.0,
+   "z": 6.45,
+   "face": 1.5708,
+   "mount": "ceiling",
+   "m2": true
+  },
+  {
+   "room": "B_ROKA",
+   "k": "pipe-ceiling",
+   "x": 13.2,
+   "z": 6.45,
+   "face": 1.5708,
+   "mount": "ceiling",
+   "m2": true
+  },
+  {
+   "room": "B_ROKA",
+   "k": "floating-debris",
+   "x": 13.8,
+   "z": 8.35,
+   "face": 0.3,
+   "m2": true
+  },
+  {
+   "room": "B_ROKA",
+   "k": "breaker",
+   "x": 17.0,
+   "z": 6.05,
+   "y": 1.1,
+   "face": 0,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "B_ROKA",
+   "k": "wet-sign",
+   "x": 17.3,
+   "z": 6.7,
+   "face": -0.5,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "B_ROKA",
+   "k": "hina-tape-arrow",
+   "x": 5.6,
+   "z": 8.95,
+   "y": 1.1,
+   "face": 3.1416,
+   "mount": "wall",
+   "m2": true,
+   "glow": true
+  },
+  {
+   "room": "PUMP",
+   "k": "fuel-tank",
+   "x": 2.0,
+   "z": 14.45,
+   "face": 3.1416,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "PUMP",
+   "k": "fuel-can",
+   "x": 1.6,
+   "z": 10.05,
+   "face": 0.4,
+   "m2": true
+  },
+  {
+   "room": "PUMP",
+   "k": "tool-board",
+   "x": 0.05,
+   "z": 14.1,
+   "y": 1.1,
+   "face": 1.5708,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "PUMP",
+   "k": "hina-lantern",
+   "x": 4.9,
+   "z": 12.95,
+   "face": 0,
+   "light": [
+    16773320,
+    0.5,
+    2.4
+   ],
+   "m2": true
+  },
+  {
+   "room": "JIMU",
+   "k": "card-cabinet",
+   "x": 11.6,
+   "z": 10.2,
+   "face": -1.5708,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "JIMU",
+   "k": "record-boxes",
+   "x": 11.55,
+   "z": 11.7,
+   "face": -1.5708,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "REIAN",
+   "k": "toe-tag-tray",
+   "x": 6.45,
+   "z": 2.75,
+   "face": 0,
+   "m2": true,
+   "y": 0.76
+  },
+  {
+   "room": "REIAN",
+   "k": "morgue-sink",
+   "x": 7.7,
+   "z": 5.35,
+   "face": 3.1416,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "REIAN",
+   "k": "hina-lantern",
+   "x": 12.0,
+   "z": 5.55,
+   "face": 0,
+   "light": [
+    16773320,
+    0.4,
+    2.2
+   ],
+   "m2": true
+  },
+  {
+   "room": "MOUTH",
+   "k": "hina-glowsticks",
+   "x": 3.4,
+   "z": 0.4,
+   "face": 0,
+   "m2": true,
+   "glow": true,
+   "s": 1.4
+  },
+  {
+   "room": "MOUTH",
+   "k": "foot-guide",
+   "x": 5.95,
+   "z": 2.6,
+   "y": 0.15,
+   "face": -1.5708,
+   "mount": "wall",
+   "m2": true,
+   "glow": true
+  },
+  {
+   "room": "P1",
+   "k": "pipe-ceiling",
+   "x": 2.6,
+   "z": -14.0,
+   "face": 0,
+   "mount": "ceiling",
+   "m2": true
+  },
+  {
+   "room": "P1",
+   "k": "pipe-ceiling",
+   "x": 2.6,
+   "z": -33.0,
+   "face": 0,
+   "mount": "ceiling",
+   "m2": true
+  },
+  {
+   "room": "P1",
+   "k": "hina-glowsticks",
+   "x": 3.3,
+   "z": -7.0,
+   "face": 1.0,
+   "m2": true,
+   "glow": true,
+   "s": 1.4
+  },
+  {
+   "room": "P1",
+   "k": "hina-glowsticks",
+   "x": 3.3,
+   "z": -22.0,
+   "face": 2.0,
+   "m2": true,
+   "glow": true,
+   "s": 1.4
+  },
+  {
+   "room": "P1",
+   "k": "hina-glowsticks",
+   "x": 3.3,
+   "z": -37.0,
+   "face": 0.4,
+   "m2": true,
+   "glow": true,
+   "s": 1.4
+  },
+  {
+   "room": "P1",
+   "k": "foot-guide",
+   "x": 3.55,
+   "z": -18.0,
+   "y": 0.15,
+   "face": -1.5708,
+   "mount": "wall",
+   "m2": true,
+   "glow": true
+  },
+  {
+   "room": "P1",
+   "k": "valve-sign",
+   "x": 3.55,
+   "z": -10.0,
+   "y": 2.0,
+   "face": -1.5708,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "P1",
+   "k": "valve-sign",
+   "x": 3.55,
+   "z": -28.0,
+   "y": 2.0,
+   "face": -1.5708,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "P3",
+   "k": "hina-glowsticks",
+   "x": -17.0,
+   "z": -62.5,
+   "face": 0.6,
+   "m2": true,
+   "glow": true,
+   "s": 1.4
+  },
+  {
+   "room": "P5",
+   "k": "hina-glowsticks",
+   "x": 9.6,
+   "z": -91.0,
+   "face": 0.2,
+   "m2": true,
+   "glow": true,
+   "s": 1.4
+  },
+  {
+   "room": "P5",
+   "k": "pipe-ceiling",
+   "x": 9.0,
+   "z": -91.5,
+   "face": 0,
+   "mount": "ceiling",
+   "m2": true
+  },
+  {
+   "room": "HYOHON",
+   "k": "jar-rack-wall",
+   "x": 5.05,
+   "z": -101.7,
+   "face": 1.5708,
+   "mount": "wall",
+   "m2": true
+  },
+  {
+   "room": "HYOHON",
+   "k": "jar-crate",
+   "x": 7.3,
+   "z": -107.25,
+   "face": 0.3,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "HYOHON",
+   "k": "organ-scale",
+   "x": 12.3,
+   "z": -107.3,
+   "face": -2.4,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "HYOHON",
+   "k": "instrument-stand",
+   "x": 6.0,
+   "z": -106.9,
+   "face": 0.8,
+   "solid": true,
+   "m2": true
+  },
+  {
+   "room": "B_ROKA",
+   "k": "emlamp-off",
+   "x": 4.5,
+   "z": 7.5,
+   "face": 0,
+   "mount": "ceiling",
+   "m2": true,
+   "after": {
+    "task": "T_GEN",
+    "k": "emlamp-on",
+    "glow": true
+   }
+  },
+  {
+   "room": "B_ROKA",
+   "k": "emlamp-off",
+   "x": 11.5,
+   "z": 7.5,
+   "face": 0,
+   "mount": "ceiling",
+   "m2": true,
+   "after": {
+    "task": "T_GEN",
+    "k": "emlamp-on",
+    "glow": true
+   }
+  }
+ ],
+ "_m2": "m2: true = a part made for this game by helper M2 (the kit library since 1.20.4 9c9832c4, minase-m2-<k>; tools/dot/stacks.py). Wall parts are kept off every wall a door swings or slides on (D_UKE, D_MADO, D_P1, D_GATE, D_END, the B_ROKA doors)."
+}

@@ -1,4 +1,4 @@
-/* game-kit 8e20d97: css/shell.css — edit in game-kit and run tools/kit-sync.js */
+/* game-kit de49b0f7: css/shell.css — edit in game-kit and run tools/kit-sync.js */
 /* game-kit: the standard 3D shell (js/game-core.js): title screen, prompt, endings, pause menu, custom mini-game layer.
    Tokens only (css/theme.css); loaded after kit.css and theme.css. A game restyles it through tokens in css/theme-game.css. */
 #title { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--gf-win-margin, 16px); overflow-y: auto; overscroll-behavior: contain;
@@ -178,9 +178,42 @@ body.touch #hud-right { top: calc(max(12px, var(--gf-safe-t, 0px)) + 52px); }   
 .tl-lookcard.tl-pickcard .iv-photo { width: 280px; max-width: 100%; max-height: 28vh; aspect-ratio: 4 / 3; border-radius: var(--gf-radius, 8px); }
 /* 1.17.0 (水無瀬病院 #7): a thing with a picture shows the picture when you look at it (not an 84 px thumbnail) */
 .tl-lookcard.tl-photocard .iv-photocard { flex-direction: column; align-items: stretch; }
-.tl-lookcard.tl-photocard .iv-photo { width: 340px; max-width: 100%; max-height: min(34vh, calc(var(--gf-lane-free, 260px) - 7em)); height: auto; aspect-ratio: 4 / 3; border-radius: var(--gf-radius, 8px); }   /* the name and the ひとこと stay inside the lane's room */
+.tl-lookcard.tl-photocard .iv-photo { width: 340px; max-width: 100%; max-height: min(34vh, 30dvh, calc(var(--gf-lane-free, 260px) - 9em)); min-height: 0; height: auto; aspect-ratio: 4 / 3; border-radius: var(--gf-radius, 8px); }   /* the name and the ひとこと stay inside the lane's room */
 .tl-item.tl-photocard { width: min(360px, 100%); }
 @media (max-height: 520px) { .tl-lookcard.tl-pickcard .iv-photo { max-width: 180px; } }
+/* 1.20.2 (札の家 ドット版 iPhone: 「スクロールできないので文字が見られません」): a look / pick-up card never cuts its text. The card is as tall as
+   the lane's room at most; its body scrolls inside it (a finger drags it: touch-action pan-y, the scroll stays in the card), a cue shows
+   that more lies below (js/toast-lane.js: .tl-more), and the card's time stops while there is more to read. On a short screen the
+   picture shrinks first. */
+.tl-item.tl-lookcard { display: flex; flex-direction: column; pointer-events: auto; touch-action: pan-y; overscroll-behavior: contain; }
+/* on a phone the look pad (#t-look, in #touch above #hud) would take the finger: while a look card is up the HUD comes above the touch layer
+   (the lane is laid out clear of the stick and the buttons, js/hud-slots.js; everything else in the HUD lets touches through) */
+body.touch #hud:has(.tl-lookcard) { z-index: 7; }
+.tl-item.tl-lookcard > .tl-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; scrollbar-width: thin; }
+.tl-item.tl-lookcard.tl-more::after { content: '\25BC\FE0E  もっと'; position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 0 4px; text-align: center; font-size: 0.78em; letter-spacing: 0.1em; color: var(--gf-accent-2, #e8a040); background: linear-gradient(transparent, var(--gf-hud-bg, rgba(0, 0, 0, 0.85)) 60%); pointer-events: none; }
+@media (max-height: 700px) { .tl-lookcard.tl-photocard .iv-photo, .tl-lookcard.tl-pickcard .iv-photo { max-height: min(22dvh, calc(var(--gf-lane-free, 260px) - 9em)); } }
+/* 1.20.3 the reading panel (toast-lane.js tl-read, 札の家 ドット版: 「スクロールできるようにではなく他のUIの邪魔にならないように広く場所を取るべき」):
+   a look-at card / a letter is read in a large panel of its own, not a small box in the lane. Near full screen on a phone (inside the safe
+   area), a big centred panel on a PC; the picture gives way before the text; 閉じる is a large target inside the panel. While it is open the rest
+   of the HUD, the thought band and the touch controls are hidden (nothing may overlap it); they come back when it is closed. */
+.gf-reader { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: max(14px, var(--gf-safe-t, env(safe-area-inset-top, 0px))) max(14px, var(--gf-safe-r, env(safe-area-inset-right, 0px))) max(14px, var(--gf-safe-b, env(safe-area-inset-bottom, 0px))) max(14px, var(--gf-safe-l, env(safe-area-inset-left, 0px))); background: rgba(0, 0, 0, 0.62); pointer-events: auto; touch-action: pan-y; }
+.gf-reader:empty { display: none; }
+.gf-reader > .tl-item.tl-read { position: relative; display: flex; flex-direction: column; width: min(720px, 100%); max-width: 100%; max-height: 100%; min-height: 0; margin: 0; padding: clamp(18px, 3vmin, 28px) clamp(18px, 3.4vmin, 32px); font-size: clamp(15px, 1.05rem, 18px); line-height: 1.75; overflow: hidden; pointer-events: auto; -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--gf-reader-bg, var(--gf-hud-bg, rgba(14, 12, 10, 0.96))); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); }
+.gf-reader > .tl-item.tl-read > .tl-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; touch-action: pan-y; }
+.gf-reader .tl-read .iv-photocard { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+.gf-reader .tl-read .iv-photo { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 4 / 3; max-height: min(40dvh, 40vh); min-height: 0; flex: none; background-size: cover; background-position: center; border-radius: var(--gf-radius, 8px); }
+.gf-reader .tl-read .iv-photo.iv-nopic { display: none; }
+.gf-reader .tl-read .iv-name { font-size: 1.12em; }
+.gf-reader .tl-read .iv-text { white-space: pre-line; margin: 0.4em 0 0; }
+.gf-reader .tl-read .iv-voice { margin-top: 14px; }
+.gf-reader .tl-read .tl-close { flex: none; align-self: stretch; min-height: 52px; margin-top: 16px; font: inherit; font-size: 1em; letter-spacing: 0.2em; cursor: pointer; border-radius: var(--gf-radius, 8px); border: 2px solid var(--gf-accent-2, #e8a040); background: var(--gf-accent, #3a7a5a); color: var(--gf-on-accent, #fff); pointer-events: auto; }
+.gf-reader .tl-read.tl-more::after { bottom: 84px; }
+@media (max-width: 600px) and (orientation: portrait) { .gf-reader > .tl-item.tl-read { width: 100%; min-height: min(64dvh, 100%); } }
+@media (max-height: 700px) { .gf-reader .tl-read .iv-photo { max-height: 26dvh; } .gf-reader > .tl-item.tl-read { line-height: 1.65; } }
+@media (max-height: 460px) { .gf-reader .tl-read .iv-photocard { flex-direction: row; } .gf-reader .tl-read .iv-photo { width: 36%; max-height: 60dvh; } }
+.gf-reader .tl-read.tl-letter .iv-photo { max-height: min(13dvh, 13vh); }   /* a letter: the text is what matters, the envelope picture stays small */
+.gf-doc-done { display: flex; justify-content: center; margin: 1.6em 0 0.4em; } .gf-doc-done .gf-doc-read { min-width: min(260px, 100%); min-height: 48px; letter-spacing: 0.2em; }
+body.gf-reading #hud, body.gf-reading #touch, body.gf-reading #say, body.gf-reading #prompt, body.gf-reading #look { visibility: hidden !important; }
 .tl-quest-note, .tl-ok { border-left-color: var(--gf-ok, #2e7a4a); }
 .tl-card { border-left-color: var(--gf-accent-2, #e8a040); }
 .tl-prompt { border-left-color: var(--gf-accent-2, #e8a040); font-weight: 700; }

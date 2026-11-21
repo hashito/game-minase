@@ -43,6 +43,11 @@
         "minLength": 1,
         "description": "the protagonist's one-line impression, shown in its own panel (U19)"
       },
+      "read": {
+        "type": "string",
+        "minLength": 1,
+        "description": "1.20.3: what the thing says (a letter's text). Shown in the reading panel the moment it is picked up, then re-read in the item list / 手帳; the feeling comes after the panel is closed"
+      },
       "room": {
         "type": "string"
       },

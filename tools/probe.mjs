@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Headless probe: serve, open the game, start it, run a few expressions, take screenshots. (TEMP decides where the browser profile goes.)
-//   node tools/probe.mjs --out D:/kagamiya-stages/s1 [--qa] [--mobile WxH] [--steps file.mjs]
+//   node tools/probe.mjs --out D:/kagamiya-stages/s1 [--qa] [--mobile WxH] [--steps file.mjs] [--public --path dot/] (public/: the built site, a page under it)
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,8 +10,8 @@ const args = process.argv.slice(2), arg = (k, d) => (args.includes(k) ? args[arg
 const out = arg('--out', 'shots/probe'); fs.mkdirSync(out, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const port = 47000 + Math.floor(Math.random() * 900);
-const server = spawn(process.execPath, [path.join(import.meta.dirname, 'serve.js'), '--port', String(port)], { stdio: 'ignore' });
-const base = `http://127.0.0.1:${port}/`;
+const server = spawn(process.execPath, [path.join(import.meta.dirname, 'serve.js'), '--port', String(port), ...(args.includes('--public') ? ['--public'] : [])], { stdio: 'ignore' });
+const base = `http://127.0.0.1:${port}/${arg('--path', '')}`;
 for (let i = 0; i < 50; i++) { if (await fetch(base).then((r) => r.ok).catch(() => false)) break; await sleep(100); }
 const [w, h] = (arg('--size', '1280x720')).split('x').map(Number);
 const mobile = args.includes('--mobile');

@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/interact-select.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit de49b0f7: js/interact-select.js — edit in game-kit and run tools/kit-sync.js */
 // Selecting the thing you use (rule W18): pure maths, no three.js and no DOM, so it is unit-tested in Node and shared by every game.
 // A small terminal / button / paper must be easy to pick with a crosshair on PC and with a thumb on a phone:
 //   - the hit volume is the visible mesh bounds + a 15 cm margin (25 cm for things under 40 cm; never a hand-set tiny box)
@@ -105,7 +105,7 @@ function evalCand(c, eye, dir, o, tol, wide) {
   let via = "ray", angle = 0;
   if (t == null) {
     angle = angleToBox(eye, dir, vol, reach);
-    if (angle > tol * (wide ? o.hysteresis : 1)) return null;
+    if (angle > tol * (c.cone || 1) * (wide ? o.hysteresis : 1)) return null;   // c.cone: a wider cone for this one (1.20.3: a person to talk to)
     via = "cone";
   }
   const d = t != null ? t : dist;

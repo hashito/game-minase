@@ -1,0 +1,347 @@
+// 水無瀬病院 ドット版（一人称）: the dot layer over the same game (the root's js/ext/index.js runs first, with the same data and voices).
+// Modelled on 札の家 game-kushi dot/js/dot/index.js (711ee4f). game.json "dot": { "mode": "fps" } (written by tools/build-dot.mjs).
+//   - the people (ひなた, あれ) are sprite-stack frame sets of the kit's shared motion rig (game-kit js/sprite-stack-mesh.js +
+//     js/sprite-stack-anim.js, docs/sprite-motions.md; ひなた character-hoodie, あれ monster-specimen-chimera, branch sprites-m1),
+//     played by MotionPlayer from what the game does (ひなた: walk / limp / lean / crouch / fear; あれ: wade / grasp / idle)
+//   - the plan's furniture, the items lying in the world and the mood props (dot/data/props.json, room by room) are library sprite
+//     stacks; the colliders and the picking boxes of the game do not change
+//   - the photos are the root's photos drawn as pixel art at boot (photos.js), the UI is the pixel skin of dot/css/dot.css
+//   - reading: the kit's reading panel and 覚え書き・読んだもの tab (standard 1.20.3, js/kit/reads-tab.js) - not redone here
+//   - the dark stays readable: a dim floor of light that never reaches black, a small light round the player, the next goal glows,
+//     and in the chase the way back (the valves, the watertight door) is lit
+// Everything (frames, stacks, photos, the pixel font) is loaded and every mesh compiled before the start button opens (pixel games load first).
+import * as THREE from 'three';
+import { loadFrameSet, createFigure, buildStackGeometry, loadPixels, stripVolume } from '../kit/sprite-stack-mesh.js';
+import { turnToward } from '../kit/sprite-stack-anim.js';
+import { installPhotoHooks, preparePhotos } from './photos.js';
+import { installPhone } from './phone.js';
+
+const LAYER = new URL('../../', import.meta.url).href;   // /dot/
+const at = (p) => new URL(p, LAYER).href;
+
+// the plan's furniture kinds -> stack (tools/dot/stacks.py); per furniture id where one room wants another part
+const FURN = { bench: 'bench', locker: 'locker', vendingMachine: 'vending', plant: 'plant', extinguisher: 'extinguisher', desk: 'desk', filingCabinet: 'filing',
+  fileRack: 'karte-shelf', bed: 'exam-bed', pipeChair: 'pipe-chair', shelf: 'shelf', drum: 'drum', steelDesk: 'steel-desk', officeChair: 'office-chair',
+  crate: 'crate', bodyCabinets: 'body-cabinets' };
+const FURN_ID = { F_RE_BED: 'gurney-shape' };   // 霊安室: the bed is a gurney with someone under the sheet
+// the items lying in the world (items.json kind / id) -> stack
+const ITEM_STACK = { FLASH: 'flashlight', KEY_B1: 'key', HEARSE_KEY: 'key', REN_PAPER: 'letter', PAGE1: 'paper', PAGE2: 'paper', PAGE3: 'paper', JAR: 'jar', NAMETAG: 'tag' };
+
+export default async function dotLayer(ext, { manifest, data }) {
+  const mode = (manifest.dot && manifest.dot.mode) || 'fps';
+  document.documentElement.dataset.dot = mode;
+  installPhotoHooks();
+  const D = window.__dot = { mode, timings: {}, furniture: [], items: [], props: [], figures: null };
+  const t0 = performance.now();
+  const [hinaSet, areSet, stackIndex, photoList, propList] = await Promise.all([
+    loadFrameSet(THREE, at('assets/figures/hinata.json')),
+    loadFrameSet(THREE, at('assets/figures/are.json')),
+    fetch(at('assets/stacks/index.json')).then((r) => r.json()),
+    fetch(at('photos.json')).then((r) => r.json()).catch(() => []),
+    fetch(at('data/props.json')).then((r) => r.json()).catch(() => ({ props: [] })),
+  ]);
+  const stackPx = Object.fromEntries(await Promise.all(Object.keys(stackIndex).map(async (k) => [k, await loadPixels(at(`assets/stacks/${k}.png`))])));
+  D.timings.load = Math.round(performance.now() - t0);
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
+  mat.name = 'dot-stack';
+  // the people: their own colours plus a share as emission, so a figure reads as a person in a dark room (the lights still shape it)
+  const figMat = (self, name) => {
+    const m = new THREE.MeshLambertMaterial({ vertexColors: true });
+    m.name = name;
+    m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * ${self.toFixed(3)};`); };
+    m.customProgramCacheKey = () => `dot-fig-${self}`;
+    return m;
+  };
+  const geoCache = new Map();
+  const stackGeo = (k) => {
+    if (!geoCache.has(k)) { const s = stackIndex[k]; geoCache.set(k, buildStackGeometry(THREE, stripVolume(stackPx[k], s.w, s.d, s.n, 0), { mpp: s.mpp })); }
+    return geoCache.get(k);
+  };
+  // a stack centred on x / z with its bottom at 0 (for props placed by a point)
+  const centred = new Map();
+  const cgeo = (k) => {
+    if (!centred.has(k)) { const g = stackGeo(k).clone(); g.computeBoundingBox(); const b = g.boundingBox, c = b.getCenter(new THREE.Vector3()); g.translate(-c.x, -b.min.y, -c.z); g.computeBoundingBox(); centred.set(k, g); }
+    return centred.get(k);
+  };
+
+  // behind the title: the photos as pixel art, the pixel font for every line of the game
+  ext.registerBoot('dot-pictures', async (ctx, report) => {
+    const t = performance.now();
+    D.photos = await preparePhotos(photoList, (k) => report(k * 0.8, `ドット絵を準備中… ${Math.round(k * 100)}%`));
+    try {
+      const text = [...new Set(JSON.stringify([data, manifest]).replace(/\\u[0-9a-f]{4}|\\n/g, ''))].join('');
+      await Promise.race([document.fonts.load('16px "DotGothic16"', text), new Promise((r) => setTimeout(r, 8000))]);
+      await document.fonts.ready;
+      D.font = document.fonts.check('16px "DotGothic16"', '水無瀬病院');
+    } catch (e) { D.font = false; }
+    report(1, '');
+    D.timings.pictures = Math.round(performance.now() - t);
+  });
+  // the game's own shader step compiles every program: after this one
+  for (const id of ['minase-shaders', 'minase-boot']) { const s = ext.reg.boot.get(id); if (s) { ext.reg.boot.unregister(id); ext.reg.boot.register(id, s); } }
+
+  // one stack filling a box (its long side along the box's long side, scaled to the box's short side), front toward `face`
+  function fitStack(k, box, o = {}) {
+    const g = cgeo(k), gs = g.boundingBox.getSize(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+    const face = o.face || 0;
+    // the box seen in the stack's own frame (turned by face)
+    const q = Math.abs(Math.sin(face)) > 0.5;
+    const bw = q ? size.z : size.x, bd = q ? size.x : size.z;
+    const s = Math.min(bw / gs.x, bd / gs.z, (o.hmax || 2.6) / gs.y) * (o.k || 1);
+    const sy = o.exactY ? size.y / gs.y : o.fillY ? Math.max(s, size.y / gs.y * 0.92) : s;
+    const m = new THREE.Mesh(g, o.material || mat); m.castShadow = true; m.receiveShadow = true;
+    m.scale.set(Math.min(bw / gs.x, s * 1.25), sy, Math.min(bd / gs.z, s * 1.25));
+    m.rotation.y = face;
+    m.position.set(c.x, box.min.y, c.z);
+    m.name = `dot-stack:${k}`;
+    return m;
+  }
+
+  let figures = null, ctxRef = null;
+  ext.on('game:ready', (ctx) => {
+    ctxRef = ctx;
+    const t = performance.now();
+    const G = window.__mn || {};
+    const W = ctx.world, scene = ctx.scene;
+    const tb = document.querySelector('#title .gf-title-box');
+    if (tb) tb.setAttribute('data-dot-label', 'ドット版・一人称');
+    const plan = ctx.data.plan;
+    const roomOf = (id) => (plan.rooms || []).find((r) => r.id === id);
+    const fy = (room) => W.floorY((roomOf(room) || {}).floor || 0);
+    // ---- the plan's furniture (the kit's recipes build it a moment after game:ready: wait for it) ----
+    const dressFurniture = (tries = 0) => {
+      const ready = (plan.furniture || []).some((f) => ctx.recipes && ctx.recipes.props && ctx.recipes.props.get(f.id));
+      if (!ready && tries < 200) { setTimeout(() => dressFurniture(tries + 1), 50); return; }
+      D.furniture.length = 0;
+    for (const f of plan.furniture || []) {
+      const obj = (ctx.recipes && ctx.recipes.props && ctx.recipes.props.get(f.id)) || W.group.getObjectByName(`prop:${f.id}`);
+      const k = FURN_ID[f.id] || FURN[f.kind];
+      if (!obj || !k || !stackIndex[k]) { D.furniture.push({ id: f.id, kind: f.kind, skipped: true, why: !obj ? 'no object' : !k ? 'no stack for the kind' : 'stack missing' }); continue; }
+      obj.updateWorldMatrix(true, true);
+      const box = new THREE.Box3().setFromObject(obj);
+      if (box.isEmpty()) { D.furniture.push({ id: f.id, empty: true }); continue; }
+      obj.traverse((x) => { if (x.isMesh) x.visible = false; });
+      // the stack's front (+z) toward where the furniture's front looked (rot 0 -> +z)
+      const face = ((f.rot || 0) * Math.PI) / 180;
+      // never taller than the furniture it stands for: what lies on it (a paper, a jar) and who stands on it (ひなた on the pump-room desk,
+      // hina.js rescue y 0.76) stay on its top, not inside it (hina-check: feet 32 cm into the desk); a desk, bed or bench top is exactly
+      // where the game's was, so the papers on it lie on it (check-playtest P13: a chart 24 cm above a lower dot desk)
+      const st = fitStack(k, box, { face, hmax: (box.max.y - box.min.y) * 1.04, exactY: /desk|bed|bench|gurney/.test(k) || /desk|bed|bench/i.test(f.kind), fillY: k === 'karte-shelf' || k === 'shelf' || k === 'locker' || k === 'filing' });
+      W.group.add(st);
+      D.furniture.push({ id: f.id, k, box: [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z].map((v) => +v.toFixed(2)) });
+    }
+      // what lies on the furniture (a chart, a diary page) rests on the stack's own top: a library desk's top is not always where the
+      // game's desk top was (check-playtest P13: papers 24 cm above the dot desk). Wall papers (y 1 m and more) stay where they are.
+      const tops = W.group.children.filter((o) => String(o.name).startsWith('dot-stack:')); for (const o of tops) o.updateMatrixWorld(true);   // added this frame: no render has set their matrices yet
+      const down = new THREE.Raycaster(); down.far = 0.6;
+      D.settled = [];
+      for (const pk of W.interactables || []) {
+        const nm = String(pk.name || ''); if (!/^(item|doc):/.test(nm) || !pk.geometry || !pk.geometry.parameters) continue;
+        const def = pk.userData.def || {}; if (def.wall || (def.y != null && def.y >= 1)) continue;
+        pk.updateWorldMatrix(true, false);
+        const p0 = new THREE.Vector3().setFromMatrixPosition(pk.matrixWorld), half = pk.geometry.parameters.height / 2;
+        down.set(new THREE.Vector3(p0.x, p0.y, p0.z), new THREE.Vector3(0, -1, 0));
+        const hit = down.intersectObjects(tops, false)[0];
+        if (!hit) continue;
+        const gap = p0.y - half - hit.point.y;
+        if (gap > 0.02 && gap < 0.5) { pk.position.y -= gap; if (def.y != null) def.y = +(def.y - gap).toFixed(3); D.settled.push([nm, +gap.toFixed(2)]); }   // def.y too: the kit puts pickups on their support again later
+      }
+      D.furnitureAt = Math.round(performance.now() - t);
+      if (ctx.pixelStyle) ctx.pixelStyle.sweep();
+    };
+    dressFurniture();
+    // ---- items lying in the world ----
+    for (const o of W.interactables) {
+      const ia = o.userData.interact, k = ia && ia.kind === 'item' && ITEM_STACK[ia.id];
+      const model = o.userData.model;
+      if (!k || !model || !stackIndex[k]) continue;
+      o.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(model);
+      if (b.isEmpty()) continue;
+      model.visible = false;
+      const st = fitStack(k, b, { k: 1.15 });
+      st.position.copy(o.worldToLocal(st.position.clone()));
+      o.add(st);
+      D.items.push(ia.id);
+    }
+    // ---- the mood props (dot/data/props.json: { props: [{ room, k, x, z, face, s, solid, y, mount, light }] }) ----
+    // mount "wall": the part's back (its -z) against the wall behind the point (a ray from x / z away from where it faces), 3 cm proud of it -
+    //   never on the plaster's own plane (the flicker of 札の家 #wall papers) and never a backing larger than the part;
+    // mount "ceiling": hung from the ceiling above the point (its top 1 cm under it); light: [colour, intensity, distance] for a part that glows
+    const surfaces = []; W.group.traverse((o) => { if (o.isMesh && o.visible !== false && !String(o.name).startsWith('dot-') && !String(o.name).startsWith('prop:')) surfaces.push(o); });
+    const ray = new THREE.Raycaster(); ray.far = 2.5;
+    const glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });   // glow: true - reads in the dark (no light of its own)
+    const mountGeo = new Map();
+    const geoFor = (k, mount) => {
+      if (mount !== 'wall' && mount !== 'ceiling') return cgeo(k);
+      const key = `${k}|${mount}`;
+      if (!mountGeo.has(key)) { const g = stackGeo(k).clone(); g.computeBoundingBox(); const bb = g.boundingBox, c = bb.getCenter(new THREE.Vector3()); g.translate(-c.x, mount === 'ceiling' ? -bb.max.y : -bb.min.y, mount === 'wall' ? -bb.min.z : -c.z); g.computeBoundingBox(); mountGeo.set(key, g); }
+      return mountGeo.get(key);
+    };
+    const swaps = D.swaps = [];
+    for (const p of propList.props || []) {
+      const R = roomOf(p.room);
+      if (!R || !stackIndex[p.k]) { D.props.push({ k: p.k, room: p.room, missing: true }); continue; }
+      const info = stackIndex[p.k], mount = p.mount || 'floor', g = geoFor(p.k, mount);
+      const m = new THREE.Mesh(g, p.glow ? glowMat : mat); m.name = `dot-prop:${p.k}`; m.castShadow = true; m.receiveShadow = true;
+      const s = p.s || 1, f = p.face || 0, dir = new THREE.Vector3(Math.sin(f), 0, Math.cos(f));
+      m.scale.setScalar(s);
+      m.rotation.y = f;
+      const y0 = fy(p.room);
+      m.position.set(p.x, y0 + (p.y || 0), p.z);
+      let wallAt = null;
+      if (mount === 'wall') {
+        ray.set(new THREE.Vector3(p.x, y0 + (p.y || 0) + 0.3, p.z).addScaledVector(dir, 0.6), dir.clone().negate());
+        const hit = ray.intersectObjects(surfaces, false)[0];
+        if (hit) { wallAt = +hit.distance.toFixed(2); m.position.x = hit.point.x + dir.x * 0.03; m.position.z = hit.point.z + dir.z * 0.03; }
+      } else if (mount === 'ceiling') {
+        ray.set(new THREE.Vector3(p.x, y0 + 1.2, p.z), new THREE.Vector3(0, 1, 0));
+        const hit = ray.intersectObjects(surfaces, false)[0];
+        m.position.y = hit ? hit.point.y - 0.01 : y0 + 2.7;
+        wallAt = hit ? +(hit.point.y - y0).toFixed(2) : null;
+      }
+      W.group.add(m);
+      m.updateMatrixWorld(true);
+      const b = new THREE.Box3().setFromObject(m);
+      if (p.solid) W.colliders.push({ box: b.clone().expandByVector(new THREE.Vector3(-0.05, 0, -0.05)), off: false, name: `dot-prop:${p.k}` });
+      if (p.light) { const L = new THREE.PointLight(p.light[0], p.light[1], p.light[2] || 3, 1.6); L.position.copy(b.getCenter(new THREE.Vector3())).addScaledVector(dir, 0.25); L.name = `dot-prop-light:${p.k}`; ctx.scene.add(L); }
+      // after: { task, k } - the part's other state (kit swap pairs, design/swap-pairs.json) once that task is done (a lamp lit by the generator)
+      if (p.after && stackIndex[p.after.k]) swaps.push({ m, p, g2: geoFor(p.after.k, mount), m2: p.after.glow ? glowMat : null, done: false });
+      D.props.push({ k: p.k, room: p.room, mount, wallAt, size: b.getSize(new THREE.Vector3()).toArray().map((v) => +v.toFixed(2)), mpp: info.mpp });
+    }
+
+    // ---- the people ----
+    const warm = [];
+    const hideOwn = (root, keep) => root.traverse((x) => { if (x.isMesh && !keep.has(x)) x.visible = false; });
+    // ひなた: her frames follow the kit person js/ext/hina.js moves and poses (H.set)
+    let hina = null;
+    if (G.hina && G.hina.root) {
+      const H = G.hina;
+      hina = createFigure(THREE, hinaSet, { height: 1.6, material: figMat(0.3, 'dot-hinata') });
+      const keep = new Set(); hina.root.traverse((x) => keep.add(x));
+      hideOwn(H.root, keep);
+      H.root.add(hina.root);
+      H.root.updateMatrixWorld(true);
+      // the kit person's own update keeps hiding nothing new; its pose is what we read
+      const set0 = H.set.bind(H);
+      D.hinaPose = 'idle';
+      H.set = (state, o) => { D.hinaPose = state; return set0(state, o); };
+      warm.push(hina.warm);
+      // [E] on her: a large box (play test: talking had to be aimed at a thin box; a tap on a phone missed)
+      const hit = W.group.getObjectByName('hina:hit');
+      if (hit) { hit.scale.set(2.0, 1.25, 2.0); D.hinaHit = [1.4, 1.9, 1.4]; }
+    }
+    // あれ: her frames in the kit's chimera root (js/ext/chimera.js moves it along the passage, sinks it, fades it); the mist stays
+    let are = null;
+    if (G.chimera && G.chimera.root) {
+      const C = G.chimera, k = C.root.scale.x || 1;
+      are = createFigure(THREE, areSet, { height: 1.85 / k, material: figMat(0.22, 'dot-are') });
+      are.root.position.y = -0.15 / k;   // the kit model stands 0.15 above the floor (its hips at the water line); the frames stand on the floor
+      const keep = new Set(); are.root.traverse((x) => keep.add(x));
+      hideOwn(C.root, keep);
+      C.root.add(are.root);
+      warm.push(are.warm);
+    }
+    for (const w of warm) { w.visible = false; scene.add(w); }
+    ctx.warmObjects = [...(ctx.warmObjects || []), ...warm];
+    figures = D.figures = { hina, are };
+
+    // ---- a larger [E] box on the talk points (the man behind the chained door) ----
+    for (const id of ['S_FRONT']) { const m = W.interactables.find((o) => o.name === `station:${id}`); if (m) m.scale.multiplyScalar(1.5); }
+
+    // ---- light: never pure black, a small light round the player, the next goal glows ----
+    const amb = new THREE.AmbientLight(0x2a3240, 0.55); amb.name = 'dot-floor-light'; scene.add(amb);
+    const near = new THREE.PointLight(0xc8d0d8, 0.9, 4.5, 1.6); near.name = 'dot-near-light'; scene.add(near);
+    D.lights = { amb, near };
+    installBeacon(ctx, G);
+    if (ctx.pixelStyle) ctx.pixelStyle.sweep();
+    D.timings.dress = Math.round(performance.now() - t);
+  });
+
+  // ---- the next goal's glow, the chase's lit way back ----
+  let beacon = null, goalLight = null, chaseLights = [];
+  let flMax = 0;
+  function installBeacon(ctx, G) {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 16;
+    const g = cv.getContext('2d');
+    // a pixel diamond with a hard edge (the dot taste): pale amber
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const d = Math.abs(x - 7.5) + Math.abs(y - 7.5); if (d < 7) { g.fillStyle = d < 3 ? '#fff4c8' : d < 5 ? '#f2c66a' : '#a8742a'; g.fillRect(x, y, 1, 1); } }
+    const tex = new THREE.CanvasTexture(cv); tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.colorSpace = THREE.SRGBColorSpace;
+    beacon = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: true, fog: false }));
+    beacon.scale.setScalar(0.22); beacon.name = 'dot-goal-beacon'; beacon.visible = false; ctx.scene.add(beacon);
+    goalLight = new THREE.PointLight(0xffd890, 0, 3.2, 1.5); goalLight.name = 'dot-goal-light'; ctx.scene.add(goalLight);
+    // the chase: the watertight door and each valve get a light of their own while she hunts
+    const mouth = new THREE.PointLight(0x9cf0b0, 0, 7, 1.4); mouth.position.set(2.6, ctx.world.floorY(0) + 2.2, -2.0); mouth.name = 'dot-chase-goal'; ctx.scene.add(mouth);
+    chaseLights.push({ l: mouth, base: 2.6 });
+    for (const P of (G.posts && G.posts.values()) || []) {
+      const l = new THREE.PointLight(0xffc070, 0, 4, 1.6); l.position.set(P.def.x, ctx.world.floorY(0) + 1.6, P.def.z); l.name = `dot-valve:${P.def.id}`; ctx.scene.add(l);
+      chaseLights.push({ l, base: 1.4, post: P });
+    }
+  }
+  function goalPos(ctx) {
+    const t = ctx.nextTask && ctx.nextTask();
+    if (!t) return null;
+    const W = ctx.world;
+    const find = (name) => W.interactables.find((o) => o.name === name && o.visible !== false) || null;
+    let m = t.station ? find(`station:${t.station}`) : null;
+    if (!m) for (const s of t.steps || []) if (s.emphasis) { m = find(s.emphasis) || W.group.getObjectByName(s.emphasis); if (m) break; }
+    if (!m && (t.station === 'S_HINA1' || t.station === 'S_HINA2')) m = W.group.getObjectByName('hina:hit');
+    if (!m) return null;
+    const p = new THREE.Vector3(); m.getWorldPosition(p);
+    return p;
+  }
+
+  // ---- the motions and the lights, every frame ----
+  const lastHina = { x: 0, z: 0, ok: false };
+  let T = 0, goalT = 0, goal = null;
+  ext.registerSystem('dot-figures', {
+    update(dt, ctx) {
+      for (const w of (D.swaps || [])) if (!w.done && ctx.state && ctx.state.tasks.includes(w.p.after.task)) { w.m.geometry = w.g2; if (w.m2) w.m.material = w.m2; w.done = true; }
+      if (!figures) return;
+      T += dt;
+      const G = window.__mn || {};
+      // ひなた
+      const hf = figures.hina;
+      if (hf && G.hina && G.hina.root.visible) {
+        const r = G.hina.root.position;
+        const moved = lastHina.ok ? Math.min(0.5, Math.hypot(r.x - lastHina.x, r.z - lastHina.z)) : 0;
+        lastHina.x = r.x; lastHina.z = r.z; lastHina.ok = true;
+        const pose = D.hinaPose, moving = moved / Math.max(dt, 1e-3) > 0.15;
+        const st = pose === 'lean' ? 'lean' : pose === 'scared' ? 'fear' : pose === 'crouch' ? (moving ? 'crouch-walk' : 'crouch') : moving ? 'walk' : 'idle';
+        hf.anim.play(st);
+        hf.update(dt, { moved: moved / hf.scale });
+      } else lastHina.ok = false;
+      // あれ
+      const af = figures.are, H = G.gh;
+      if (af && H && G.chimera && G.chimera.root.visible) {
+        const cam = ctx.camera.position, ps = G.project ? G.project(cam.x, cam.z).s : 0, gap = ps - (H.s || 0);
+        const st = H.pressing || (gap < 3 && H.mode === 'chase') ? 'attack' : H.sunk > 0 ? 'fear' : (H.mode !== 'off' && H.wait <= 0 && H.rise <= 0) ? 'walk' : 'idle';
+        af.anim.play(st);
+        af.update(dt, { moved: st === 'walk' ? (H.mode === 'chase' ? 2.4 : 1.3) * dt / af.scale : 0 });
+      }
+      // the light round the player
+      if (D.lights) {
+        const c = ctx.camera.position; D.lights.near.position.set(c.x, c.y - 0.2, c.z);
+        // the near glow follows the flashlight: a flicker or a blackout of the story still goes dark (only the dim ambient stays)
+        const fl = ctx.flashlight; if (fl) flMax = Math.max(flMax, fl.intensity || 0);
+        const r = fl && flMax > 0 && ctx.lightOn !== false ? Math.min(1, (fl.intensity || 0) / flMax) : 0;
+        D.lights.near.intensity = 0.15 + 0.45 * r;
+      }
+      // the next goal (looked up twice a second): a pixel diamond above it and a warm light on it, never while she hunts
+      goalT -= dt;
+      if (goalT <= 0) { goalT = 0.5; goal = ctx.state.started && !(H && H.mode === 'chase') ? goalPos(ctx) : null; }
+      if (beacon) {
+        const gd = goal ? ctx.camera.position.distanceTo(goal) : 99, on = gd < 14;
+        beacon.visible = on && gd > 1.8;   // close up the [E] label says it; the diamond would sit in front of the thing goalLight.intensity = on ? 1.2 + Math.sin(T * 3) * 0.4 : 0;
+        if (on) { beacon.position.set(goal.x, goal.y + 0.55 + Math.sin(T * 2.5) * 0.05, goal.z); goalLight.position.set(goal.x, goal.y + 0.4, goal.z); }
+      }
+      const chase = H && H.mode === 'chase';
+      for (const c of chaseLights) c.l.intensity = chase ? c.base * (c.post ? (c.post.on ? 0.35 : 1) : 1) * (0.8 + Math.sin(T * 4 + c.base) * 0.2) : 0;
+    },
+  });
+
+  // the other version, from the title
+  D.phone = installPhone(ext);   // phones: sideways recommended, the 目的 chip, full screen (phone.js)
+  ext.registerTitleButton('dot-original', { label: '元の版（写真の3D）へ', order: 210, run() { location.href = '/'; } });
+}

@@ -11,8 +11,10 @@ import { installTests } from './test-scenes.js';
 import { installAnswers } from './answers.js';
 import { installBoot } from './boot.js';
 
-export default function (ext) {
+export default function (ext, env = {}) {
   const G = {};
+  // the same game drawn in dots (/dot-fps, tools/build-dot.mjs): from the normal title, a button to it (the dot page's own layer links back)
+  if (!(env.manifest && env.manifest.dot)) ext.registerTitleButton('dot-version', { label: 'ドット版（一人称）で遊ぶ', order: 200, run() { location.href = '/dot-fps'; } });
   installWater(ext, G);
   installHospital(ext, G);
   installDress(ext, G);

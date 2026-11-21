@@ -1,4 +1,4 @@
-/* game-kit 1d506003: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 9c9832c4: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
 // The standard bootstrap of a 3D first-person game (docs/standard-3d.md). Wires the standard modules from DATA (game.json + data/*.json):
 //   runtime base  render-presets (renderer, lights, fog, post, quality tiers; the preset may be a name or { base, ...overrides }),
 //                 frame-guard (?perf overlay, dynamic resolution, job queue), controller (walk / look / touch),
@@ -49,6 +49,7 @@ import { createPauseMenu } from './pause-menu.js';
 import { installControlHelp } from './control-help.js';
 import { renderPaperDoc, paperDocHtml } from './paper-doc.js';
 import { createJournal } from './journal-ui.js';
+import { readsTab, READS_CSS } from './reads-tab.js';
 import { createMapSvg } from './map-svg.js';
 import { createStepGuide, minigameSteps } from './step-guide.js';
 import { FrameGuard, JobQueue, prewarm, auditScene } from './frame-guard.js';
@@ -74,7 +75,7 @@ import { installTimedShot } from './timed-shot.js';
 import { VoiceQueue } from './voice-queue.js';
 import { installNpcAudit } from './npc-audit.js';
 
-export const CORE_VERSION = '1.20.0';
+export const CORE_VERSION = '1.20.4';
 // the mini game library's types (js/mg-library.js LIBRARY; test/story-hooks.test.mjs keeps the two equal): game.json "minigames" naming one of these loads the library
 export const MG_LIB_TYPES = ['pour', 'turn-dials', 'match-mark', 'timing', 'code-drums', 'tune-radio', 'trace-path', 'slide-tiles', 'search-dark', 'rotate-pipes', 'sort-items', 'memory-pairs', 'lock-pick', 'photo-focus', 'rhythm-taps', 'connect-dots', 'balance-scale', 'echo-bells', 'switch-panel', 'rotate-pieces', 'count-shadows', 'spot-difference', 'maze-path', 'cipher-wheel', 'steady-hand', 'pump-gauge', 'order-steps', 'compass-bearing', 'mirror-beam', 'kana-word', 'jug-measure', 'hold-breath', 'layer-board'];
 const $ = (id) => document.getElementById(id);
@@ -211,7 +212,11 @@ export function createGame(cfg) {
   ctx.isTouch = inputMode.touch; ctx.input = inputMode.mode;
   // HUD slots + toast lane (rule U27, docs/hud-slots.md): one region per HUD part; every short notification is an item of the lane (top centre, below the top stacks)
   const slots = ensureHudSlots(hud);
-  const lane = ctx.lane = new ToastLane({ el: slots.lane, paused: () => !!((ctx.wm && ctx.wm.isOpen) || (ctx.ui && ctx.ui.open)) || (ctx.sayHold || []).some((f) => { try { return !!f(); } catch { return false; } }),   /* a game's own cover holds the notices too (1.10.8) */ calm: () => ctx.calm || document.documentElement.hasAttribute('data-gf-calm'), fit: () => { layoutHudSlots(); return laneFree(); }, onChange: scheduleHudLayout });
+  const lane = ctx.lane = new ToastLane({ el: slots.lane, paused: () => !!((ctx.wm && ctx.wm.isOpen) || (ctx.ui && ctx.ui.open)) || (ctx.sayHold || []).some((f) => { try { return !!f(); } catch { return false; } }),   /* a game's own cover holds the notices too (1.10.8) */ calm: () => ctx.calm || document.documentElement.hasAttribute('data-gf-calm'), fit: () => { layoutHudSlots(); return laneFree(); }, onChange: scheduleHudLayout, onReader: (open) => onReader(open) });
+  // 1.20.3: the reading panel (toast-lane.js tl-read): the game waits while it is open; Esc / E / Enter / Space or 閉じる close it, then the comment and the lock come back
+  ctx.blockers.push(() => lane.reading);
+  function onReader(open) { if (open) ctx.fp && ctx.fp.release(); else setTimeout(() => { if (state.started && !state.ended && !blocked()) ctx.fp.lock(); }, 0); scheduleHudLayout(); bus.emit(open ? 'reader:open' : 'reader:close', {}); }
+  addEventListener('keydown', (e) => { if (!lane.reading || e.repeat) return; if (['Escape', 'KeyE', 'Enter', 'Space', 'NumpadEnter'].includes(e.code)) { e.preventDefault(); e.stopImmediatePropagation(); lane.close(); } }, true);
   ctx.registerHudPart = registerHudPart;
   registerHudPart('prompt', { slot: 'prompt' });
   if ($('t-menu')) registerHudPart('pause-menu', { slot: 'tr', order: -20, move: false });
@@ -372,9 +377,19 @@ export function createGame(cfg) {
 
   // short messages (say / toast) and progress-ui's dialogs: KitUI. Menus, tabs, docs, endings: the window manager (ONE window at a time).
   ctx.sayHold = ctx.sayHold || [];   // a game adds () => true while its own cover (an intro, a cut-in) hides the say band: the line waits (1.10.8)
-  const ui = ctx.ui = new KitUI({ lane, sayHeld: () => !!((ctx.wm && ctx.wm.isOpen) || (ctx.ui && ctx.ui.open)) || ctx.sayHold.some((f) => { try { return !!f(); } catch { return false; } }), onOpen: (n) => onUiOpen(n), onClose: (n) => onUiClose(n) });
+  const ui = ctx.ui = new KitUI({ lane, sayHeld: () => !!((ctx.wm && ctx.wm.isOpen) || (ctx.ui && ctx.ui.open) || lane.reading) || ctx.sayHold.some((f) => { try { return !!f(); } catch { return false; } }), onOpen: (n) => onUiOpen(n), onClose: (n) => onUiClose(n) });
   const wm = ctx.wm = createWindowManager({ container: body, thought: '#say', onPause: (p) => { if (p) ctx.fp && ctx.fp.release(); else setTimeout(() => { if (state.started && !state.ended && !ui.open && !blocked()) ctx.fp.lock(); }, 0); } });   // the lock waits one tick: a window opened right after the last one closed (a result, the next page) must not get a lock landing over it
   wm.on('open', (id) => bus.emit('ui:open', { name: id })); wm.on('close', (id) => bus.emit('ui:close', { name: id }));
+  // 1.20.3 (札の家 「帳面を開くとすぐに自分のコメントが始まり見づらい」): while a document or a reading card is open, the protagonist's comment
+  // (thought line + its voice) and any talk wait; they start once the player has closed it (read first, then the comment). ctx.afterReading(f)
+  // runs f then (at once when nothing is open). Logged in ctx.readLog for the checks: ['open', 'doc'], ['close', 'doc'], ['say', text], ['talk', key].
+  let docUp = 0; const afterQ = []; ctx.readLog = [];
+  const readingNow = ctx.readingNow = () => docUp > 0 || lane.reading;
+  const flushReading = () => setTimeout(() => { if (readingNow()) return; for (const f of afterQ.splice(0)) safe(f); }, 350);
+  ctx.afterReading = (f) => { if (readingNow()) afterQ.push(f); else f(); };
+  wm.on('open', (id) => { if (id === 'doc') { docUp++; ctx.readLog.push(['open', 'doc', Date.now()]); } });
+  wm.on('close', (id) => { if (id === 'doc') { docUp = Math.max(0, docUp - 1); ctx.readLog.push(['close', 'doc', Date.now()]); flushReading(); } });
+  bus.on('reader:open', () => ctx.readLog.push(['open', 'card', Date.now()])); bus.on('reader:close', () => { ctx.readLog.push(['close', 'card', Date.now()]); flushReading(); });
   function onUiOpen(n) { ctx.fp && ctx.fp.release(); bus.emit('ui:open', { name: n }); }
   function onUiClose(n) { if (!state.ended && state.started && !wm.isOpen && !blocked()) ctx.fp.lock(); bus.emit('ui:close', { name: n }); }
   const blocked = () => !state.started || !!ui.open || wm.isOpen || MG.isActive() || !!ctx.mgOpen || !!state.ended || ctx.rnOpen || ctx.blockers.some((f) => f());
@@ -422,7 +437,13 @@ export function createGame(cfg) {
   addEventListener('resize', applyHud); applyHud(); ctx.applyHud = applyHud;
   const invDef = uiDef('inventory'), jrDef = uiDef('journal');
   const docTab = invDef.docTab || 'docs';
-  const itemEntry = (i) => ({ ...i, tab: i.tab || 'items', img: i.photo || undefined, meta: i.meta || (i.room ? `${roomName(i.room)}で入手` : undefined) });
+  // 1.20.3 (札の家 見下ろし: 「画像が画面中央の上部に出てきて邪魔です。通常に読ませるダイアログにして、思ったことや内容を確認させてください」):
+  // a thing picked up (or given) with a picture or a text opens the reading panel - picture, name, what it is (desc / the letter's text),
+  // the protagonist's thought - and waits for 閉じる; no floating picture card any more. The thought line (and its voice) follows the close.
+  const readItem = (it, verb) => lane.push({ kind: 'card', cls: `tl-lookcard tl-photocard tl-read${it.read ? ' tl-letter' : ''}`, key: `pickup:${it.id}`, html: viewItemHtml({ photo: it.photo, title: `${verb}：${it.name}`, text: it.read || it.desc, feeling: it.feeling }) });   // a letter: its own words (the envelope's description stays in the item list)
+  const itemEntry = (i) => ({ ...i, desc: i.read ? `${i.desc ? `${i.desc}
+
+` : ''}${i.read}` : i.desc, tab: i.tab || 'items', img: i.photo || undefined, meta: i.meta || (i.room ? `${roomName(i.room)}で入手` : undefined) });
   const docEntry = (d) => ({ ...d, name: d.title, desc: d.text, why: d.why || '', tab: docTab, img: d.photo || undefined, canUse: false, examineLabel: '読む' });
   const invItems = () => [...items.map(itemEntry), ...docs.map(docEntry)].map((e) => (invDef.decorate ? invDef.decorate(e, ctx) || e : e));
   const inv = ctx.inv = createInventory({
@@ -483,7 +504,7 @@ export function createGame(cfg) {
     state.tasks.push(id); prog.flag(id); if (!phaseNow) ctx.checkpoint = { x: camera.position.x, z: camera.position.z, yaw: fp.yaw, floor: ctx.floor };   // inside a phase the checkpoint stays at its start (1.17.3)
     if (!o.quiet) { ui.toast(`✓ ${esc((taskById.get(id) || {}).title || id)}`, 'ok'); sound('beep', true); }
     bus.emit('task:done', { id });
-    for (const it of items) if (it.given === id && !state.inv.includes(it.id)) { state.inv.push(it.id); if (!o.quiet) { if (it.photo) lane.push({ kind: 'card', cls: 'tl-lookcard tl-pickcard', key: `pickup:${it.id}`, ttl: 7000, html: viewItemHtml({ photo: it.photo, title: `受け取った：${it.name}` }) }); else ui.toast(`受け取った：${esc(it.name)}`); }   /* 1.17.0 (水無瀬病院 #8): an item a task gives shows its picture, like one picked up */ bus.emit('item:given', { id: it.id, task: id }); }   // "given": <task id> (standard 1.7)
+    for (const it of items) if (it.given === id && !state.inv.includes(it.id)) { state.inv.push(it.id); if (!o.quiet) { if (it.photo || it.read) readItem(it, '受け取った'); else ui.toast(`受け取った：${esc(it.name)}`); }   /* 1.17.0 (水無瀬病院 #8): an item a task gives shows its picture, like one picked up */ bus.emit('item:given', { id: it.id, task: id }); }   // "given": <task id> (standard 1.7)
     const reg = ext.reg.task.get(id); if (!ctx.skipping) reg && reg.onDone && reg.onDone(ctx, taskById.get(id));
     if (!o.noSave) ctx.save();
     checkEndings();
@@ -538,9 +559,9 @@ export function createGame(cfg) {
     station: { prompt: (o) => { const t = taskAtStation(tasks, o.id, state.tasks); return t ? `[E] ${t.title}` : o.label || '（いまは何もない）'; },
       run: (o) => { const t = taskAtStation(tasks, o.id, state.tasks); if (!t) { const open = tasks.find((x) => x.station === o.id && !state.tasks.includes(x.id)); const why = open ? ctx.canStart(open) : 'ここでの作業は、もう終わっています。'; return ui.say(esc(why), Math.min(9, 2.4 + String(why).length * 0.09), { urgent: true }); }   /* the answer to [E] (K8): never behind a queued line */ return ctx.startTask(t.id); } },
     item: { prompt: (o) => `[E] 拾う：${items.find((i) => i.id === o.id).name}`,
-      run: (o) => { const it = items.find((i) => i.id === o.id); remove('item', o.id); state.inv.push(o.id); sound('pickup'); ctx.lastPickup = { it, at: Date.now() }; if (it.photo) lane.push({ kind: 'card', cls: 'tl-lookcard tl-pickcard', key: `pickup:${it.id}`, ttl: 6000, html: viewItemHtml({ photo: it.photo, title: `入手：${it.name}` }) }); else ui.toast(`入手：${esc(it.name)}`); ui.say(esc(it.feeling));   /* an item with a photo shows its picture card (the feeling stays in the thought band) */ bus.emit('item:pickup', { id: o.id }); ctx.save(); checkEndings(); } },
+      run: (o) => { const it = items.find((i) => i.id === o.id); remove('item', o.id); state.inv.push(o.id); sound('pickup'); if (!(it.photo || it.read)) ctx.lastPickup = { it, at: Date.now() };   /* 1.20.3: an item shown in the reading panel is not shown again as the first page of a talk */ if (it.photo || it.read) readItem(it, '入手'); else ui.toast(`入手：${esc(it.name)}`); if (it.feeling) ctx.afterReading(() => ui.say(esc(it.feeling)));   /* 1.20.3 items.json "read": a letter shows what it says the moment it is picked up (札の家 「各手紙も拾ったタイミングで内容を表示」); re-read in the item list / 手帳 */   /* an item with a photo shows its picture card (the feeling stays in the thought band) */ bus.emit('item:pickup', { id: o.id }); ctx.save(); checkEndings(); } },
     doc: { prompt: (o) => `[E] 読む：${docs.find((d) => d.id === o.id).title}`,
-      run: (o) => { const d = docs.find((x) => x.id === o.id); if (!state.docsRead.includes(o.id)) state.docsRead.push(o.id); sound('paper'); wm.open('doc', { title: d.title, size: (manifest.docStyle === 'paper' || d.paper) ? 'm' : 's', render: (el) => { if (manifest.docStyle === 'paper' || d.paper) { renderPaperDoc(el, d); return; } el.innerHTML = `${d.photo ? `<img class="gf-doc-img" src="${esc(d.photo)}" alt="">` : ''}${d.text.split('\n').map((p) => `<p>${esc(p)}</p>`).join('')}${d.feeling ? `<p class="iv-feel">${esc(d.feeling)}</p>` : ''}`; } });   /* 1.17.0: game.json docStyle "paper" / docs.json "paper": the document as a sheet (js/paper-doc.js) */ bus.emit('doc:read', { id: o.id }); ctx.save(); } },
+      run: (o) => { const d = docs.find((x) => x.id === o.id); const first = !state.docsRead.includes(o.id); if (first) state.docsRead.push(o.id); sound('paper'); wm.open('doc', { title: d.title, size: (manifest.docStyle === 'paper' || d.paper) ? 'm' : 's', render: (el) => { if (manifest.docStyle === 'paper' || d.paper) renderPaperDoc(el, d, { feeling: false }); else el.innerHTML = `${d.photo ? `<img class="gf-doc-img" src="${esc(d.photo)}" alt="">` : ''}${d.text.split('\n').map((p) => `<p>${esc(p)}</p>`).join('')}`; el.insertAdjacentHTML('beforeend', '<p class="gf-doc-done"><button type="button" class="btn primary gf-doc-read">読んだ</button></p>'); el.querySelector('.gf-doc-read').addEventListener('click', () => wm.close()); } });   /* 1.20.3: 読んだ at the end of the text closes it (then the comment) */   /* 1.17.0: game.json docStyle "paper" / docs.json "paper": the document as a sheet (js/paper-doc.js) */ if (first && d.feeling) ctx.monologue(d.feeling, Math.min(9, 2.4 + String(d.feeling).length * 0.09));   /* 1.20.3: the document alone in its window; the protagonist's comment comes after it is closed (ctx.monologue waits, see ctx.afterReading) and stays in 手帳 */ bus.emit('doc:read', { id: o.id }); ctx.save(); } },
     // locked stairs say why (the plan's hint, else the progression's lock text) and stay shut: [E] gives the reason in the thought band (1.9.1)
     stairs: { prompt: (o) => (o.locked && o.locked() ? `[E] ${lockedLabel(o.label || '階段', 'いまは使えません')}` : `[E] ${o.label || '階段を使う'}`),
       run: (o) => { if (o.locked && o.locked()) { ui.say(esc(o.hint || prog.lockText(o.unlock) || 'いまは、この階段を使えません。先に、いまの目標を進めましょう。'), 6, { urgent: true }); bus.emit('stairs:locked', { id: o.id, unlock: o.unlock }); return; } ctx.useStairs(o); } },
@@ -558,6 +579,7 @@ export function createGame(cfg) {
   let tapUsedAt = -1e9;
   document.addEventListener('click', (e) => { if (performance.now() - tapUsedAt < 450 && e.target.closest && e.target.closest('.wm-layer')) { e.preventDefault(); e.stopPropagation(); } }, true);
   ctx.tapSelect = (x, y) => { if (blocked() || !state.started) return false; const t = world.pickAt ? world.pickAt(x, y, ctx) : pickInteractableAt(camera, world.interactables, x, y, innerWidth, innerHeight, 2.4, { colliders: world.colliders }); if (!t) return false; target = ctx.target = t; const used = ctx.interact(); if (used) tapUsedAt = performance.now(); return used; };
+  ctx.useInteract = (ia) => { const h = ia && handlerOf(ia.kind); if (!h) return false; h.run(ia, ctx); return true; };   // 1.20.2: one interaction run directly (tools/check-playtest.mjs P24 opens every card and document)
   ctx.interact = () => { if (blocked() || !target) return false; const h = handlerOf(target.kind); if (!h) return false; bus.emit('player:interact', { kind: target.kind, id: target.id }); h.run(target, ctx); return true; };
   // floors: a stairs / lift end ({ to: { x, z, floor, yaw } }) moves the player; worlds without stairs never call it
   ctx.setFloor = (floor, p = null) => { const from = ctx.floor; if (p) { placeCamera(p.x, p.z, floor); if (p.yaw != null) fp.yaw = p.yaw; } else placeCamera(camera.position.x, camera.position.z, floor); if (world.setLampFloor) world.setLampFloor(floor); if (from !== floor) bus.emit('player:floor', { from, to: floor }); };
@@ -601,7 +623,9 @@ export function createGame(cfg) {
     name: manifest.id, tabs: jrDef.tabs || [{ id: 'notes', label: '気になること' }], ...(jrDef.groups ? { groups: jrDef.groups } : {}), ...(jrDef.layout ? { layout: jrDef.layout } : {}),
     ...(jrDef.onOpen ? { onOpen: (e, jr) => jrDef.onOpen(e, jr, ctx) } : {}), ...(jrDef.storage !== undefined ? { storage: jrDef.storage } : {}),
     getEntries: () => (jrDef.entries ? jrDef.entries(ctx) : [
-      ...items.filter((i) => state.inv.includes(i.id)).map((i) => ({ id: `item:${i.id}`, tab: 'notes', title: i.name, text: i.desc, line: i.feeling, img: i.photo || undefined, group: i.room, groupLabel: roomName(i.room) })),
+      ...items.filter((i) => state.inv.includes(i.id)).map((i) => ({ id: `item:${i.id}`, tab: 'notes', title: i.name, text: i.read ? `${i.desc ? `${i.desc}
+
+` : ''}${i.read}` : i.desc, line: i.feeling, img: i.photo || undefined, group: i.room, groupLabel: roomName(i.room) })),
       ...docs.filter((d) => state.docsRead.includes(d.id)).map((d) => ({ id: `doc:${d.id}`, tab: 'notes', title: d.title, text: d.text, line: d.feeling, img: d.photo || undefined, paperHtml: manifest.docStyle === 'paper' || d.paper ? () => paperDocHtml(d, { feeling: false }) : undefined, group: d.room, groupLabel: roomName(d.room) })),
       ...(ctx.things ? ctx.things.entries() : []),   // what was looked at (data/things.json)
     ]),
@@ -655,6 +679,10 @@ export function createGame(cfg) {
   wm.on('open', (id) => { if (id === 'tab-menu' && tm.active === 'map') mapOn(); });
   wm.on('close', (id) => { if (id === 'tab-menu') mapOff(); });
   { const rt = recapTab(ctx, data.stages); if (rt) tm.registerTab(rt); }   // これまで (standard 1.14, js/guide-aids.js)
+  if (!(manifest.ui && manifest.ui.reads === false) && (docs.length || items.some((i) => i.read))) {   // 覚え書き・読んだもの (standard 1.20.3, js/reads-tab.js)
+    if (typeof document !== 'undefined') { const st = document.createElement('style'); st.textContent = READS_CSS; document.head.appendChild(st); }
+    tm.registerTab(ctx.reads = readsTab(ctx, { items, docs, tasks, lane, tm, bus, manifest, roomName }));
+  }
   for (const t of ext.tabs()) tm.registerTab({ id: t.id, label: t.label, icon: t.icon, after: t.after, render: (el) => t.render(el, ctx), badge: t.badge ? () => t.badge(ctx) : undefined, onShow: t.onShow ? () => t.onShow(ctx) : undefined, onKey: t.onKey, focus: t.focus });
   const pm = ctx.pm = createPauseMenu({
     wm, tabMenu: tm, releaseNotes: rn, ...(uiDef('pause').renderSettings ? { renderSettings: (el, api) => uiDef('pause').renderSettings(el, api, ctx) } : {}), onTitle: () => (ctx.toTitle ? ctx.toTitle() : location.reload()), storage: safe(() => localStorage),
@@ -920,6 +948,8 @@ export function createGame(cfg) {
   if (manifest.thoughtVoices && typeof fetch !== 'undefined') fetch(manifest.thoughtVoices).then((r) => (r.ok ? r.json() : {})).then((j) => { thoughtVoices = Object.fromEntries(Object.values(j).map((v) => [v.text, v])); }).catch(() => {});
   const thoughtDir = String(manifest.thoughtVoices || '').replace(/[^/]*$/, '');
   ctx.monologue = (text, sec = 2.2, o) => {
+    if (readingNow()) { afterQ.push(() => ctx.monologue(text, sec, o)); return; }   // 1.20.3: after the document / card is closed
+    ctx.readLog.push(['say', String(text).slice(0, 40), Date.now()]);
     const v = thoughtVoices && thoughtVoices[text];
     if (v && !ctx.qa) { safe(() => thoughtNode && thoughtNode.stop && thoughtNode.stop()); safe(() => { thoughtNode = ctx.voiceLine(thoughtDir + v.file, null, { prio: (o && o.prio) || 'hint' }); }); sec = Math.max(sec, (v.sec || 0) + 1); }
     return ui.say(esc(text), sec, o);
@@ -940,6 +970,8 @@ export function createGame(cfg) {
       return spoken.length ? Promise.resolve(T.talk(spoken, o)).then((v) => { after(); return v; }) : (after(), Promise.resolve(true));
     };
     ctx.talk = (src, o = {}) => {
+      if (readingNow()) return new Promise((res) => afterQ.push(() => res(ctx.talk(src, o))));   // 1.20.3: a talk waits for the open document / card
+      ctx.readLog.push(['talk', typeof src === 'string' ? src : 'lines', Date.now()]);
       const p = ctx.lastPickup; ctx.lastPickup = null;
       const lines = typeof src === 'string' ? (data.talk && data.talk[src]) || [] : src || [];
       if (!p || Date.now() - p.at > 8000 || o.pickup === false || !lines.length) return talk0(src, o);

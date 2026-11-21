@@ -1,4 +1,4 @@
-/* game-kit 8bda952: js/world-from-plan.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit de49b0f7: js/world-from-plan.js — edit in game-kit and run tools/kit-sync.js */
 // The standard world builder (docs/standard-3d.md, layer "world"): plan.json (rooms, corridors, doors, stations) -> THREE objects,
 // colliders, doors that open and a room lookup. Boxes only: floors, ceilings, walls with door gaps and lintels, door panels, task
 // stations. The look is a flat palette per room kind + the preset lighting; richer looks (texture-library, props, env-props) are added
@@ -304,7 +304,7 @@ export function buildWorld(plan, o = {}) {
   for (const s of plan.stations || []) {
     if (!roomsById.has(s.room)) continue;
     const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.1, 0.5), stationM);
-    mesh.position.y = 0.55; mesh.name = `station:${s.id}`; mesh.userData.interact = { kind: 'station', id: s.id, label: s.label };
+    mesh.position.y = 0.55; mesh.name = `station:${s.id}`; mesh.userData.interact = { kind: 'station', id: s.id, label: s.label, ...(s.talk ? { talk: true } : {}), ...(s.reach ? { reach: s.reach } : {}) };   /* 1.20.3: plan station "talk": true (a person to speak to) / "reach": m */
     place(mesh, s.room, s.x, s.z);
     const col = { box: new THREE.Box3().setFromObject(mesh), off: false };
     colliders.push(col);
@@ -453,16 +453,20 @@ export function buildWorld(plan, o = {}) {
 // prev (the id shown last frame; kept in the module otherwise) }. Returns null or { object, ...userData.interact, distance, via }.
 const _bx = new THREE.Box3(), _q = new THREE.Vector3();
 let lastPick = null;
+// 1.20.3 (札の家 「婆さんに話しかけづらいです。領域を増やしてください」): a person to talk to is picked from further away than a thing
+// (interact.talk: TALK_REACH) and any interactable can name its own reach (interact.reach, m); the cone of the pick is unchanged
+export const TALK_REACH = 3.4, TALK_CONE = 4;
 function candidatesOf(camera, interactables, reach) {
   const out = [];
   for (const o of interactables) {
     if (!o.visible) continue;
+    const ia = o.userData.interact, own = ia ? (ia.reach ?? (ia.talk ? Math.max(TALK_REACH, reach) : null)) : null, r = own ?? reach;
     // the world position (matrixWorld), not o.position: a part of a prop (a drawer, a cabinet door) has a local position
     const e = o.matrixWorld.elements, wx = o.parent ? e[12] : o.position.x, wz = o.parent ? e[14] : o.position.z;
-    if (Math.abs(wx - camera.position.x) > reach + 3 || Math.abs(wz - camera.position.z) > reach + 3) continue;
+    if (Math.abs(wx - camera.position.x) > r + 3 || Math.abs(wz - camera.position.z) > r + 3) continue;
     _bx.setFromObject(o);
     if (_bx.isEmpty()) continue;
-    out.push({ id: o.id, min: [_bx.min.x, _bx.min.y, _bx.min.z], max: [_bx.max.x, _bx.max.y, _bx.max.z], obj: o });
+    out.push({ id: o.id, min: [_bx.min.x, _bx.min.y, _bx.min.z], max: [_bx.max.x, _bx.max.y, _bx.max.z], obj: o, ...(own != null ? { reach: own } : {}), ...(ia && ia.talk ? { cone: TALK_CONE } : {}) });
   }
   return out;
 }

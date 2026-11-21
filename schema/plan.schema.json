@@ -197,6 +197,14 @@
           },
           "label": {
             "type": "string"
+          },
+          "talk": {
+            "type": "boolean",
+            "description": "1.20.3: a person to speak to: picked from further (TALK_REACH 3.4 m) and in a wider cone (x4) than a thing"
+          },
+          "reach": {
+            "type": "number",
+            "description": "1.20.3: this station's own pick reach in metres"
           }
         }
       }

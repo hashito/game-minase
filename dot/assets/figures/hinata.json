@@ -1,0 +1,161 @@
+{
+ "id": "hinata",
+ "w": 31,
+ "d": 45,
+ "n": 84,
+ "pivot": [
+  15,
+  19
+ ],
+ "mpp": 0.025,
+ "frames": [
+  "idle.1",
+  "idle.2",
+  "idle.3",
+  "idle.4",
+  "walk.1",
+  "walk.2",
+  "walk.3",
+  "walk.4",
+  "walk.5",
+  "walk.6",
+  "walk.7",
+  "walk.8",
+  "crouch.1",
+  "crouch-walk.1",
+  "crouch-walk.2",
+  "crouch-walk.3",
+  "crouch-walk.4",
+  "crouch-walk.5",
+  "crouch-walk.6",
+  "crouch-walk.7",
+  "crouch-walk.8",
+  "stand-up.1",
+  "stand-up.2",
+  "fear.1",
+  "fear.2",
+  "lean.1",
+  "lean.2",
+  "reach.1",
+  "reach.2",
+  "reach.3",
+  "turn.1",
+  "turn.2",
+  "turn.3",
+  "turn.4"
+ ],
+ "motions": {
+  "idle": {
+   "frames": [
+    "idle.1",
+    "idle.2",
+    "idle.3",
+    "idle.4"
+   ],
+   "fps": 2,
+   "loop": true,
+   "fallback": null
+  },
+  "walk": {
+   "frames": [
+    "walk.1",
+    "walk.2",
+    "walk.3",
+    "walk.4",
+    "walk.5",
+    "walk.6",
+    "walk.7",
+    "walk.8"
+   ],
+   "fps": 8,
+   "stride": 1.4,
+   "loop": true,
+   "fallback": "idle"
+  },
+  "crouch": {
+   "frames": [
+    "crouch.1"
+   ],
+   "loop": true,
+   "fallback": "idle"
+  },
+  "crouch-walk": {
+   "frames": [
+    "crouch-walk.1",
+    "crouch-walk.2",
+    "crouch-walk.3",
+    "crouch-walk.4",
+    "crouch-walk.5",
+    "crouch-walk.6",
+    "crouch-walk.7",
+    "crouch-walk.8"
+   ],
+   "fps": 6,
+   "stride": 0.8,
+   "loop": true,
+   "fallback": "crouch"
+  },
+  "stand-up": {
+   "frames": [
+    "crouch.1",
+    "stand-up.1",
+    "stand-up.2",
+    "idle.1"
+   ],
+   "fps": 8,
+   "loop": false,
+   "fallback": "idle"
+  },
+  "fear": {
+   "frames": [
+    "fear.1",
+    "fear.2"
+   ],
+   "fps": 2,
+   "loop": true,
+   "fallback": "crouch"
+  },
+  "lean": {
+   "frames": [
+    "lean.1",
+    "lean.2"
+   ],
+   "fps": 1,
+   "loop": true,
+   "fallback": "idle"
+  },
+  "reach": {
+   "frames": [
+    "reach.1",
+    "reach.2",
+    "reach.2",
+    "reach.3"
+   ],
+   "fps": 6,
+   "loop": false,
+   "fallback": "paste"
+  },
+  "turn": {
+   "frames": [
+    "turn.1",
+    "turn.2",
+    "turn.3",
+    "turn.4"
+   ],
+   "fps": 6,
+   "loop": true,
+   "fallback": "walk"
+  }
+ },
+ "src": {
+  "family": "character-hoodie",
+  "variant": "woman",
+  "params": {
+   "top": "#4c5a52",
+   "bottom": "#2a2f3a",
+   "shoes": "#d8d6cc",
+   "hair": "#241a14",
+   "hairstyle": "ponytail"
+  }
+ }
+}

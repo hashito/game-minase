@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Playtest findings as checks (standard 1.17.0, docs/playtest-findings.md). What players found by playing, looked for in every game, headless:
-//   node tools/check-playtest.mjs [game-dir] [--scene <id>] [--json] [--strict]
+//   node tools/check-playtest.mjs [game-dir] [--scene <id>] [--json] [--strict] [--root public --path dot/]   (a built layer, e.g. a dot version)
 // Opens the game in test mode (?test: no save is touched), starts it, closes the opening windows, and audits the built world:
 //   P1  an [E] target (a thing to look at, a station) with nothing visible in its box: you can read a notice that is not there (#3) or
 //       talk to someone who has left (#2)
@@ -26,15 +26,34 @@
 //   P20 a ladder / flight that moves the player at once (no climb) (#13)
 //   P21 two opaque faces in the same plane, overlapping (z-fighting: the flicker of squares on the wall behind ひなた) (#1)
 //   P22 a voice played around the one voice channel (new Audio / decodeAudioData in the game's own code) (#3)
-// Exit 1 on an error (P4, P7, P9, P19) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+//   1.20.2 (札の家 ドット版):
+//   P23 a framed box whose text comes closer than 12 px to its frame (a button 8 px left / right), at 390 x 844 and 375 x 667 (tools/frame-padding.mjs)
+//   P24 every thing card and document opened at 390 x 844 and 375 x 667: a line cut off by a box that cannot scroll (an error)
+//   1.20.3 (札の家 ドット版, the user's phone play 2026-11-21):
+//   P25 a card / document in the reading panel (js/toast-lane.js #gf-reader): HUD, touch controls or the say band on it (an error), no large
+//       閉じる, less than half of a phone screen, or past the screen edge (「他のUIの邪魔にならないように広く場所を取るべき」)
+//   P26 a document whose comment (monologue / talk) starts while the document is still open (「しっかりとテキストを見せた後に感想を」)
+//   P27 a room that reads as black: mean luminance round the player under tools/scene-luma.mjs LUMA_DARK (「地下室が真っ暗で見えず」)
+//   P28 a thing hanging on the wall where a door opens or slides (tools/wall-door.mjs: 「スライドする戸のところに壁掛け時計」)
+//   P29 a person ("talk": true station) that the pick misses from the 1.0 / 1.8 m rings (tools/talk-ring.mjs: 「婆さんに話しかけづらい」)
+//   P30 a picture shown outside the reading panel when an item or a thing is opened (「画像が画面中央の上部に出てきて邪魔」)
+//   P21+ a wall paper that flickers on a still picture (tools/frame-flicker.mjs, the dot layers too: 「張り紙よりも大きな枠が見えて、ちらついている」)
+// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { launch } from './cdp.mjs';
+import { framePaddingSource, clippedTextSource } from './frame-padding.mjs';
+import { lumaSource, LUMA_DARK } from './scene-luma.mjs';
+import { wallDoorSource } from './wall-door.mjs';
+import { talkRingSource, TALK_RING_MIN } from './talk-ring.mjs';
+import { flickerSource, FLICKER_MAX } from './frame-flicker.mjs';
+// P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
+const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
 
 const args = process.argv.slice(2), arg = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
-const dir = path.resolve(args.find((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--') && ['--scene'].includes(args[i - 1]))) || '.');
+const dir = path.resolve(args.find((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--') && ['--scene', '--root', '--path'].includes(args[i - 1]))) || '.');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const errors = [], warns = [];
 const E = (id, m) => errors.push(`${id} ${m}`), Wn = (id, m) => warns.push(`${id} ${m}`);
@@ -82,8 +101,8 @@ if (game.deaths) {
 // ---- in the page ----
 const port = 47900 + Math.floor(Math.random() * 90);
 const serve = path.join(dir, 'tools', 'serve.js');
-const server = spawn(process.execPath, [fs.existsSync(serve) ? serve : path.join(import.meta.dirname, 'serve.js'), '--port', String(port), '--root', dir], { stdio: 'ignore', cwd: dir });
-const base = `http://127.0.0.1:${port}/`;
+const server = spawn(process.execPath, [fs.existsSync(serve) ? serve : path.join(import.meta.dirname, 'serve.js'), '--port', String(port), '--root', path.resolve(dir, arg('--root', '.'))], { stdio: 'ignore', cwd: dir });
+const base = `http://127.0.0.1:${port}/${arg('--path', '')}`;
 for (let i = 0; i < 60; i++) { if (await fetch(base).then((r) => r.ok).catch(() => false)) break; await sleep(100); }
 const p = await launch({ width: 1280, height: 720 });
 const G = async (expr) => { const s = await p.eval(`(async () => { const g = window.__game; return JSON.stringify(await (${expr})); })()`); return s === undefined ? undefined : JSON.parse(s); };
@@ -286,6 +305,32 @@ try {
     if (r && r.instant) Wn('P20', `stairs "${r.id}" (${r.look}) move the player at once: no climb (game-core useStairs 1.20.0, game.json controls.climb)`);
     else if (r && !r.moved) Wn('P20', `stairs "${r.id}": the climb did not reach the other floor`);
   }
+  // P28: nothing hangs where a door opens or slides
+  { const hits = await G(wallDoorSource()); for (const x of (hits || []).slice(0, 12)) Wn('P28', `door "${x.door}": "${x.mesh}" at ${JSON.stringify(x.at)} ${x.why} (move it off the door's opening / slide; a charm meant for the door: userData.doorItem)`); }
+  // P29: a person is easy to speak to
+  { const r = await G(talkRingSource({ radii: [1.0, 1.8] })); for (const x of r || []) if (x.error || (x.spots && x.share < TALK_RING_MIN)) Wn('P29', `station "${x.id}" ("talk": true): picked from ${x.hits}/${x.spots} spots on the 1.0 / 1.8 m rings${x.error ? ` (${x.error})` : ''} (plan station "reach", world-from-plan TALK_REACH)`); }
+  // P27: no room reads as black (the player in the middle of each room)
+  {
+    const rooms = await G(`(g.data.plan.rooms || []).map((r) => ({ id: r.id, x: r.x + r.w / 2, z: r.z + r.d / 2, floor: r.floor || 0 }))`);
+    const back = await G(`({ x: g.camera.position.x, z: g.camera.position.z, floor: g.floor || 0, light: !!g.lightOn })`);
+    await G(`(g.setLight && g.setLight(true), 1)`);   // the player's own light on (a dark beat before it is lit is the game's choice; the play scripts check it)
+    for (const r of (rooms || []).slice(0, 40)) {
+      await G(`(g.teleport({ x: ${r.x}, z: ${r.z}, floor: ${r.floor} }), g.fp.pitch = -0.25, 1)`); await sleep(350);
+      const L = await G(lumaSource({ camera: '(window.__dot && window.__dot.topCam) || g.camera', points: { player: '[g.camera.position.x, g.world.floorY(g.floor || 0) + 0.6, g.camera.position.z]' } }));
+      const m = L && L.points && L.points.player && L.points.player.on ? L.points.player.mean : null;
+      if (L && L.frame < LUMA_DARK.frame) Wn('P27', `room "${r.id}": the picture is black (frame mean ${L.frame.toFixed(1)} < ${LUMA_DARK.frame}): a dim floor light, a lit radius round the player, a glow at the goal`);
+      else if (m != null && m < LUMA_DARK.player) Wn('P27', `room "${r.id}": black round the player (mean ${m.toFixed(1)} < ${LUMA_DARK.player})`);
+    }
+    await G(`(g.teleport(${JSON.stringify(back)}), g.setLight && g.setLight(${back.light}), 1)`);
+  }
+  // P21 (the dot layers too): a wall paper that flickers on a still picture
+  {
+    const ps = await G(`(() => { const T = g.THREE, out = []; g.world.group.traverse((o) => { if (!o.isMesh || !o.visible || out.length >= 12) return; if (!(o.userData.pasted || /^fuda:|paper|poster/i.test(o.name || ''))) return; const c = new T.Box3().setFromObject(o).getCenter(new T.Vector3()); out.push({ n: o.name || o.uuid.slice(0, 8), c: [c.x, c.y, c.z] }); }); return out; })()`);
+    for (const w of ps || []) {
+      const f = await G(flickerSource({ camera: '(window.__dot && window.__dot.topCam) || g.camera', points: { paper: JSON.stringify(w.c) }, frames: 6 }));
+      if (f && f.paper && f.paper.on && f.paper.share > FLICKER_MAX) Wn('P21', `wall paper "${w.n}" flickers on a still picture (${f.paper.share} of its square jumps between frames: polygonOffset / one plane)`);
+    }
+  }
   // P9: 操作方法 in the menu
   const ctl = await G(`(async () => { if (!g.pm) return 'no menu'; g.pm.open(); await new Promise((r) => setTimeout(r, 400)); const ok = [...document.querySelectorAll('.wm-layer button, .pm button')].some((b) => /操作方法/.test(b.textContent)); g.pm.close && g.pm.close(); return ok; })()`);
   if (ctl !== true) E('P9', `the menu has no 操作方法 (${ctl})`);
@@ -299,6 +344,51 @@ try {
     await sleep(500); await G(`((document.querySelector('.gf-mo-card button') || { click() {} }).click(), 1)`); await sleep(1200);
     if (await G('g.blocked ? g.blocked() : false')) { await G(`([...document.querySelectorAll('.wm-layer .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`); await sleep(800); }
     if (await G('g.blocked ? g.blocked() : false')) E('P7', `death "${reason}": still held after the retry button`);
+  }
+  // P23 / P24 (1.20.2, 札の家 ドット版): the UI on a phone. P23 text too close to its frame (warning); P24 every card and document opened at
+  // 390 x 844 and 375 x 667: a line of text cut off by a box that cannot scroll is an error (「スクロールできないので文字が見られません」)
+  for (const [w, h] of [[390, 844], [375, 667]]) {
+    const q = await launch({ width: w, height: h, mobile: true, dpr: 2 });
+    const Q = async (expr) => { const s = await q.eval(`(async () => { const g = window.__game; return JSON.stringify(await (${expr})); })()`); return s === undefined ? undefined : JSON.parse(s); };
+    const closeAll = () => Q(`(g.lane && g.lane.clear && g.lane.clear('card'), g.wm && g.wm.isOpen && g.wm.close(), [...document.querySelectorAll('.wm-layer .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`);
+    try {
+      await q.goto(`${base}?test=1`);
+      await q.waitFor("window.__game && document.getElementById('start-btn') && !document.getElementById('start-btn').disabled || (window.__game && window.__game.state && window.__game.state.started)", 120000);
+      if (!(await Q('g.state.started'))) await Q(`(document.getElementById('start-btn').click(), 1)`);
+      await sleep(2500);
+      for (let i = 0; i < 30 && (await Q('g.blocked ? g.blocked() : false')); i++) { await closeAll(); await sleep(400); }
+      await sleep(600);
+      for (const x of (await Q(framePaddingSource())).slice(0, 12)) Wn('P23', `${w}x${h} ${x.sel} 「${x.text}」: text ${x.min} px from its frame (needs ${x.need[0]} px, gaps l${x.gap.l} r${x.gap.r} t${x.gap.t} b${x.gap.b})`);
+      if (!(await Q('typeof g.useInteract === "function"'))) { Wn('P24', 'ctx.useInteract is missing (kit < 1.20.2): the cards and documents were not opened'); continue; }
+      const list = await Q(`g.world.interactables.map((o) => o.userData.interact).filter((ia) => ia && (ia.kind === 'look' || ia.kind === 'thing' || ia.kind === 'doc')).map((ia) => ({ kind: ia.kind, id: ia.id }))`);
+      let n = 0;
+      for (const ia of list.slice(0, 80)) {
+        await Q(`(g.useInteract(g.world.interactables.map((o) => o.userData.interact).find((x) => x && x.kind === ${JSON.stringify(ia.kind)} && x.id === ${JSON.stringify(ia.id)})), 1)`);
+        await sleep(700);
+        const rd = await Q(`(() => { const r = document.querySelector('#gf-reader > .tl-read'); if (!r) return null; const R = r.getBoundingClientRect(), vis = (e) => { const s = getComputedStyle(e); return s.visibility !== 'hidden' && s.display !== 'none' && +s.opacity > 0.05; }, hit = [];
+          for (const e of document.querySelectorAll('#hud *, #touch *, #say, #prompt')) { if (r.contains(e) || !vis(e)) continue; const q = e.getBoundingClientRect(); if (q.width < 2 || q.height < 2) continue; if (q.right > R.left + 1 && q.left < R.right - 1 && q.bottom > R.top + 1 && q.top < R.bottom - 1 && (e.textContent.trim() || e.matches('button'))) hit.push((e.id || e.className || e.tagName).toString().slice(0, 40)); }
+          const c = r.querySelector('.tl-close'), cr = c && c.getBoundingClientRect();
+          return { hit: [...new Set(hit)].slice(0, 5), share: +(R.width * R.height / (innerWidth * innerHeight)).toFixed(2), inView: R.left >= 0 && R.top >= 0 && R.right <= innerWidth + 0.5 && R.bottom <= innerHeight + 0.5, close: cr ? Math.round(Math.min(cr.width, cr.height)) : 0 }; })()`);
+        if (rd) {
+          if (rd.hit.length) E('P25', `${w}x${h} ${ia.kind} "${ia.id}": HUD on the reading panel: ${rd.hit.join(', ')}`);
+          if (rd.close < 44) Wn('P25', `${w}x${h} ${ia.kind} "${ia.id}": the reading panel has no large 閉じる (${rd.close} px)`);
+          if (rd.share < 0.5 || !rd.inView) Wn('P25', `${w}x${h} ${ia.kind} "${ia.id}": the reading panel takes ${rd.share} of the screen${rd.inView ? '' : ', past the edge'}`);
+        }
+        const fl = await Q(`[...document.querySelectorAll('#look img, .tl-lane img, .tl-lane .tl-photocard, #hud .tl-photocard')].filter((e) => !e.closest('#gf-reader') && e.getBoundingClientRect().width > 8 && getComputedStyle(e).visibility !== 'hidden').length`);
+        if (fl) E('P30', `${w}x${h} ${ia.kind} "${ia.id}": a picture shown outside the reading panel (${fl})`);
+        if (ia.kind === 'doc') {
+          await sleep(1800);
+          const lg = await Q(`(g.readLog || []).map((x) => x[0])`);
+          if (Array.isArray(lg) && docOpenSay(lg)) E('P26', `${w}x${h} doc "${ia.id}": a comment started while the document was open (${lg.join(' ')})`);
+        }
+        const cut = await Q(clippedTextSource('body'));
+        for (const x of cut.slice(0, 3)) E('P24', `${w}x${h} ${ia.kind} "${ia.id}": 「${x.text}」 cut off by ${x.sel} (${x.out.b ? `${x.out.b} px below` : `${x.out.t} px above`}; overflow ${x.scroll.y}, cannot scroll to it)`);
+        n++;
+        await closeAll(); await sleep(250);
+      }
+      if (!n) Wn('P24', `${w}x${h}: no thing or document to open`);
+    } catch (e) { Wn('P24', `${w}x${h}: the phone pass could not run: ${e.message}`); }
+    finally { await q.close(); }
   }
   if (p.errors.length) for (const e of [...new Set(p.errors)].filter((x) => !/favicon/.test(x)).slice(0, 5)) Wn('P0', `page error: ${e.slice(0, 200)}`);
 } catch (e) { E('P0', `the check could not run: ${e.message}`); }

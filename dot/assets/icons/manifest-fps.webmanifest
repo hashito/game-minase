@@ -1,0 +1,14 @@
+{
+  "name": "水無瀬病院 ― 七番の瓶（ドット版・一人称）",
+  "short_name": "水無瀬病院ドット",
+  "start_url": "/dot-fps",
+  "scope": "/dot-fps",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#070b0b",
+  "theme_color": "#070b0b",
+  "icons": [
+    { "src": "/dot/assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/dot/assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

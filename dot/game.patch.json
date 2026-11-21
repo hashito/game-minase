@@ -1,0 +1,24 @@
+{
+  "style": "pixel",
+  "pixel": {
+    "world": "lowres",
+    "short": 200
+  },
+  "fx": {
+    "noise": 0,
+    "saturation": 0.45
+  },
+  "preset": {
+    "post": {
+      "grain": 0,
+      "vignette": 0.45
+    }
+  },
+  "theme": "dark-industrial",
+  "controls": {
+    "flashlight": {
+      "intensity": 12
+    }
+  },
+  "_flashlight": "dot: the pixel walls burn white close up at 18 (a wall 1 m away was a white disc); 12 plus the near glow (dot/js/dot/index.js)"
+}

@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/toast-lane.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit de49b0f7: js/toast-lane.js — edit in game-kit and run tools/kit-sync.js */
 // Toast lane (rule U27, docs/hud-slots.md): ONE place for every short notification, so it never lands on the clock, the sensors or the menu.
 // The lane is the top-centre HUD slot (#hs-tc): hud-slots.js puts it BELOW the taller of the top stacks that it would touch and keeps it above the
 // prompt / action cluster. Everything that used to be its own floating box (toasts, side-job notes, pick-up cards, "carrying" hint, "click to return")
@@ -24,6 +24,12 @@ const WAIT_CAP = 12;
 
 import { gfRegister, gfEmit, gfOk, gfFail, gfUnknown } from "./gf-test.js";
 
+// 1.20.3 (札の家 ドット版, phone play: 「スクロールできるようにではなく他のUIの邪魔にならないように広く場所を取るべき」): a card with the class
+// tl-read (the look-at card, things.js) is a READING card: not a small box in the lane but a large panel of its own (#gf-reader, near full screen
+// on a phone, a big centred panel on a PC) with a close button; while it is open the rest of the HUD and the touch controls are hidden and the
+// game's input waits (game-core: ctx.blockers). Scrolling is only the fallback for an unusually long text.
+export const READ_PRIO = 90;
+export const isRead = (cls) => /(^|\s)tl-read(\s|$)/.test(cls || "");
 const plain = (s) => String(s ?? "").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ");
 
 export class LaneModel {
@@ -42,10 +48,12 @@ export class LaneModel {
     const html = spec.html ?? "";
     const text = plain(spec.text ?? html);
     const key = spec.key || `${k}:${text}`;
-    const ttl = spec.sticky ? 0 : spec.ttl ?? def.ttl;
+    const read = isRead(spec.cls);   // 1.20.3: a reading card stays until the player closes it, and no notice pushes it away
+    const ttl = spec.sticky || read ? 0 : spec.ttl ?? def.ttl;
     const dup = this.items.find((i) => i.key === key);
     if (dup) { dup.count++; dup.left = ttl; dup.ttl = ttl; dup.bump = (dup.bump || 0) + 1; return dup; }   // a repeat: no second copy, the time restarts
-    const it = { id: ++this.seq, key, kind: k, html, text, prio: spec.prio ?? def.prio, ttl, left: ttl, count: 1, shown: false, cls: spec.cls || "", title: spec.title || "", since: this.now() };
+    if (read) this.items = this.items.filter((i) => !isRead(i.cls));   // one reading card at a time: the new one replaces the old
+    const it = { id: ++this.seq, key, kind: k, html, text, prio: read ? READ_PRIO : spec.prio ?? def.prio, ttl, left: ttl, count: 1, shown: false, cls: spec.cls || "", title: spec.title || "", since: this.now() };
     this.items.push(it);
     this._trim();
     this.fill();
@@ -87,7 +95,7 @@ export class LaneModel {
   // advance time by dt ms: only visible items age; returns the ids that expired
   tick(dt) {
     const gone = [];
-    for (const i of this.items) if (i.shown && i.ttl > 0) { i.left -= dt; if (i.left <= 0) gone.push(i.id); }
+    for (const i of this.items) if (i.shown && i.ttl > 0 && !i.hold) { i.left -= dt; if (i.left <= 0) gone.push(i.id); }   // hold: a card with more to read below (1.20.2)
     if (gone.length) { this.items = this.items.filter((i) => !gone.includes(i.id)); this.fill(); }
     return gone;
   }
@@ -164,11 +172,15 @@ export class ToastLane {
     el.className = `tl-item tl-${it.kind} ${it.cls}`.trim();
     el.dataset.laneId = String(it.id); el.dataset.kind = it.kind;
     el.dataset.hudPart = `lane-${it.kind}`;
+    // 1.20.2: a card taller than its room scrolls (css .tl-lookcard > .tl-body); reading it to the end lets its time run again
+    el.addEventListener("scroll", () => this._more(), { capture: true, passive: true });
+    if (isRead(it.cls)) { el.setAttribute("role", "dialog"); el.setAttribute("aria-modal", "true"); el.addEventListener("click", (e) => { if (e.target.closest(".tl-close")) { e.preventDefault(); e.stopPropagation(); this.close(); } }); }
     return el;
   }
   _fill(el, it) {
     const body = (it.title ? `<small>${esc(it.title)}</small>` : "") + (it.html || esc(it.text));
-    const html = `<div class="tl-body">${body}</div>${it.count > 1 ? `<span class="tl-count" aria-hidden="true">×${it.count}</span>` : ""}`;
+    const close = isRead(it.cls) ? `<button type="button" class="btn primary tl-close" aria-label="閉じる">閉じる</button>` : "";
+    const html = `<div class="tl-body">${body}</div>${close}${it.count > 1 && !close ? `<span class="tl-count" aria-hidden="true">×${it.count}</span>` : ""}`;
     if (el.dataset.sig !== html) { el.innerHTML = html; el.dataset.sig = html; }
   }
   render() {
@@ -180,12 +192,14 @@ export class ToastLane {
     for (const [id, el] of this.nodes) if (!keep.has(id)) { this.nodes.delete(id); if (calm) el.remove(); else { el.classList.add("tl-out"); setTimeout(() => el.remove(), 360); } }
     vis.forEach((it, idx) => {
       let el = this.nodes.get(it.id);
-      if (!el) { el = this._node(it); this.nodes.set(it.id, el); this._fill(el, it); this.el.appendChild(el); if (!calm) { el.classList.add("tl-in"); requestAnimationFrame(() => el.classList.remove("tl-in")); } } else this._fill(el, it);
+      if (!el) { el = this._node(it); this.nodes.set(it.id, el); this._fill(el, it); this._host(it).appendChild(el); if (!calm) { el.classList.add("tl-in"); requestAnimationFrame(() => el.classList.remove("tl-in")); } } else this._fill(el, it);
       el.style.order = String(idx);
       if (it.bump) { it.bump = 0; if (!calm) { el.classList.remove("tl-bump"); void el.offsetWidth; el.classList.add("tl-bump"); } }
     });
-    this.el.classList.toggle("tl-empty", !vis.length);
+    this.el.classList.toggle("tl-empty", !vis.some((i) => !isRead(i.cls)));
+    this._reading(vis.some((i) => isRead(i.cls)));
     if (typeof this.o.fit === "function") this._fit();
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(() => this._more()); else this._more();
     if (typeof this.o.onChange === "function") this.o.onChange(this);
   }
   // keep the lane inside the free height: while the visible items are taller than what is free, one place less (never below 1)
@@ -211,8 +225,40 @@ export class ToastLane {
   _sync() {
     const vis = this.model.visible(), keep = new Set(vis.map((i) => i.id));
     for (const [id, el] of this.nodes) if (!keep.has(id)) { this.nodes.delete(id); el.remove(); }
-    for (const it of vis) if (!this.nodes.has(it.id)) { const el = this._node(it); this._fill(el, it); this.nodes.set(it.id, el); this.el.appendChild(el); }
+    for (const it of vis) if (!this.nodes.has(it.id)) { const el = this._node(it); this._fill(el, it); this.nodes.set(it.id, el); this._host(it).appendChild(el); }
     vis.forEach((it, idx) => { const el = this.nodes.get(it.id); if (el) el.style.order = String(idx); });
+  }
+  // 1.20.2: which cards have more below than they show (.tl-more: the cue; the item holds its time until read to the end, then has 3 s at least)
+  _more() {
+    for (const [id, el] of this.nodes) {
+      const body = el.querySelector(".tl-body"), it = this.model.items.find((i) => i.id === id);
+      if (!body || !it) continue;
+      const over = body.scrollHeight > body.clientHeight + 2 && getComputedStyle(body).overflowY !== "visible";
+      const more = over && body.scrollTop + body.clientHeight < body.scrollHeight - 2;
+      el.classList.toggle("tl-more", more);
+      if (more) it.hold = true;
+      else if (it.hold) { it.hold = false; it.left = Math.max(it.left, 3000); }
+    }
+  }
+  // 1.20.3: the reading panel. Its host sits on <body> (not in the lane: nothing of the HUD may share its room); body.gf-reading hides the
+  // rest of the HUD and the touch controls (css/shell.css); o.onReader(open) lets the game hold its input and the pointer lock.
+  get reading() { return this.model.visible().some((i) => isRead(i.cls)); }
+  close() { const it = this.model.items.find((i) => isRead(i.cls)); if (!it) return false; this.model.remove(it.id); this.render(); return true; }
+  _host(it) {
+    if (!isRead(it.cls) || !hasDom()) return this.el;
+    if (!this.readerEl || !this.readerEl.isConnected) {
+      const r = document.createElement("div"); r.id = "gf-reader"; r.className = "gf-reader";
+      r.addEventListener("pointerdown", (e) => { if (e.target === r) { e.preventDefault(); this.close(); } });   // a tap beside the panel closes it too
+      document.body.appendChild(r); this.readerEl = r;
+    }
+    return this.readerEl;
+  }
+  _reading(on) {
+    if (!hasDom() || on === !!this._readOn) return;
+    this._readOn = on;
+    document.body.classList.toggle("gf-reading", on);
+    if (on) { const b = this.readerEl && this.readerEl.querySelector(".tl-close"); if (b && b.focus) try { b.focus({ preventScroll: true }); } catch { /* old browsers */ } }
+    if (typeof this.o.onReader === "function") this.o.onReader(on);
   }
   destroy() { clearInterval(this.timer); this.timer = 0; this.model.clear(); this.render(); }
 }

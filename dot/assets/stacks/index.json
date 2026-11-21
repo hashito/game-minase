@@ -1,0 +1,548 @@
+{
+ "bench": {
+  "w": 77,
+  "d": 16,
+  "n": 27,
+  "src": "env-props-bench-waiting",
+  "mpp": 0.025
+ },
+ "locker": {
+  "w": 31,
+  "d": 22,
+  "n": 74,
+  "src": "props-locker",
+  "mpp": 0.025
+ },
+ "vending": {
+  "w": 43,
+  "d": 29,
+  "n": 73,
+  "src": "atmos-k4-vending-light-out",
+  "mpp": 0.025
+ },
+ "plant": {
+  "w": 21,
+  "d": 23,
+  "n": 37,
+  "src": "atmos-k3-dead-plant",
+  "mpp": 0.025
+ },
+ "extinguisher": {
+  "w": 11,
+  "d": 10,
+  "n": 30,
+  "src": "game-fire-extinguisher",
+  "mpp": 0.025
+ },
+ "desk": {
+  "w": 49,
+  "d": 26,
+  "n": 42,
+  "src": "hikage-office-desk",
+  "mpp": 0.025
+ },
+ "filing": {
+  "w": 19,
+  "d": 27,
+  "n": 53,
+  "src": "props-filing-cabinet",
+  "mpp": 0.025
+ },
+ "karte-shelf": {
+  "w": 45,
+  "d": 19,
+  "n": 65,
+  "src": "minase-karte-shelf",
+  "mpp": 0.025
+ },
+ "exam-bed": {
+  "w": 39,
+  "d": 83,
+  "n": 27,
+  "src": "game-bed",
+  "mpp": 0.025
+ },
+ "pipe-chair": {
+  "w": 19,
+  "d": 21,
+  "n": 37,
+  "src": "props-pipe-chair",
+  "mpp": 0.025
+ },
+ "shelf": {
+  "w": 37,
+  "d": 17,
+  "n": 57,
+  "src": "hikage-supply-shelf",
+  "mpp": 0.025
+ },
+ "drum": {
+  "w": 33,
+  "d": 31,
+  "n": 36,
+  "src": "atmos-k3-drum-rust",
+  "mpp": 0.025
+ },
+ "steel-desk": {
+  "w": 49,
+  "d": 27,
+  "n": 45,
+  "src": "hikage-meas-desk",
+  "mpp": 0.025
+ },
+ "office-chair": {
+  "w": 19,
+  "d": 22,
+  "n": 36,
+  "src": "hikage-office-chair",
+  "mpp": 0.025
+ },
+ "crate": {
+  "w": 23,
+  "d": 21,
+  "n": 14,
+  "src": "env-props-crate-slat",
+  "mpp": 0.025
+ },
+ "body-cabinets": {
+  "w": 73,
+  "d": 16,
+  "n": 48,
+  "src": "minase-body-cabinets",
+  "mpp": 0.05
+ },
+ "gurney-shape": {
+  "w": 25,
+  "d": 75,
+  "n": 43,
+  "src": "atmos-k2-gurney-shape",
+  "mpp": 0.025
+ },
+ "flashlight": {
+  "w": 33,
+  "d": 11,
+  "n": 11,
+  "src": "game-flashlight",
+  "mpp": 0.007
+ },
+ "key": {
+  "w": 33,
+  "d": 13,
+  "n": 3,
+  "src": "game-kouguchi-lockerKey",
+  "mpp": 0.007
+ },
+ "paper": {
+  "w": 21,
+  "d": 25,
+  "n": 3,
+  "src": "miru-delivery-pickup-paper-sheet",
+  "mpp": 0.007
+ },
+ "letter": {
+  "w": 21,
+  "d": 25,
+  "n": 3,
+  "src": "game-whitepigeon-nurseLetter",
+  "mpp": 0.007
+ },
+ "jar": {
+  "w": 17,
+  "d": 19,
+  "n": 32,
+  "src": "atmos-k5-jar-sealed",
+  "mpp": 0.007
+ },
+ "tag": {
+  "w": 11,
+  "d": 26,
+  "n": 4,
+  "src": "miru-delivery-pickup-tag",
+  "mpp": 0.007
+ },
+ "iv-dried": {
+  "w": 25,
+  "d": 24,
+  "n": 74,
+  "src": "atmos-k2-iv-dried",
+  "mpp": 0.025
+ },
+ "iv-fallen": {
+  "w": 79,
+  "d": 24,
+  "n": 33,
+  "src": "atmos-k2-iv-fallen",
+  "mpp": 0.025
+ },
+ "gurney-slipped": {
+  "w": 30,
+  "d": 77,
+  "n": 32,
+  "src": "atmos-k2-gurney-slipped",
+  "mpp": 0.025
+ },
+ "wheelchair-blanket": {
+  "w": 27,
+  "d": 33,
+  "n": 39,
+  "src": "atmos-k2-wheelchair-blanket",
+  "mpp": 0.025
+ },
+ "wheelchair-overturned": {
+  "w": 25,
+  "d": 33,
+  "n": 39,
+  "src": "atmos-k2-wheelchair-overturned",
+  "mpp": 0.025
+ },
+ "wheelchair-tipped": {
+  "w": 25,
+  "d": 39,
+  "n": 33,
+  "src": "atmos-k3-wheelchair-tipped",
+  "mpp": 0.025
+ },
+ "trolley-rounds": {
+  "w": 29,
+  "d": 33,
+  "n": 49,
+  "src": "atmos-k2-trolley-rounds",
+  "mpp": 0.025
+ },
+ "trolley-disinfect": {
+  "w": 23,
+  "d": 33,
+  "n": 48,
+  "src": "atmos-k2-trolley-disinfect",
+  "mpp": 0.025
+ },
+ "exam-lamp": {
+  "w": 26,
+  "d": 21,
+  "n": 59,
+  "src": "atmos-k2-exam-lamp",
+  "mpp": 0.025
+ },
+ "ward-screen-stain": {
+  "w": 59,
+  "d": 15,
+  "n": 67,
+  "src": "atmos-k2-ward-screen-stain",
+  "mpp": 0.025
+ },
+ "ward-screen-torn": {
+  "w": 59,
+  "d": 15,
+  "n": 67,
+  "src": "atmos-k2-ward-screen-torn",
+  "mpp": 0.025
+ },
+ "specimen-broken": {
+  "w": 49,
+  "d": 26,
+  "n": 18,
+  "src": "atmos-k2-specimen-broken",
+  "mpp": 0.012
+ },
+ "specimen-eyes": {
+  "w": 22,
+  "d": 22,
+  "n": 35,
+  "src": "atmos-k2-specimen-eyes",
+  "mpp": 0.012
+ },
+ "specimen-organ": {
+  "w": 22,
+  "d": 21,
+  "n": 35,
+  "src": "atmos-k2-specimen-organ",
+  "mpp": 0.012
+ },
+ "tube-light-fallen": {
+  "w": 58,
+  "d": 33,
+  "n": 26,
+  "src": "atmos-k3-fallen-tube-light",
+  "mpp": 0.025
+ },
+ "leak-bucket": {
+  "w": 46,
+  "d": 43,
+  "n": 37,
+  "src": "atmos-k3-leak-bucket",
+  "mpp": 0.025
+ },
+ "floor-charts": {
+  "w": 49,
+  "d": 41,
+  "n": 4,
+  "src": "minase-floor-charts",
+  "mpp": 0.012
+ },
+ "wet-slippers": {
+  "w": 30,
+  "d": 31,
+  "n": 6,
+  "src": "minase-wet-slippers",
+  "mpp": 0.007
+ },
+ "coat-scrap": {
+  "w": 18,
+  "d": 26,
+  "n": 5,
+  "src": "minase-coat-scrap",
+  "mpp": 0.007
+ },
+ "collapsed-shelf": {
+  "w": 39,
+  "d": 66,
+  "n": 9,
+  "src": "atmos-k3-collapsed-shelf",
+  "mpp": 0.025
+ },
+ "hina-backpack": {
+  "w": 31,
+  "d": 23,
+  "n": 39,
+  "src": "minase-m2-hina-backpack",
+  "mpp": 0.012
+ },
+ "hina-camera": {
+  "w": 31,
+  "d": 30,
+  "n": 60,
+  "src": "minase-m2-hina-camera",
+  "mpp": 0.025
+ },
+ "bucket-leak": {
+  "w": 32,
+  "d": 34,
+  "n": 47,
+  "src": "minase-m2-bucket-leak",
+  "mpp": 0.025
+ },
+ "number-display": {
+  "w": 31,
+  "d": 6,
+  "n": 19,
+  "src": "minase-m2-number-display",
+  "mpp": 0.025
+ },
+ "reception-sign": {
+  "w": 53,
+  "d": 7,
+  "n": 40,
+  "src": "minase-m2-reception-sign",
+  "mpp": 0.025
+ },
+ "wet-sign": {
+  "w": 26,
+  "d": 27,
+  "n": 36,
+  "src": "minase-m2-wet-sign",
+  "mpp": 0.025
+ },
+ "nurse-board": {
+  "w": 49,
+  "d": 7,
+  "n": 39,
+  "src": "minase-m2-nurse-board",
+  "mpp": 0.025
+ },
+ "stepladder": {
+  "w": 19,
+  "d": 25,
+  "n": 49,
+  "src": "minase-m2-stepladder",
+  "mpp": 0.025
+ },
+ "record-boxes": {
+  "w": 53,
+  "d": 32,
+  "n": 33,
+  "src": "minase-m2-record-boxes",
+  "mpp": 0.025
+ },
+ "bedside": {
+  "w": 22,
+  "d": 22,
+  "n": 38,
+  "src": "minase-m2-bedside",
+  "mpp": 0.025
+ },
+ "chain-padlock": {
+  "w": 46,
+  "d": 31,
+  "n": 11,
+  "src": "minase-m2-chain-padlock",
+  "mpp": 0.012
+ },
+ "lift-indicator": {
+  "w": 33,
+  "d": 4,
+  "n": 19,
+  "src": "minase-m2-lift-indicator",
+  "mpp": 0.025
+ },
+ "call-off": {
+  "w": 13,
+  "d": 5,
+  "n": 21,
+  "src": "minase-m2-call-off",
+  "mpp": 0.025
+ },
+ "pipe-ceiling": {
+  "w": 93,
+  "d": 21,
+  "n": 19,
+  "src": "minase-m2-pipe-ceiling",
+  "mpp": 0.025
+ },
+ "floating-debris": {
+  "w": 61,
+  "d": 57,
+  "n": 4,
+  "src": "minase-m2-floating-debris",
+  "mpp": 0.025
+ },
+ "hina-tape-arrow": {
+  "w": 32,
+  "d": 2,
+  "n": 21,
+  "src": "minase-m2-hina-tape-arrow",
+  "mpp": 0.025
+ },
+ "breaker": {
+  "w": 31,
+  "d": 21,
+  "n": 50,
+  "src": "minase-m2-breaker",
+  "mpp": 0.025
+ },
+ "fuel-tank": {
+  "w": 32,
+  "d": 30,
+  "n": 69,
+  "src": "minase-m2-fuel-tank",
+  "mpp": 0.025
+ },
+ "fuel-can": {
+  "w": 33,
+  "d": 22,
+  "n": 34,
+  "src": "minase-m2-fuel-can",
+  "mpp": 0.012
+ },
+ "tool-board": {
+  "w": 65,
+  "d": 6,
+  "n": 51,
+  "src": "minase-m2-tool-board",
+  "mpp": 0.025
+ },
+ "hina-lantern": {
+  "w": 24,
+  "d": 24,
+  "n": 34,
+  "src": "minase-m2-hina-lantern",
+  "mpp": 0.012
+ },
+ "card-cabinet": {
+  "w": 33,
+  "d": 36,
+  "n": 49,
+  "src": "minase-m2-card-cabinet",
+  "mpp": 0.025
+ },
+ "toe-tag-tray": {
+  "w": 27,
+  "d": 19,
+  "n": 4,
+  "src": "minase-m2-toe-tag-tray",
+  "mpp": 0.012
+ },
+ "morgue-sink": {
+  "w": 64,
+  "d": 33,
+  "n": 49,
+  "src": "minase-m2-morgue-sink",
+  "mpp": 0.025
+ },
+ "hina-glowsticks": {
+  "w": 41,
+  "d": 18,
+  "n": 5,
+  "src": "minase-m2-hina-glowsticks",
+  "mpp": 0.012
+ },
+ "foot-guide": {
+  "w": 17,
+  "d": 5,
+  "n": 11,
+  "src": "minase-m2-foot-guide",
+  "mpp": 0.025
+ },
+ "valve-sign": {
+  "w": 27,
+  "d": 4,
+  "n": 39,
+  "src": "minase-m2-valve-sign",
+  "mpp": 0.025
+ },
+ "jar-rack-wall": {
+  "w": 65,
+  "d": 16,
+  "n": 67,
+  "src": "minase-m2-jar-rack-wall",
+  "mpp": 0.025
+ },
+ "jar-crate": {
+  "w": 28,
+  "d": 20,
+  "n": 18,
+  "src": "minase-m2-jar-crate",
+  "mpp": 0.025
+ },
+ "organ-scale": {
+  "w": 28,
+  "d": 18,
+  "n": 66,
+  "src": "minase-m2-organ-scale",
+  "mpp": 0.025
+ },
+ "instrument-stand": {
+  "w": 33,
+  "d": 31,
+  "n": 38,
+  "src": "minase-m2-instrument-stand",
+  "mpp": 0.025
+ },
+ "ceiling-sag": {
+  "w": 61,
+  "d": 61,
+  "n": 29,
+  "src": "minase-m2-ceiling-sag",
+  "mpp": 0.025
+ },
+ "call-lit": {
+  "w": 13,
+  "d": 5,
+  "n": 21,
+  "src": "minase-m2-call-lit",
+  "mpp": 0.025
+ },
+ "emlamp-off": {
+  "w": 29,
+  "d": 15,
+  "n": 18,
+  "src": "minase-m2-emlamp-off",
+  "mpp": 0.025
+ },
+ "emlamp-on": {
+  "w": 29,
+  "d": 15,
+  "n": 18,
+  "src": "minase-m2-emlamp-on",
+  "mpp": 0.025
+ }
+}
