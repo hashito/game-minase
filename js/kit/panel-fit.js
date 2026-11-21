@@ -1,0 +1,35 @@
+/* game-kit afcbe2c2: js/panel-fit.js — edit in game-kit and run tools/kit-sync.js */
+// Fit a panel's content into its box without scrolling (standard 1.21.1, 水無瀬病院 ドット版 on an iPhone held sideways with the address bar
+// showing, 844x340: 「ズレてます」 and the document text hidden under its picture). The user's rule: shrink the PICTURE first, then the text;
+// scrolling is only the fallback for an unusually long text. Used by the document window (game-core), the talk window (talk-ui) and the
+// reading panel (toast-lane). Each step lowers one CSS property / custom property of one element until the box no longer overflows:
+//   fitPanel(box, [{ el, prop: '--pd-photo-w', from: 34, to: 16, step: -2, unit: '%' }, { el, prop: '--pd-scale', from: 1, to: 0.8, step: -0.04 }])
+//   keepFitted(box, run)   // run now, again when a picture loads, the fonts are ready or the box changes size; returns a stop function
+export function fitPanel(box, steps, o = {}) {
+  if (!box || typeof getComputedStyle === 'undefined') return null;
+  const slack = o.slack ?? 1;
+  const over = () => box.scrollHeight > box.clientHeight + slack;
+  for (const s of steps) if (s && s.el) s.el.style.setProperty(s.prop, `${s.from}${s.unit || ''}`);
+  const out = { fits: true, at: {} };
+  for (const s of steps) {
+    if (!s || !s.el) continue;
+    let v = s.from, n = 0;
+    while (over() && (s.step < 0 ? v + s.step >= s.to - 1e-6 : v + s.step <= s.to + 1e-6) && n++ < 200) { v = +(v + s.step).toFixed(4); s.el.style.setProperty(s.prop, `${v}${s.unit || ''}`); }
+    out.at[s.prop] = v;
+    if (!over()) break;
+  }
+  out.fits = !over();
+  box.toggleAttribute('data-fit-scroll', !out.fits);   // the fallback: the box scrolls (css may show a hint)
+  return out;
+}
+export function keepFitted(box, run) {
+  if (!box) return () => {};
+  let busy = false;
+  const go = () => { if (busy || !box.isConnected) return; busy = true; try { run(); } finally { busy = false; } };
+  go();
+  for (const im of box.querySelectorAll('img')) if (!im.complete) im.addEventListener('load', go, { once: true });
+  if (typeof document !== 'undefined' && document.fonts && document.fonts.ready) document.fonts.ready.then(go).catch(() => {});
+  let ro = null, w = box.clientWidth, h = box.clientHeight;
+  if (typeof ResizeObserver !== 'undefined') { ro = new ResizeObserver(() => { if (box.clientWidth === w && box.clientHeight === h) return; w = box.clientWidth; h = box.clientHeight; go(); }); ro.observe(box); }
+  return () => { if (ro) ro.disconnect(); };
+}

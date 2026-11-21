@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/mg-tune-radio.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit afcbe2c2: js/mg-tune-radio.js — edit in game-kit and run tools/kit-sync.js */
 // Library mini game "tune-radio" (standard 1.8.2: a radio, a walkie-talkie, an old receiver): turn the knob to find the voice under the
 // static; the needle shows the band, the noise bars calm down as you get close, and holding it there for `hold` seconds tunes it in.
 // Nothing is lost by drifting off. Mouse / touch drag on the knob, or ← → (Shift = fine). Register it with useMinigames() (js/mg-library.js).
@@ -56,9 +56,11 @@ export default {
         if (held >= hold) { f.say(cfg.ok || '声がはっきり聞こえた。'); snd('ok'); f.win(600); return; }
         raf = requestAnimationFrame(tick);
       };
-      // drag around the knob: the change of angle turns it (one full turn = 2/3 of the band)
-      const ang = (e) => { const r = knob.getBoundingClientRect(); return Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)); };
-      knob.addEventListener('pointerdown', (e) => { e.preventDefault(); knob.setPointerCapture && knob.setPointerCapture(e.pointerId); drag = { a: ang(e) }; knob.focus(); });
+      // drag around the knob: the change of angle turns it (one full turn = 2/3 of the band). 1.21.1 (「文字が改行されると回す位置が変わって
+      // ハンチングする」): the centre is taken once, at pointerdown, so the turn is relative to where the finger started and never to where the
+      // knob is drawn now (if anything moved the knob, the value no longer jumps with it)
+      const ang = (e) => Math.atan2(e.clientY - drag.cy, e.clientX - drag.cx);
+      knob.addEventListener('pointerdown', (e) => { e.preventDefault(); knob.setPointerCapture && knob.setPointerCapture(e.pointerId); const r = knob.getBoundingClientRect(); drag = { cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; drag.a = ang(e); knob.focus(); });
       knob.addEventListener('pointermove', (e) => { if (!drag) return; const a = ang(e); let d = a - drag.a; if (d > Math.PI) d -= Math.PI * 2; if (d < -Math.PI) d += Math.PI * 2; drag.a = a; set(x + d / (Math.PI * 3)); });
       const up = () => { drag = null; };
       knob.addEventListener('pointerup', up); knob.addEventListener('pointercancel', up);

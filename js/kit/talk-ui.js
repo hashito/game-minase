@@ -1,4 +1,4 @@
-/* game-kit 1d506003: js/talk-ui.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit afcbe2c2: js/talk-ui.js — edit in game-kit and run tools/kit-sync.js */
 // The 3D conversation window (standard 1.7): who speaks, where, an optional picture, the line, and 次へ (tap / click / Enter; S11:
 // the player sends each line). A choice is the same window with buttons. Both open in the ONE window of win-manager (U12), so the game
 // pauses and the pointer is free while they are open; the protagonist's thoughts stay in the thought band (ctx.monologue).
@@ -25,6 +25,7 @@
 //     (rule no-auto-advance: the timer presses, it does not decide).
 //   timedUrges(urge, seconds, left) (pure) -> the urge lines due at this moment (test/playtest-findings.test.mjs).
 import { paperURL, hashStr } from './paper-doc.js';
+import { fitPanel, keepFitted } from './panel-fit.js';
 export function timedUrges(urge = [], seconds, left, said = new Set()) {
   return urge.map((u, i) => ({ u, i })).filter(({ u, i }) => !said.has(i) && left <= seconds * (u.at ?? 0.5)).map(({ u, i }) => (said.add(i), u));
 }
@@ -59,6 +60,22 @@ export function preload(urls) {
   for (const u of urls) if (u && !seen.has(u)) { seen.add(u); const im = new Image(); im.decoding = 'async'; im.src = u; }
 }
 
+/** shrink the talk picture (its shape kept), then the text, until the talk fits its window body (js/panel-fit.js) */
+export function fitTalk(body) {
+  const t = body && body.querySelector('.gf-talk');
+  if (!t) return null;
+  const img = t.querySelector('.gf-talk-img');
+  t.classList.add('gf-fit');
+  const steps = [];
+  if (img) {
+    const w = t.clientWidth || 600, h0 = Math.round(Math.min(w * 9 / 16, body.clientHeight * 0.5));
+    steps.push({ el: t, prop: '--talk-img-h', from: Math.max(48, h0), to: 48, step: -8, unit: 'px' });
+  }
+  const face = t.querySelector('.gf-talk-face');
+  if (face) { t.style.removeProperty('--talk-face-w'); const fw = Math.round(face.getBoundingClientRect().width) || 96; steps.push({ el: t, prop: '--talk-face-w', from: fw, to: Math.min(fw, 48), step: -8, unit: 'px' }); }
+  steps.push({ el: t, prop: '--talk-scale', from: 1, to: 0.82, step: -0.03, unit: '' });
+  return fitPanel(body, steps);
+}
 export function createTalk({ wm, qa = false, me = '私', data = null, log = [], voice = null, portraits = null, said = null, fx = null, sound = null } = {}) {
   const linesOf = (x) => (typeof x === 'string' ? (data && data[x]) || [] : x || []);
   function talk(src, o = {}) {
@@ -80,6 +97,11 @@ export function createTalk({ wm, qa = false, me = '私', data = null, log = [], 
         const b = el.querySelector('.gf-talk-next');
         b.onclick = () => { if (last) wm.close(); else { i++; render(el); } };
         el.querySelector('.gf-talk-text').onclick = () => b.click();
+        // 1.21.1 (水無瀬病院 ドット版, iPhone sideways with the address bar: the text ran out of the frame and the picture was a thin strip):
+        // the picture keeps its shape and gets smaller first, then the text; the whole line and 次へ show without scrolling
+        fitTalk(el);
+        for (const im of el.querySelectorAll('img')) if (!im.complete) im.addEventListener('load', () => fitTalk(el), { once: true });
+        if (!el._gfFitStop) el._gfFitStop = keepFitted(el, () => fitTalk(el));
         setTimeout(() => b.focus(), 30);
       };
       const pics = lines.some((l) => l.img || face(l.who));   // a window with pictures keeps one size from line to line (no text-only fit)

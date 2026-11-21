@@ -470,7 +470,7 @@
   },
   {
    "room": "P1",
-   "k": "valve-sign",
+   "k": "valve-sign-plain",
    "x": 3.55,
    "z": -10.0,
    "y": 2.0,
@@ -480,7 +480,7 @@
   },
   {
    "room": "P1",
-   "k": "valve-sign",
+   "k": "valve-sign-plain",
    "x": 3.55,
    "z": -28.0,
    "y": 2.0,

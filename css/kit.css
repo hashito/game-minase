@@ -1,4 +1,4 @@
-/* game-kit 19a0634: css/kit.css — edit in game-kit and run tools/kit-sync.js */
+/* game-kit afcbe2c2: css/kit.css — edit in game-kit and run tools/kit-sync.js */
 /* game-kit: shared styles for first-person browser games (windows, HUD, buttons, touch controls,
    status chips, steppers, kanban, app-like software screens, tabs, stamps, share buttons; at the end
    progression pg-*, sim UI nt-/tb-/dl-/ch-*, journal jr-* / stream veil st-* / hiding hd-*, chat cx-*).
@@ -3064,7 +3064,14 @@ html[data-gf-no-flash="1"] .wm-layer { animation: none; }
 /*@end*/
 
 /* ---- the 3D conversation window and choice (js/talk-ui.js, standard 1.7) ---- */
-.gf-talk { display: flex; flex-direction: column; gap: var(--gf-space-3, 12px); min-height: 100%; color: var(--gf-text, #e8e6df); }
+.gf-talk { display: flex; flex-direction: column; gap: var(--gf-space-3, 12px); min-height: 100%; flex: 1 0 auto; font-size: calc(1em * var(--talk-scale, 1)); color: var(--gf-text, #e8e6df); }
+/* 1.21.1 (水無瀬病院 ドット版, iPhone sideways with the address bar, 844x340: 「ズレてます」): the talk never shrinks below its content (its frame
+   always holds the whole text), nothing in it is squashed, and talk-ui fitTalk() makes the picture smaller - keeping its shape, centred - before
+   the text, so the line and 次へ fit the window without scrolling */
+.gf-talk > * { flex-shrink: 0; }
+.gf-talk.gf-fit .gf-talk-img { height: var(--talk-img-h, auto); width: auto; max-width: 100%; max-height: none; align-self: center; }
+.gf-talk.gf-fit[style*="--talk-face-w"] .gf-talk-face { width: var(--talk-face-w); }
+.gf-talk.gf-fit .gf-talk-text { line-height: calc(1.9 - (1 - var(--talk-scale, 1)) * 2); }
 .gf-talk-img { display: block; width: 100%; aspect-ratio: 16 / 9; height: auto; max-height: 30vh; object-fit: cover; background: #0b0e0f; border: 1px solid var(--gf-border, rgba(255,255,255,.2)); border-radius: var(--gf-radius, 4px); }   /* the box has its size before the picture arrives (1.11.1) */
 .gf-talk-img--kept { opacity: .72; filter: saturate(.75); }   /* the last picture, kept under a line without one (no jump) */
 .gf-talk-row { display: flex; gap: var(--gf-space-3, 12px); align-items: flex-start; }
@@ -3145,7 +3152,8 @@ body.gf-warming .wm-layer, body.gf-warming .rn-wrap, body.gf-warming #mg, body.g
 .mgx-radio-bars b { flex: 1; height: 10%; background: color-mix(in srgb, var(--gf-accent, #3a7a5a) 70%, transparent); border-radius: 2px 2px 0 0; }
 .mgx-radio-hold { width: min(380px, 100%); height: 8px; border-radius: 4px; background: var(--gf-surface-2, #ece6d6); overflow: hidden; }
 .mgx-radio-hold i { display: block; height: 100%; width: 0; background: var(--gf-accent, #3a7a5a); }
-.mgx-radio-heard { margin: 0; min-height: 1.7em; width: min(380px, 100%); text-align: center; color: var(--gf-text); font-size: 0.95em; line-height: 1.7; }
+.mgx-radio-heard { margin: 0; height: 3.4em; overflow: hidden; display: flex; align-items: center; justify-content: center; flex: none; width: min(380px, 100%); text-align: center; color: var(--gf-text); font-size: 0.95em; line-height: 1.7; }   /* 1.21.1: two lines' room, always (the longest caption wraps on a phone; the knob below must never move with the text) */
+.mgx-radio-band span { font-variant-numeric: tabular-nums; }
 @media (max-height: 500px) { .mgx-radio { gap: 6px; } .mgx-radio-knob { width: 84px; height: 84px; } .mgx-radio-bars { height: 36px; } }
 .mgx-radio-signal { display: flex; align-items: center; gap: 8px; width: min(380px, 100%); font-size: 0.8em; color: var(--gf-text-dim); }
 .mgx-radio-signal div { flex: 1; height: 12px; border-radius: 6px; background: var(--gf-surface-2, #ece6d6); overflow: hidden; border: 1px solid var(--gf-border, #d8d2c2); }

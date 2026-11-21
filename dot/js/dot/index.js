@@ -14,7 +14,6 @@ import * as THREE from 'three';
 import { loadFrameSet, createFigure, buildStackGeometry, loadPixels, stripVolume } from '../kit/sprite-stack-mesh.js';
 import { turnToward } from '../kit/sprite-stack-anim.js';
 import { installPhotoHooks, preparePhotos } from './photos.js';
-import { installPhone } from './phone.js';
 
 const LAYER = new URL('../../', import.meta.url).href;   // /dot/
 const at = (p) => new URL(p, LAYER).href;
@@ -342,6 +341,5 @@ export default async function dotLayer(ext, { manifest, data }) {
   });
 
   // the other version, from the title
-  D.phone = installPhone(ext);   // phones: sideways recommended, the 目的 chip, full screen (phone.js)
   ext.registerTitleButton('dot-original', { label: '元の版（写真の3D）へ', order: 210, run() { location.href = '/'; } });
 }

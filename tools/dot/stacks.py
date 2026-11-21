@@ -45,7 +45,7 @@ PLAIN = {
 M2 = ['hina-backpack', 'hina-camera', 'bucket-leak', 'number-display', 'reception-sign', 'wet-sign', 'nurse-board', 'stepladder',
       'record-boxes', 'bedside', 'chain-padlock', 'lift-indicator', 'call-off', 'pipe-ceiling', 'floating-debris',
       'hina-tape-arrow', 'breaker', 'fuel-tank', 'fuel-can', 'tool-board', 'hina-lantern', 'card-cabinet', 'toe-tag-tray', 'morgue-sink',
-      'hina-glowsticks', 'foot-guide', 'valve-sign', 'jar-rack-wall', 'jar-crate', 'organ-scale', 'instrument-stand', 'ceiling-sag',
+      'hina-glowsticks', 'foot-guide', 'valve-sign', 'valve-sign-plain', 'jar-rack-wall', 'jar-crate', 'organ-scale', 'instrument-stand', 'ceiling-sag',
       'call-lit', 'emlamp-off', 'emlamp-on']
 
 

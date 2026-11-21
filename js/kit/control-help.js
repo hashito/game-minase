@@ -1,4 +1,4 @@
-/* game-kit 1d506003: js/control-help.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit afcbe2c2: js/control-help.js — edit in game-kit and run tools/kit-sync.js */
 // Controls help (standard 1.17.0, from 水無瀬病院 #16 / #17 / #22: 「操作方法をメニューで表示して」「C またはボタンでしゃがむなどを教えて」
 // 「走れるようになったりライトを直したりの操作が分かりづらい」). Two parts, installed by game-core for every 3D game:
 //   - 操作方法 in the pause menu: every control of this game (game.json "controls"), keyboard / touch / pad as the player is using now;
@@ -35,6 +35,7 @@ const CSS = `
 .gf-ch[data-hud-slot]{position:relative;left:auto;top:auto;transform:none;width:100%;max-width:100%;box-sizing:border-box;pointer-events:auto;animation:gf-ch-in2 .35s ease-out}
 @keyframes gf-ch-in2{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .gf-ch .gf-ch-more{display:block;margin-top:2px;color:#9fb0aa;font-size:13px}
+.gf-ch.gf-ch--short{gap:10px;padding:6px 8px 6px 12px;font-size:15px;line-height:1.4}.gf-ch.gf-ch--short .gf-ch-t b{font-size:15px;font-weight:600}.gf-ch.gf-ch--short .gf-ch-t span,.gf-ch.gf-ch--short .gf-ch-more{display:none}.gf-ch.gf-ch--short button{min-height:40px;padding:0 10px}
 html[data-gf-calm="1"] .gf-ch{animation:none}
 #t-buttons button.gf-ch-lit{outline:3px solid #f0d36a;outline-offset:2px;animation:gf-ch-pulse 1.1s ease-in-out infinite}
 @keyframes gf-ch-pulse{50%{outline-color:rgba(240,211,106,.25)}}
@@ -63,7 +64,7 @@ export function installControlHelp(ctx) {
   } });
   let card = null, cur = null;
   const seen = new Set(), queue = [];
-  const close = () => { if (card) card.remove(); card = null; document.querySelectorAll('.gf-ch-lit').forEach((b) => b.classList.remove('gf-ch-lit')); cur = null; if (queue.length) setTimeout(() => { if (!card && queue.length) { const [k, o] = queue.shift(); show(k, o); } }, 350); };
+  const close = () => { if (card) card.remove(); card = null; document.querySelectorAll('.gf-ch-lit').forEach((b) => { b.classList.remove('gf-ch-lit'); delete b.dataset.gfHint; }); cur = null; if (queue.length) setTimeout(() => { if (!card && queue.length) { const [k, o] = queue.shift(); show(k, o); } }, 350); };
   const show = (k, o) => {
     injectCss(); cur = k;
     const row = CONTROL_ROWS.find((r) => r[0] === k);
@@ -71,14 +72,19 @@ export function installControlHelp(ctx) {
     card = document.createElement('div'); card.className = 'gf-ch'; card.id = 'gf-ch'; card.setAttribute('role', 'status');
     card.innerHTML = `<kbd>${esc(m === 'touch' ? (o.touch || '') || '' : key)}</kbd><div class="gf-ch-t"><b></b><span></span><small class="gf-ch-more" hidden></small></div><button type="button" aria-label="閉じる">閉じる</button>`;
     const kb = card.querySelector('kbd'); if (m === 'touch' && !o.touch) kb.remove();
-    card.querySelector('b').textContent = `${o.why ? `${o.why} ` : ''}${o.text || (row ? row[1] : k)}${m === 'touch' ? `：${o.touch || key}` : ''}`;
+    // 1.21.1 (「通知が多すぎます」): on a phone the hint card, when it shows, is one short line (what and which button) and the button itself flashes (gf-ch-lit)
+    const short = m === 'touch' && typeof matchMedia !== 'undefined' && matchMedia('(max-height: 520px), (max-width: 520px)').matches;
+    if (short) card.classList.add('gf-ch--short');
+    card.querySelector('b').textContent = short ? `${o.text || (row ? row[1] : k)}：${o.touch || key}` : `${o.why ? `${o.why} ` : ''}${o.text || (row ? row[1] : k)}${m === 'touch' ? `：${o.touch || key}` : ''}`;
     card.querySelector('span').textContent = o.sub || (k === 'crouch' ? (m === 'touch' ? 'もう一度押すと立つ。' : 'もう一度 C で立つ。') : k === 'run' ? 'しゃがんでいると走れない。' : '');
     card.querySelector('button').onclick = () => close();
     const lane = document.getElementById('hs-tc');
     if (lane && ctx.registerHudPart) { lane.appendChild(card); try { ctx.registerHudPart('gf-ch', { slot: 'tc', order: 5, el: card }); } catch { /* an older HUD */ } }
     else document.body.appendChild(card);
     more();
-    for (const b of document.querySelectorAll('#t-buttons [data-k]')) if ((KEYS[k] || [o.code]).includes(b.dataset.k)) b.classList.add('gf-ch-lit');
+    // 1.21.0 (phones: 「通知が多すぎます」): the lit button carries a short badge (data-gf-hint); a phone shows only that badge, not the card
+    let lit = 0; for (const b of document.querySelectorAll('#t-buttons [data-k]')) if ((KEYS[k] || [o.code]).includes(b.dataset.k)) { b.classList.add('gf-ch-lit'); b.dataset.gfHint = o.badge || (o.why === 'できるようになった。' ? 'NEW' : (o.text || (row ? row[1] : k)).slice(0, 8)); lit++; }
+    card.classList.toggle('gf-ch-badged', lit > 0);
   };
   const more = () => { const el = card && card.querySelector('.gf-ch-more'); if (!el) return; el.hidden = !queue.length; el.textContent = queue.length ? `このあと、もう ${queue.length} つ` : ''; };
   ctx.controlHint = (k, o = {}) => {

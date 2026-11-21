@@ -1,4 +1,4 @@
-/* game-kit de49b0f7: js/toast-lane.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit afcbe2c2: js/toast-lane.js — edit in game-kit and run tools/kit-sync.js */
 // Toast lane (rule U27, docs/hud-slots.md): ONE place for every short notification, so it never lands on the clock, the sensors or the menu.
 // The lane is the top-centre HUD slot (#hs-tc): hud-slots.js puts it BELOW the taller of the top stacks that it would touch and keeps it above the
 // prompt / action cluster. Everything that used to be its own floating box (toasts, side-job notes, pick-up cards, "carrying" hint, "click to return")
@@ -23,6 +23,7 @@ export const LANE_MAX = 3;
 const WAIT_CAP = 12;
 
 import { gfRegister, gfEmit, gfOk, gfFail, gfUnknown } from "./gf-test.js";
+import { fitPanel, keepFitted } from "./panel-fit.js";
 
 // 1.20.3 (札の家 ドット版, phone play: 「スクロールできるようにではなく他のUIの邪魔にならないように広く場所を取るべき」): a card with the class
 // tl-read (the look-at card, things.js) is a READING card: not a small box in the lane but a large panel of its own (#gf-reader, near full screen
@@ -258,7 +259,23 @@ export class ToastLane {
     this._readOn = on;
     document.body.classList.toggle("gf-reading", on);
     if (on) { const b = this.readerEl && this.readerEl.querySelector(".tl-close"); if (b && b.focus) try { b.focus({ preventScroll: true }); } catch { /* old browsers */ } }
+    if (on) this._fitRead(); else if (this._fitStop) { this._fitStop(); this._fitStop = null; }
     if (typeof this.o.onReader === "function") this.o.onReader(on);
+  }
+  // 1.21.1: the reading card fits its panel without scrolling: the picture gets smaller first (beside the text on a low landscape screen: its
+  // width; above it: its height), then the text (js/panel-fit.js); scrolling stays only for an unusually long text
+  _fitRead() {
+    const card = this.readerEl && this.readerEl.querySelector(".tl-read"), body = card && card.querySelector(".tl-body");
+    if (!body) return;
+    const run = () => {
+      const pic = card.querySelector(".iv-photo:not(.iv-nopic)"), row = !!pic && getComputedStyle(pic.parentElement).flexDirection === "row";
+      const steps = [];
+      if (pic) steps.push(row ? { el: card, prop: "--rd-photo-w", from: 34, to: 16, step: -2, unit: "%" } : { el: card, prop: "--rd-photo-h", from: Math.max(80, Math.round(body.clientHeight * 0.5)), to: 56, step: -12, unit: "px" });
+      steps.push({ el: card, prop: "--rd-scale", from: 1, to: 0.82, step: -0.03, unit: "" });
+      fitPanel(body, steps);
+    };
+    if (this._fitStop) this._fitStop();
+    this._fitStop = keepFitted(body, run);
   }
   destroy() { clearInterval(this.timer); this.timer = 0; this.model.clear(); this.render(); }
 }

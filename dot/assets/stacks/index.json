@@ -489,6 +489,13 @@
   "src": "minase-m2-valve-sign",
   "mpp": 0.025
  },
+ "valve-sign-plain": {
+  "w": 27,
+  "d": 4,
+  "n": 39,
+  "src": "minase-m2-valve-sign-plain",
+  "mpp": 0.025
+ },
  "jar-rack-wall": {
   "w": 65,
   "d": 16,

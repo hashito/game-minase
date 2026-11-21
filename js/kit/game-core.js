@@ -1,4 +1,4 @@
-/* game-kit 9c9832c4: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit afcbe2c2: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
 // The standard bootstrap of a 3D first-person game (docs/standard-3d.md). Wires the standard modules from DATA (game.json + data/*.json):
 //   runtime base  render-presets (renderer, lights, fog, post, quality tiers; the preset may be a name or { base, ...overrides }),
 //                 frame-guard (?perf overlay, dynamic resolution, job queue), controller (walk / look / touch),
@@ -47,9 +47,11 @@ import { createTabMenu } from './tab-menu.js';
 import { installGuideAids, recapTab } from './guide-aids.js';
 import { createPauseMenu } from './pause-menu.js';
 import { installControlHelp } from './control-help.js';
-import { renderPaperDoc, paperDocHtml } from './paper-doc.js';
+import { renderPaperDoc, paperDocHtml, renderDocWindow } from './paper-doc.js';
 import { createJournal } from './journal-ui.js';
 import { readsTab, READS_CSS } from './reads-tab.js';
+import { applyDotPost } from './dot-post.js';
+import { installPhonePlay } from './phone-play.js';
 import { createMapSvg } from './map-svg.js';
 import { createStepGuide, minigameSteps } from './step-guide.js';
 import { FrameGuard, JobQueue, prewarm, auditScene } from './frame-guard.js';
@@ -75,7 +77,7 @@ import { installTimedShot } from './timed-shot.js';
 import { VoiceQueue } from './voice-queue.js';
 import { installNpcAudit } from './npc-audit.js';
 
-export const CORE_VERSION = '1.20.4';
+export const CORE_VERSION = '1.21.1';
 // the mini game library's types (js/mg-library.js LIBRARY; test/story-hooks.test.mjs keeps the two equal): game.json "minigames" naming one of these loads the library
 export const MG_LIB_TYPES = ['pour', 'turn-dials', 'match-mark', 'timing', 'code-drums', 'tune-radio', 'trace-path', 'slide-tiles', 'search-dark', 'rotate-pipes', 'sort-items', 'memory-pairs', 'lock-pick', 'photo-focus', 'rhythm-taps', 'connect-dots', 'balance-scale', 'echo-bells', 'switch-panel', 'rotate-pieces', 'count-shadows', 'spot-difference', 'maze-path', 'cipher-wheel', 'steady-hand', 'pump-gauge', 'order-steps', 'compass-bearing', 'mirror-beam', 'kana-word', 'jug-measure', 'hold-breath', 'layer-board'];
 const $ = (id) => document.getElementById(id);
@@ -90,7 +92,7 @@ export { preloadImage, whenFontsReady };   // js/boot.js (first-load screen, doc
 export async function loadGame(manifestUrl = 'game.json', o = {}) {
   const base = new URL(manifestUrl, location.href);
   const get = async (u) => { const r = await fetch(new URL(u, base)); if (!r.ok) throw new Error(`${u}: ${r.status}`); return r.json(); };
-  const manifest = await get(base.href);
+  const manifest = applyDotPost(await get(base.href));   // 1.21.0: "dotPost": "soft" - the dot look of 札の家 in one line (js/dot-post.js)
   if (manifest.titleImage && !o.titleArt) o = { ...o, titleArt: preloadImage(new URL(manifest.titleImage, location.href).href) };   // start the key art right away, in parallel with data/*.json and the ext modules
   const data = Object.fromEntries(await Promise.all(Object.entries(manifest.data).map(async ([k, f]) => [k, await get(f)])));
   const ext = o.ext || createExtensions();
@@ -561,7 +563,7 @@ export function createGame(cfg) {
     item: { prompt: (o) => `[E] 拾う：${items.find((i) => i.id === o.id).name}`,
       run: (o) => { const it = items.find((i) => i.id === o.id); remove('item', o.id); state.inv.push(o.id); sound('pickup'); if (!(it.photo || it.read)) ctx.lastPickup = { it, at: Date.now() };   /* 1.20.3: an item shown in the reading panel is not shown again as the first page of a talk */ if (it.photo || it.read) readItem(it, '入手'); else ui.toast(`入手：${esc(it.name)}`); if (it.feeling) ctx.afterReading(() => ui.say(esc(it.feeling)));   /* 1.20.3 items.json "read": a letter shows what it says the moment it is picked up (札の家 「各手紙も拾ったタイミングで内容を表示」); re-read in the item list / 手帳 */   /* an item with a photo shows its picture card (the feeling stays in the thought band) */ bus.emit('item:pickup', { id: o.id }); ctx.save(); checkEndings(); } },
     doc: { prompt: (o) => `[E] 読む：${docs.find((d) => d.id === o.id).title}`,
-      run: (o) => { const d = docs.find((x) => x.id === o.id); const first = !state.docsRead.includes(o.id); if (first) state.docsRead.push(o.id); sound('paper'); wm.open('doc', { title: d.title, size: (manifest.docStyle === 'paper' || d.paper) ? 'm' : 's', render: (el) => { if (manifest.docStyle === 'paper' || d.paper) renderPaperDoc(el, d, { feeling: false }); else el.innerHTML = `${d.photo ? `<img class="gf-doc-img" src="${esc(d.photo)}" alt="">` : ''}${d.text.split('\n').map((p) => `<p>${esc(p)}</p>`).join('')}`; el.insertAdjacentHTML('beforeend', '<p class="gf-doc-done"><button type="button" class="btn primary gf-doc-read">読んだ</button></p>'); el.querySelector('.gf-doc-read').addEventListener('click', () => wm.close()); } });   /* 1.20.3: 読んだ at the end of the text closes it (then the comment) */   /* 1.17.0: game.json docStyle "paper" / docs.json "paper": the document as a sheet (js/paper-doc.js) */ if (first && d.feeling) ctx.monologue(d.feeling, Math.min(9, 2.4 + String(d.feeling).length * 0.09));   /* 1.20.3: the document alone in its window; the protagonist's comment comes after it is closed (ctx.monologue waits, see ctx.afterReading) and stays in 手帳 */ bus.emit('doc:read', { id: o.id }); ctx.save(); } },
+      run: (o) => { const d = docs.find((x) => x.id === o.id); const first = !state.docsRead.includes(o.id); if (first) state.docsRead.push(o.id); sound('paper'); wm.open('doc', { title: d.title, size: (manifest.docStyle === 'paper' || d.paper) ? 'm' : 's', render: (el) => renderDocWindow(el, d, { paper: manifest.docStyle === 'paper' || !!d.paper, onDone: () => wm.close() }) });   /* 1.21.1: js/paper-doc.js renderDocWindow: the text in its own scroller, 読んだ below it (never over it), the picture left of the text on a low landscape screen, the picture shrunk before the text (js/panel-fit.js) */   /* 1.20.3: 読んだ at the end of the text closes it (then the comment) */   /* 1.17.0: game.json docStyle "paper" / docs.json "paper": the document as a sheet (js/paper-doc.js) */ if (first && d.feeling) ctx.monologue(d.feeling, Math.min(9, 2.4 + String(d.feeling).length * 0.09));   /* 1.20.3: the document alone in its window; the protagonist's comment comes after it is closed (ctx.monologue waits, see ctx.afterReading) and stays in 手帳 */ bus.emit('doc:read', { id: o.id }); ctx.save(); } },
     // locked stairs say why (the plan's hint, else the progression's lock text) and stay shut: [E] gives the reason in the thought band (1.9.1)
     stairs: { prompt: (o) => (o.locked && o.locked() ? `[E] ${lockedLabel(o.label || '階段', 'いまは使えません')}` : `[E] ${o.label || '階段を使う'}`),
       run: (o) => { if (o.locked && o.locked()) { ui.say(esc(o.hint || prog.lockText(o.unlock) || 'いまは、この階段を使えません。先に、いまの目標を進めましょう。'), 6, { urgent: true }); bus.emit('stairs:locked', { id: o.id, unlock: o.unlock }); return; } ctx.useStairs(o); } },
@@ -719,7 +721,10 @@ export function createGame(cfg) {
     });
   }
   ctx.refreshGuide = refreshGuide;
-  for (const ev of ['game:start', 'task:done', 'stage:up', 'door:open']) bus.on(ev, () => setTimeout(refreshGuide, 0));
+  for (const ev of ['game:start', 'task:done', 'stage:up', 'door:open', 'item:pickup', 'item:given', 'player:room', 'player:respawn']) bus.on(ev, () => setTimeout(refreshGuide, 0));
+  // 1.21.0 (札の家 ドット版: a test scene / a story change that sets items or flags after game:start left the card on an optional task
+  // while a required one could start): the guide is also re-checked once a second (refreshGuide does nothing when the task is the same)
+  if (typeof setInterval === 'function') setInterval(() => { if (state.started && !state.ended) refreshGuide(); }, 1000);
 
   addEventListener('keydown', (e) => {
     if (!state.started || /INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '')) return;
@@ -1051,6 +1056,7 @@ ${it.desc}` : ''}`, ...(it.photo ? { img: it.photo } : {}) };
     title.classList.add('hidden');   // the game's cards (controls, intro) show on the bare 3D view
     if (td.beforeStart && !o.skipIntro) td.beforeStart(ctx, go, o); else go();   // the game's controls card / intro screens
   };
+  installPhonePlay(ctx, { manifest, bus, pm: ctx.pm, ui });   // 1.21.0 phone play: landscape notice, 目的 chip, one notice at a time, 全画面 (js/phone-play.js)
   $('start-btn').onclick = () => { if (saved && td.confirmNew && !$('start-btn').dataset.sure) { $('start-btn').dataset.sure = '1'; $('start-btn').textContent = td.confirmNew; return; } begin({}); };
   if ($('continue-btn')) $('continue-btn').onclick = () => begin({ resume: true });
   ctx.start = begin;

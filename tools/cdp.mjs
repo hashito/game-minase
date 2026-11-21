@@ -102,6 +102,15 @@ export async function launch(o = {}) {
       if (type !== "up") await send("Input.dispatchKeyEvent", { type: "keyDown", code, key: k });
       if (type !== "down") await send("Input.dispatchKeyEvent", { type: "keyUp", code, key: k });
     },
+    async tap(x, y) {   // a real touch (touchstart / touchend, then the browser's own click), as a finger on a phone (1.21.1, P32)
+      await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x, y, radiusX: 4, radiusY: 4, force: 1, id: 1 }] });
+      await new Promise((r) => setTimeout(r, 60));
+      await send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    },
+    async touch(type, x, y) {   // one step of a finger drag: type "start" | "move" | "end" (1.21.1, mini-game drags on a phone)
+      const t = { start: "touchStart", move: "touchMove", end: "touchEnd" }[type];
+      await send("Input.dispatchTouchEvent", { type: t, touchPoints: type === "end" ? [] : [{ x, y, radiusX: 4, radiusY: 4, force: 1, id: 1 }] });
+    },
     async click(x, y) {
       await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: 1 });
       await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: 1 });

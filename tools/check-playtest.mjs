@@ -37,18 +37,34 @@
 //   P28 a thing hanging on the wall where a door opens or slides (tools/wall-door.mjs: 「スライドする戸のところに壁掛け時計」)
 //   P29 a person ("talk": true station) that the pick misses from the 1.0 / 1.8 m rings (tools/talk-ring.mjs: 「婆さんに話しかけづらい」)
 //   P30 a picture shown outside the reading panel when an item or a thing is opened (「画像が画面中央の上部に出てきて邪魔」)
+//   1.21.1 (水無瀬病院 ドット版, the user's iPhone play 2026-11-21; tools/hud-checks.mjs), at 390 x 844, 375 x 667 and 844 x 390:
+//   P35 a close button that a finger cannot tap: something else is on top at its centre, or a real tap leaves its box there (an error)
+//       (「上の通知でしゃがむの案内を閉じるで閉じられないです」)
+//   P36 a library mini game whose controls move when a caption / message gets longer (an error) (「文字が改行されると回す位置が変わってハンチングする」)
 //   P21+ a wall paper that flickers on a still picture (tools/frame-flicker.mjs, the dot layers too: 「張り紙よりも大きな枠が見えて、ちらついている」)
-// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+//   1.21.0: P33 (dot games) a visible material in a room that is not dot: a photo texture, a plain material, a smooth texture - walls,
+//     floors and ceilings included (tools/dot-scene.mjs; js/dot-world.js dotifyScene draws them as dot tiles in the palette) (error)
+//   1.21.0: P34 (dot games) a person or monster figure built at res 1 (people and monsters are res 2, 1.25 cm a voxel; game.json
+//     "sprites": { "res": 1 } keeps the old one, with a warning) (error)
+//   1.21.0: P32 framed panels on a phone (844x390, 667x375, 844x340): the inner frame inside its panel, no frame line across the text, no
+//     content spilling out of a frame (error); an inner line drawn as a negative outline, a squashed picture (warning) (tools/frame-nest.mjs)
+//   1.21.0: P31 phone layout at 844x390 / 667x375 (landscape) and 390x844 (portrait): the HUD covers more than PHONE_HUD_MAX of the screen,
+//       two panels overlap (errors), the portrait notice is missing (tools/phone-layout.mjs: 「メッセージや通知で領域を使いすぎている」)
+// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { launch } from './cdp.mjs';
 import { framePaddingSource, clippedTextSource } from './frame-padding.mjs';
+import { frameNestSource } from './frame-nest.mjs';
+import { dotSceneSource } from './dot-scene.mjs';
 import { lumaSource, LUMA_DARK } from './scene-luma.mjs';
 import { wallDoorSource } from './wall-door.mjs';
 import { talkRingSource, TALK_RING_MIN } from './talk-ring.mjs';
 import { flickerSource, FLICKER_MAX } from './frame-flicker.mjs';
+import { phoneLayoutSource, PHONE_HUD_MAX } from './phone-layout.mjs';
+import { closeTapSource, mgStableSource } from './hud-checks.mjs';
 // P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
 const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
 
@@ -313,6 +329,7 @@ try {
   {
     const rooms = await G(`(g.data.plan.rooms || []).map((r) => ({ id: r.id, x: r.x + r.w / 2, z: r.z + r.d / 2, floor: r.floor || 0 }))`);
     const back = await G(`({ x: g.camera.position.x, z: g.camera.position.z, floor: g.floor || 0, light: !!g.lightOn })`);
+    const isDot = await G(`!!(g.manifest && (g.manifest.dot || g.manifest.dotPost))`), seenDot = new Set();
     await G(`(g.setLight && g.setLight(true), 1)`);   // the player's own light on (a dark beat before it is lit is the game's choice; the play scripts check it)
     for (const r of (rooms || []).slice(0, 40)) {
       await G(`(g.teleport({ x: ${r.x}, z: ${r.z}, floor: ${r.floor} }), g.fp.pitch = -0.25, 1)`); await sleep(350);
@@ -320,6 +337,19 @@ try {
       const m = L && L.points && L.points.player && L.points.player.on ? L.points.player.mean : null;
       if (L && L.frame < LUMA_DARK.frame) Wn('P27', `room "${r.id}": the picture is black (frame mean ${L.frame.toFixed(1)} < ${LUMA_DARK.frame}): a dim floor light, a lit radius round the player, a glow at the goal`);
       else if (m != null && m < LUMA_DARK.player) Wn('P27', `room "${r.id}": black round the player (mean ${m.toFixed(1)} < ${LUMA_DARK.player})`);
+      // P33 (1.21.0, dot games): every visible material in this room is a sprite stack or a dot tile (no photo texture, walls included)
+      if (isDot) {
+        await sleep(400);
+        const D = await G(dotSceneSource());
+        for (const [k, c] of ((D && D.bad) || []).slice(0, 6)) if (!seenDot.has(k)) { seenDot.add(k); E('P33', `room "${r.id}": ${k} (x${c}) - not dot: draw it with js/dot-world.js dotifyScene (a dot tile / quantized picture in the palette) or as a sprite stack`); }
+      }
+    }
+    // P34 (1.21.0, dot games): people and monsters are built at the fine resolution (res 2), unless game.json "sprites": { "res": 1 } chose the old one
+    if (isDot) {
+      const want = await G(`((g.manifest && g.manifest.sprites && g.manifest.sprites.res) || 2)`);
+      const figs = await G(`(() => { const out = []; g.scene.traverse((o) => { if (/^figure:/.test(o.name || '')) out.push([o.name, o.userData.res || 1]); }); return out; })()`);
+      for (const [n, rs] of figs || []) if (rs < want) E('P34', `${n} is built at res ${rs}; dot games draw people and monsters at res 2 (tools/sprite-stacks/motion_frames.py --res 2; game.json "sprites": { "res": 1 } keeps the old one)`);
+      if (want < 2) Wn('P34', 'game.json "sprites": { "res": 1 }: the people are at the old (coarse) resolution');
     }
     await G(`(g.teleport(${JSON.stringify(back)}), g.setLight && g.setLight(${back.light}), 1)`);
   }
@@ -347,7 +377,7 @@ try {
   }
   // P23 / P24 (1.20.2, 札の家 ドット版): the UI on a phone. P23 text too close to its frame (warning); P24 every card and document opened at
   // 390 x 844 and 375 x 667: a line of text cut off by a box that cannot scroll is an error (「スクロールできないので文字が見られません」)
-  for (const [w, h] of [[390, 844], [375, 667]]) {
+  for (const [w, h] of [[390, 844], [375, 667], [844, 390]]) {
     const q = await launch({ width: w, height: h, mobile: true, dpr: 2 });
     const Q = async (expr) => { const s = await q.eval(`(async () => { const g = window.__game; return JSON.stringify(await (${expr})); })()`); return s === undefined ? undefined : JSON.parse(s); };
     const closeAll = () => Q(`(g.lane && g.lane.clear && g.lane.clear('card'), g.wm && g.wm.isOpen && g.wm.close(), [...document.querySelectorAll('.wm-layer .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`);
@@ -358,6 +388,22 @@ try {
       await sleep(2500);
       for (let i = 0; i < 30 && (await Q('g.blocked ? g.blocked() : false')); i++) { await closeAll(); await sleep(400); }
       await sleep(600);
+      // P35 (1.21.1): a control hint up, then every close button on screen by a real tap
+      await Q(`(g.controlHint && g.controlHint('crouch', { why: 'できるようになった。', once: false }), 1)`); await sleep(1200);
+      for (const c of await Q(closeTapSource())) {
+        if (!c.on) { E('P35', `${w}x${h}: the close button of ${c.id} is under ${c.top} (a finger on it hits that instead)`); continue; }
+        if (c.id !== '#gf-ch') continue;
+        await q.tap(c.x, c.y); await sleep(900);
+        if (await Q(`!!document.querySelector('#gf-ch')`)) E('P35', `${w}x${h}: a tap on 閉じる of ${c.id} did not close it`);
+        else { await sleep(2000); if (await Q(`!!document.querySelector('#gf-ch')`)) E('P35', `${w}x${h}: ${c.id} came back after it was closed`); }
+      }
+      for (let i = 0; i < 10 && (await Q('g.blocked ? g.blocked() : false')); i++) { await closeAll(); await sleep(400); }
+      // P36 (1.21.1): each library mini game once (at the first size)
+      if (w === 390) for (const t of (await Q(`g.data.tasks.filter((t) => t.minigame && t.minigame.type).map((t) => t.id)`)) || []) {
+        const r = await Q(mgStableSource(t)); if (!r || !r.open) continue;
+        for (const m of r.moved) E('P36', `${w}x${h} task "${t}" (${r.type}): a longer text moves a control: ${m}`);
+        for (let i = 0; i < 10 && (await Q('g.blocked ? g.blocked() : false')); i++) { await closeAll(); await sleep(400); }
+      }
       for (const x of (await Q(framePaddingSource())).slice(0, 12)) Wn('P23', `${w}x${h} ${x.sel} 「${x.text}」: text ${x.min} px from its frame (needs ${x.need[0]} px, gaps l${x.gap.l} r${x.gap.r} t${x.gap.t} b${x.gap.b})`);
       if (!(await Q('typeof g.useInteract === "function"'))) { Wn('P24', 'ctx.useInteract is missing (kit < 1.20.2): the cards and documents were not opened'); continue; }
       const list = await Q(`g.world.interactables.map((o) => o.userData.interact).filter((ia) => ia && (ia.kind === 'look' || ia.kind === 'thing' || ia.kind === 'doc')).map((ia) => ({ kind: ia.kind, id: ia.id }))`);
@@ -388,6 +434,34 @@ try {
       }
       if (!n) Wn('P24', `${w}x${h}: no thing or document to open`);
     } catch (e) { Wn('P24', `${w}x${h}: the phone pass could not run: ${e.message}`); }
+    finally { await q.close(); }
+  }
+  // P31 (1.21.0): the phone layout, landscape and portrait, with a notice on screen (the worst case the player meets)
+  for (const [w, h] of [[844, 390], [667, 375], [844, 340], [390, 844]]) {
+    const q = await launch({ width: w, height: h, mobile: true, dpr: 2 });
+    const Q = async (expr) => { const s = await q.eval(`(async () => { const g = window.__game; return JSON.stringify(await (${expr})); })()`); return s === undefined ? undefined : JSON.parse(s); };
+    try {
+      await q.goto(`${base}?test=1`);
+      await q.waitFor("window.__game && document.getElementById('start-btn') && !document.getElementById('start-btn').disabled || (window.__game && window.__game.state && window.__game.state.started)", 120000);
+      if (h > w) { await sleep(800); const r0 = await Q(phoneLayoutSource()); if (r0.phone && !r0.rotate) E('P31', `${w}x${h}: no 横向き notice in portrait (js/phone-play.js)`); await Q(`((document.querySelector('#gf-rotate .gf-rot-ok') || { click() {} }).click(), 1)`); }
+      if (!(await Q('g.state.started'))) await Q(`(document.getElementById('start-btn').click(), 1)`);
+      await sleep(2500);
+      for (let i = 0; i < 30 && (await Q('g.blocked ? g.blocked() : false')); i++) { await Q(`(g.lane && g.lane.clear && g.lane.clear('card'), g.wm && g.wm.isOpen && g.wm.close(), [...document.querySelectorAll('.wm-layer .btn.primary, #gf-reader .tl-close')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`); await sleep(400); }
+      await sleep(5500);   // past the goal's flash
+      await Q(`(g.ui && g.ui.toast && g.ui.toast('テストの通知'), g.ui && g.ui.toast && g.ui.toast('二つ目の通知'), 1)`); await sleep(700);
+      const r = await Q(phoneLayoutSource());
+      if (!r.phone) { Wn('P31', `${w}x${h}: not treated as a phone (body.gf-phone missing: kit < 1.21.0 or game.json ui.phone false)`); continue; }
+      const max = r.portrait ? PHONE_HUD_MAX.portrait : PHONE_HUD_MAX.landscape;
+      if (r.cover > max) E('P31', `${w}x${h}: the HUD covers ${Math.round(r.cover * 100)}% of the screen (max ${Math.round(max * 100)}%): ${r.parts.join(', ')}`);
+      for (const o of r.overlaps) E('P31', `${w}x${h}: "${o[0]}" and "${o[1]}" overlap (${o[2]}x${o[3]} px)`);
+      // the crowded moment (水無瀬病院 「通知が多すぎます」): a thought line, a notice, a control hint and the goal flash at once -> one box shows
+      await Q(`(g.phone && g.phone.flashGoal && g.phone.flashGoal(4), g.controlHint && g.controlHint('custom', { key: 'G', touch: '［テスト］', text: 'テストの操作', once: false }), g.ui && g.ui.toast && g.ui.toast('三つ目の通知'), g.ui && g.ui.say && g.ui.say('テストの独り言。'), 1)`); await sleep(700);
+      const r2 = await Q(phoneLayoutSource());
+      if (r2.msgs.length > 1) E('P31', `${w}x${h}: ${r2.msgs.length} message boxes at once (${r2.msgs.join(', ')}); a phone shows one (js/phone-play.js gf-saying / gf-hinting)`);
+      for (const o of r2.overlaps) E('P31', `${w}x${h} (crowded): "${o[0]}" and "${o[1]}" overlap (${o[2]}x${o[3]} px)`);
+      // P32 (1.21.0): framed panels in a short landscape (the address bar showing: 844x340 is checked below too)
+      for (const x of await Q(frameNestSource())) (x.kind === 'squash' || x.kind === 'inset' ? Wn : E)('P32', `${w}x${h} ${x.sel}: ${x.kind}${x.text ? ` 「${x.text}」` : ''} ${JSON.stringify(x.by)}`);
+    } catch (e) { Wn('P31', `${w}x${h}: the phone layout pass could not run: ${e.message}`); }
     finally { await q.close(); }
   }
   if (p.errors.length) for (const e of [...new Set(p.errors)].filter((x) => !/favicon/.test(x)).slice(0, 5)) Wn('P0', `page error: ${e.slice(0, 200)}`);

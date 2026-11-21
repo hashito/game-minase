@@ -21,7 +21,7 @@
 :root[data-dot] .kit-csspost > div[style*="kitGrain"] { display: none !important; }
 
 /* the frames: windows, cards, talk, the HUD boxes */
-:root[data-dot] .win, :root[data-dot] .wm-win, :root[data-dot] .gf-talk, :root[data-dot] .kcard, :root[data-dot] .gf-mo-card-in,
+:root[data-dot] .win, :root[data-dot] .wm-win, :root[data-dot] .gf-talk:not(.wm-win .gf-talk), :root[data-dot] .kcard, :root[data-dot] .gf-mo-card-in,
 :root[data-dot] .tl-lookcard, :root[data-dot] .gf-title-box, :root[data-dot] #objective, :root[data-dot] .kc-fuda, :root[data-dot] .kc-seal,
 :root[data-dot] .mg-card, :root[data-dot] .chip {
   border: 2px solid var(--dot-line) !important;
@@ -84,40 +84,20 @@
 :root[data-dot] #prompt:not(:empty) { padding: 8px 16px !important; }
 :root[data-dot] .gf-title-box { padding: 24px 26px 18px !important; }
 :root[data-dot] .gf-mo-card-in, :root[data-dot] .kcard, :root[data-dot] .gf-talk { padding: 20px 24px !important; }
+:root[data-dot] .wm-win .gf-talk { padding: 0 !important; }   /* 1.4.1: inside a window the window's own frame and padding hold the talk (「ズレてます」) */
+/* 1.4.1 a very low screen (Safari sideways with the address bar, about 844x340): less chrome round the text, never under 14 px */
+@media (max-height: 420px) {
+  :root[data-dot] .wm-body:not(.wm-flush) { padding: 14px 20px !important; }
+  :root[data-dot] .wm-head { padding-top: 4px !important; padding-bottom: 4px !important; min-height: 0 !important; }
+}
 :root[data-dot] .btn, :root[data-dot] .gf-sb-btn, :root[data-dot] .wm-btn { padding-left: max(16px, 1em) !important; padding-right: max(16px, 1em) !important; }
 :root[data-dot] #t-right button, :root[data-dot] .t-btn { padding-left: 10px !important; padding-right: 10px !important; }
 :root[data-dot] .tm-tabs { padding-left: 18px !important; padding-right: 18px !important; }
 :root[data-dot] .wm-body.wm-flush { padding-left: 8px !important; padding-right: 8px !important; }
 
 
-/* ---- phones (js/dot/phone.js, user feedback 2026-11-21: sideways, no standing task boxes, full screen) ---- */
-.ph-sheet { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: rgba(3, 6, 6, 0.9); }
-.ph-card { width: min(440px, 100%); max-height: 100%; overflow-y: auto; background: var(--dot-bg, #070b0b); border: 3px solid var(--dot-line, #7fb3a4); box-shadow: 0 0 0 3px #000, 6px 6px 0 3px rgba(0, 0, 0, 0.6); padding: 24px 22px 20px; color: var(--dot-ink, #e4ecdf); text-align: center; }
-.ph-card h2 { margin: 6px 0 10px; font-size: 19px; color: var(--dot-line, #7fb3a4); letter-spacing: 0.06em; }
-.ph-card p { margin: 0 0 14px; font-size: 16px; line-height: 1.8; text-align: left; }
-.ph-btns { display: grid; gap: 10px; margin-top: 8px; }
-.ph-btns .btn { min-height: 52px; font-size: 17px; }
-.ph-turn { color: var(--dot-line, #7fb3a4); }
-.ph-turn-svg { animation: ph-tilt 2.4s ease-in-out infinite; transform-origin: 50% 60%; }
-@keyframes ph-tilt { 0%, 30% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
-@media (prefers-reduced-motion: reduce) { .ph-turn-svg { animation: none; } }
-.ph-tab { display: grid; gap: 14px; padding: 8px 4px; font-size: 16px; line-height: 1.8; }
-.ph-tab .btn { min-height: 52px; font-size: 17px; justify-self: start; }
-.ph-note { color: var(--dot-dim, #9fb5ad); }
-/* the 目的 chip replaces the standing goal and step boxes on a phone; a tap shows them under it */
-.ph-goal { display: none; }
-:root[data-phone] .ph-goal { display: flex; align-items: center; gap: 8px; position: fixed; z-index: 40; left: max(10px, env(safe-area-inset-left)); top: max(10px, env(safe-area-inset-top)); max-width: min(46vw, 320px); min-height: 44px; padding: 6px 14px 6px 8px !important; background: rgba(4, 10, 9, 0.88); border: 2px solid var(--dot-line, #7fb3a4); color: var(--dot-ink, #e4ecdf); font: inherit; font-size: 14px; text-align: left; }
-.ph-goal-k { flex: none; padding: 2px 8px; background: var(--dot-line, #7fb3a4); color: #06120e; font-size: 13px; letter-spacing: 0.1em; }
-.ph-goal-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ph-goal.ph-blink { animation: ph-blink 0.5s steps(2) 4; }
-@keyframes ph-blink { 50% { border-color: #f0d36a; box-shadow: 0 0 0 3px rgba(240, 211, 106, 0.4); } }
-:root[data-phone] #hud-left { display: none !important; }
-:root[data-phone][data-goal-open] #hud-left { display: flex !important; top: calc(max(10px, env(safe-area-inset-top)) + 52px) !important; z-index: 39; }
-:root[data-phone] .tl-lane .tl-item ~ .tl-item { display: none !important; }   /* one notification at a time; the next waits */
-:root[data-ph-upright] .ph-goal { max-width: calc(100vw - 96px); }
-:root[data-phone] .ph-goal[hidden], :root[data-reading] .ph-goal { display: none !important; }
-/* sideways on a phone: the thought band sits between the stick and the button cluster, never under 操作 (667 x 375: it covered it) */
-@media (orientation: landscape) {
-  :root[data-phone] body.touch #say { left: calc(max(12px, env(safe-area-inset-left)) + 118px) !important; right: calc(max(12px, env(safe-area-inset-right)) + 222px) !important; width: auto !important; max-width: none !important; transform: none !important; bottom: max(10px, env(safe-area-inset-bottom)) !important; font-size: 14px; line-height: 1.6; padding: 10px 14px !important; }
-  :root[data-phone] .ph-goal { max-width: 200px; }
-}
+/* ---- phones: the kit's phone play (js/kit/phone-play.js, standard 1.21.0: sideways notice, 目的 chip, one message box at a time,
+   全画面) since 1.4.1; the dot skin only frames its pieces ---- */
+:root[data-dot] #gf-goal-chip, :root[data-dot] .gf-rot-card { border: 2px solid var(--dot-line) !important; box-shadow: 0 0 0 2px #000 !important; border-radius: 0 !important; }
+/* the tap label: small, just under the crosshair, clear of the line and the hints */
+body.gf-phone #prompt:not(:empty) { font-size: 13px !important; padding: 3px 10px !important; line-height: 1.4; letter-spacing: 0.04em; }

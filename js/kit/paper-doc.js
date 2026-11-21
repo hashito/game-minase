@@ -1,4 +1,4 @@
-/* game-kit 8e20d97: js/paper-doc.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit afcbe2c2: js/paper-doc.js — edit in game-kit and run tools/kit-sync.js */
 // Documents as paper (standard 1.17.0, from 水無瀬病院 #1: 「紙類について、みる風車を真似た雰囲気に」「書類系は書類の形状で見せる」).
 // The feel of みる風車's documents (its js/paper.js: aged, stained, creased paper drawn on a canvas, ink that wavers, a photo pinned on):
 // a docs.json entry opens as a sheet of the kind it is, not as a plain window of paragraphs.
@@ -7,6 +7,7 @@
 //                                          | note (メモ・手紙・手書き) | typed (報告・お知らせ) | map (案内図)
 // renderPaperDoc(el, doc) fills a window body; paperURL(kind, seed) is the sheet alone (a data URL) for a game's own use.
 import { esc } from './ui.js';
+import { fitPanel, keepFitted } from './panel-fit.js';
 
 const KINDS = {
   notice: { base: [228, 220, 196], ink: '#1f1d1a', font: '"Yu Gothic","Hiragino Sans","Noto Sans JP",sans-serif', size: 17, jitter: 0.15, ruled: false, tape: true },
@@ -84,7 +85,8 @@ export function inkHTML(text, jitter, seed) {
 const CSS = `
 .pd-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;padding:8px 0 6px}
 .pd-sheet{position:relative;width:min(540px,100%);box-sizing:border-box;padding:30px 30px 26px;background-size:cover;box-shadow:0 6px 22px rgba(0,0,0,.55);transform:rotate(-.6deg)}
-.pd-sheet p{margin:0 0 .55em;line-height:1.95}
+.pd-sheet{font-size:calc(var(--pd-size,16px) * var(--pd-scale,1))}
+.pd-sheet p{margin:0 0 .55em;line-height:calc(1.95 - (1 - var(--pd-scale,1)) * 2)}
 .pd-sheet .pd-title{font-weight:700;margin:0 0 14px;letter-spacing:.06em}
 .pd-notice .pd-title{text-align:center;font-size:1.35em;border-bottom:2px solid currentColor;padding-bottom:8px}
 .pd-notice{border:6px double rgba(30,30,30,.35)}
@@ -97,7 +99,7 @@ const CSS = `
 .pd-ledger .pd-body p{border-bottom:1px solid rgba(120,40,30,.25);padding-bottom:2px}
 .pd-note{transform:rotate(1.2deg)}
 .pd-photo{position:relative;margin:2px auto 14px;width:fit-content;max-width:86%;transform:rotate(-2deg);box-shadow:2px 3px 10px rgba(0,0,0,.45);background:#eee;padding:6px 6px 16px}
-.pd-photo img{display:block;max-width:100%;max-height:34vh;height:auto}
+.pd-photo img{display:block;max-width:100%;max-height:var(--pd-photo-h,34vh);height:auto}
 .pd-photo::before,.pd-photo::after{content:"";position:absolute;top:-9px;width:62px;height:20px;background:rgba(236,230,200,.72);box-shadow:0 1px 2px rgba(0,0,0,.2)}
 .pd-photo::before{left:-12px;transform:rotate(-24deg)}.pd-photo::after{right:-12px;transform:rotate(22deg)}
 .pd-tape::before{content:"";position:absolute;top:-10px;left:50%;width:90px;height:22px;margin-left:-45px;background:rgba(236,230,200,.7);transform:rotate(-3deg);box-shadow:0 1px 2px rgba(0,0,0,.2)}
@@ -105,6 +107,40 @@ const CSS = `
 .pd-stamp{position:absolute;right:18px;top:16px;transform:rotate(-12deg);border:3px double rgba(150,20,20,.7);color:#7a0c0c;padding:4px 12px;font-weight:700;letter-spacing:.2em;opacity:.8}
 @media (max-width:500px){.pd-sheet{padding:22px 18px 18px}}
 html[data-gf-calm="1"] .pd-sheet,html[data-gf-calm="1"] .pd-photo{transform:none}
+/* 1.21.1 a low landscape screen (a phone held sideways, 水無瀬病院 ドット版): the picture LEFT of the text (about a third), the text on the right;
+   renderDocWindow shrinks the picture (--pd-photo-w) before the text (--pd-scale) until the whole text shows without scrolling */
+@media (orientation:landscape) and (max-height:600px){
+.pd-wrap{padding:2px 0}
+.pd-sheet:has(>.pd-photo){width:100%;display:grid;grid-template-columns:var(--pd-photo-w,34%) minmax(0,1fr);column-gap:20px;align-items:start;padding:16px 22px 14px}
+.pd-sheet:has(>.pd-photo)>.pd-photo{grid-column:1;grid-row:1 / span 8;margin:6px 0 0;max-width:100%;width:auto;justify-self:center}
+.pd-sheet:has(>.pd-photo)>.pd-photo img{width:100%;max-height:none}
+.pd-sheet:has(>.pd-photo)>:not(.pd-photo):not(.pd-stamp){grid-column:2}
+.pd-sheet:has(>.pd-photo) .pd-body{columns:auto}
+.pd-sheet .pd-title{margin-bottom:8px}
+.pd-chart .pd-title{margin:0 0 10px;min-height:0}
+.pd-news .pd-title,.pd-log .pd-title,.pd-ledger .pd-title{margin-bottom:10px}
+}
+/* the document window (renderDocWindow): the text scrolls in its own box (only as the fallback), 読んだ stays under it and never covers it */
+.wm-body.gf-doc{overflow:hidden}
+.gf-doc-main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.wm-body.gf-doc>.gf-doc-done{position:static!important;box-shadow:none!important;background:none!important;flex:none;margin:10px 0 0}
+.gf-doc-plain .gf-doc-img{display:block;max-width:100%;max-height:var(--pd-photo-h,34vh);margin:0 auto 12px}
+.gf-doc-plain{font-size:calc(1em * var(--pd-scale,1))}
+@media (orientation:landscape) and (max-height:600px){
+.gf-doc-plain:has(>.gf-doc-img){display:grid;grid-template-columns:var(--pd-photo-w,34%) minmax(0,1fr);column-gap:18px;align-items:start}
+.gf-doc-plain>.gf-doc-img{width:100%;max-height:none;margin:4px 0 0}
+.wm-body.gf-doc>.gf-doc-done{margin-top:6px}
+.wm-body.gf-doc>.gf-doc-done .gf-doc-read{min-height:44px}
+}
+@media (orientation:landscape) and (max-height:430px){
+.wm-body.gf-doc{flex-direction:row;align-items:stretch;gap:14px}
+.wm-body.gf-doc>.gf-doc-done{margin:0;display:flex;align-items:flex-end}
+.wm-body.gf-doc>.gf-doc-done .gf-doc-read{min-width:0;width:auto;writing-mode:horizontal-tb;padding:0 14px}
+.pd-sheet:has(>.pd-photo){padding:12px 18px 10px}
+.pd-sheet p{margin:0 0 .3em}
+.pd-notice .pd-title{font-size:1.2em;padding-bottom:4px}
+.pd-wrap{padding:0}
+}
 `;
 function injectCss() { if (typeof document === 'undefined' || document.getElementById('gf-paper-css')) return; const s = document.createElement('style'); s.id = 'gf-paper-css'; s.textContent = CSS; document.head.appendChild(s); }
 
@@ -117,9 +153,36 @@ export function paperDocHtml(d, o = {}) {
   const head = lines[0] && lines[0].replace(/\s/g, '') === String(d.title || '').replace(/[（(].*$/, '').replace(/\s/g, '') ? lines.shift() : null;
   const title = head || (kind === 'chart' || kind === 'news' || kind === 'log' || kind === 'ledger' ? d.title : null);
   const still = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const style = `background-image:url(${paperURL(kind, seed)});color:${st.ink};font-family:${st.font.replace(/"/g, "'")};font-size:${st.size}px;${still ? '' : `clip-path:${tornClip(seed)};`}`;
+  const style = `background-image:url(${paperURL(kind, seed)});color:${st.ink};font-family:${st.font.replace(/"/g, "'")};--pd-size:${st.size}px;${still ? '' : `clip-path:${tornClip(seed)};`}`;
   const sheet = `<div class="pd-sheet pd-${kind}${st.tape ? ' pd-tape' : ''}" style="${style}">${d.photo ? `<figure class="pd-photo"><img src="${esc(d.photo)}" alt=""></figure>` : ''}${title ? `<p class="pd-title">${inkHTML(title, st.jitter * 0.5, seed)}</p>` : ''}<div class="pd-body">${lines.map((p, i) => `<p>${inkHTML(p, st.jitter, seed + i)}</p>`).join('')}</div>${d.stamp ? `<span class="pd-stamp">${esc(d.stamp)}</span>` : ''}</div>`;
   return `<div class="pd-wrap">${sheet}${d.feeling && o.feeling !== false ? `<p class="iv-feel pd-feel">${esc(d.feeling)}</p>` : ''}</div>`;
+}
+/** 1.21.1: the document window's body: the document (paper or plain) in a scroller .gf-doc-main, 読んだ under it, fitted so the whole text
+ * shows without scrolling (picture first, then the text: js/panel-fit.js). o = { paper, onDone, label } */
+export function renderDocWindow(el, d, o = {}) {
+  injectCss();
+  el.classList.add('gf-doc');
+  el.innerHTML = '';
+  const main = document.createElement('div'); main.className = 'gf-doc-main'; el.appendChild(main);
+  if (o.paper) renderPaperDoc(main, d, { feeling: false });
+  else main.innerHTML = `<div class="gf-doc-plain">${d.photo ? `<img class="gf-doc-img" src="${esc(d.photo)}" alt="">` : ''}<div class="gf-doc-text">${String(d.text || '').split(String.fromCharCode(10)).map((p) => `<p>${esc(p)}</p>`).join('')}</div></div>`;
+  el.insertAdjacentHTML('beforeend', `<p class="gf-doc-done"><button type="button" class="btn primary gf-doc-read">${esc(o.label || '読んだ')}</button></p>`);
+  el.querySelector('.gf-doc-read').addEventListener('click', () => { if (o.onDone) o.onDone(); });
+  const fit = () => fitDoc(main);
+  el._gfFitStop = keepFitted(main, fit);
+  return { kind: o.paper ? paperKind(d) : 'plain', fit };
+}
+/** shrink the picture, then the text, until the document fits its box (pure layout; returns fitPanel's result) */
+export function fitDoc(main) {
+  const sheet = main.querySelector('.pd-sheet, .gf-doc-plain');
+  if (!sheet) return null;
+  const pic = sheet.querySelector(':scope > .pd-photo, :scope > .gf-doc-img');
+  const split = !!pic && typeof getComputedStyle !== 'undefined' && getComputedStyle(sheet).display === 'grid';
+  const h0 = Math.max(60, Math.round(main.clientHeight * 0.55));
+  const steps = [];
+  if (pic) steps.push(split ? { el: sheet, prop: '--pd-photo-w', from: 34, to: 16, step: -2, unit: '%' } : { el: sheet, prop: '--pd-photo-h', from: h0, to: 56, step: -12, unit: 'px' });
+  steps.push({ el: sheet, prop: '--pd-scale', from: 1, to: 0.8, step: -0.04, unit: '' });
+  return fitPanel(main, steps);
 }
 /** fill a window body with the document drawn as paper */
 export function renderPaperDoc(el, d, o = {}) { el.innerHTML = paperDocHtml(d, o); return { kind: paperKind(d) }; }
