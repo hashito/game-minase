@@ -35,6 +35,13 @@
       "img": "assets/photos/op-chain.webp",
       "id": "opening-5",
       "voice": "assets/voice/opening-5.mp3"
+    },
+    {
+      "who": "私",
+      "text": "出るには、地下の七番の瓶を持って来るしかない。まずは、ひなたと相談しよう。",
+      "img": "assets/photos/op-chain.webp",
+      "id": "opening-6",
+      "voice": "assets/voice/opening-6.mp3"
     }
   ],
   "hina1": [
@@ -283,6 +290,12 @@
       "text": "止まった。乾いた床の手前で、あれが身をよじっている。……でも、床の溝から、水がにじみ戻ってくる。",
       "id": "post_ok-1",
       "voice": "assets/voice/post_ok-1.mp3"
+    },
+    {
+      "who": "私",
+      "text": "あれは、水のある所しか動けない。止水弁を閉めて床を乾かせば、そこから先へは来られない。",
+      "id": "post_ok-2",
+      "voice": "assets/voice/post_ok-2.mp3"
     }
   ],
   "post_done": [

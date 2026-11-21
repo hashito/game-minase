@@ -35,7 +35,8 @@ export function installAnswers(ext, G) {
     ctx.canStart = (task) => {
       const r = cs0(task);
       if (r === true || !task || typeof r !== 'string' || !GENERIC.test(r)) return r;
-      if (/^この作業は、もう終わっています/.test(r)) return W.done_here;
+      // 1.4.2 (dot rollout #7: no small completion comments): a place already done says what comes next, not that it is done
+      if (/^この作業は、もう終わっています/.test(r)) { const nx = ctx.nextTask && ctx.nextTask(); return nx && nx.title ? `次は、${nx.title}。` : W.done_here; }
       return why(task) || W.not_yet;
     };
     // a station whose task is not open yet still offers [E] (the answer says what is missing)

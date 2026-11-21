@@ -376,6 +376,8 @@ const talk = {
     { who: I, text: '玄関ホールで撮りはじめたとき、地元の先輩の黒木さんたちが入って来た。携帯を二人とも取り上げられた。', img: P('op-kuroki') },
     { who: I, text: '黒木さんたちは外へ出て、正面の扉の取っ手に鎖を巻いた。裏口も窓も、板で打ちつけてある。', img: P('op-chain') },
     { who: K, where: '鎖の扉の外', text: '地下の標本室に、七番の瓶がある。それを持って来い。持って来るまで、鎖は外さん。', img: P('op-chain') },
+    // 1.4.2 (dot rollout #3, story clarity): what the opening means and what to do first
+    { who: I, text: '出るには、地下の七番の瓶を持って来るしかない。まずは、ひなたと相談しよう。', img: P('op-chain') },
   ],
   hina1: [
     { who: HI, text: '湊、ごめん。私が撮りに行こうって言ったから。' },
@@ -432,6 +434,7 @@ const talk = {
   ],
   post_ok: [
     { who: I, text: '止まった。乾いた床の手前で、あれが身をよじっている。……でも、床の溝から、水がにじみ戻ってくる。' },
+    { who: I, text: 'あれは、水のある所しか動けない。止水弁を閉めて床を乾かせば、そこから先へは来られない。' },
   ],
   post_done: [
     { who: I, text: '水が戻った。……あれは、すっと水に沈んで消えた。' },
@@ -618,4 +621,5 @@ wr('data/endings.json', endings);
 for (const [k, seq] of Object.entries(talk)) seq.forEach((L, i) => { L.id = `${k}-${i + 1}`; if (L.where === '無線') L.vfx = 'phone'; if (fs.existsSync(path.join(ROOT, 'assets/voice', `${L.id}.mp3`))) L.voice = `assets/voice/${L.id}.mp3`; });
 wr('data/talk.json', talk);
 wr('data/monsters.json', monsters);
-wr('data/release-notes.json', releaseNotes);
+// data/release-notes.json is kept by hand since 1.4.0 (the dot version's releases); the table above stays as the record up to 1.3.0
+void releaseNotes;
