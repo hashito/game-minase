@@ -59,11 +59,19 @@ export default async function dotLayer(ext, { manifest, data }) {
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   mat.name = 'dot-stack';
   // the people: their own colours plus a share as emission, so a figure reads as a person in a dark room (the lights still shape it)
+  const FIG_KNEE = 0.32, FIG_CAP = 0.62;   // 1.4.4: linear light on a figure rolls off softly from the knee and never passes the cap
   const figMat = (self, name) => {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.name = name;
-    m.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * ${self.toFixed(3)};`); };
-    m.customProgramCacheKey = () => `dot-fig-${self}`;
+    // 1.4.4 「ひなたの顔に白い横の帯」: her near-white collar under the face (albedo 0.96) took the self light and the flashlight and clipped to
+    // a glowing white row (with the flashlight off it was still there). Pale colours take less self light, and the light on a figure rolls
+    // off softly under FIG_CAP instead of clipping, so a face keeps its shape at 0.8 m in the flashlight (tools/dot/face-check-steps.mjs)
+    m.onBeforeCompile = (sh) => {
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * ${self.toFixed(3)} * (1.0 - 0.7 * dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)));`)
+        .replace('#include <opaque_fragment>', `{ float fm = max(max(outgoingLight.r, outgoingLight.g), outgoingLight.b); const float FK = ${FIG_KNEE.toFixed(3)}, FC = ${FIG_CAP.toFixed(3)};\n  if (fm > FK) outgoingLight *= (FK + (FC - FK) * (1.0 - exp(-(fm - FK) / (FC - FK)))) / fm; }\n#include <opaque_fragment>`);
+    };
+    m.customProgramCacheKey = () => `dot-fig-${self}-${FIG_KNEE}-${FIG_CAP}`;
     return m;
   };
   const geoCache = new Map();
