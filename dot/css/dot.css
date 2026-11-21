@@ -89,6 +89,8 @@
 @media (max-height: 420px) {
   :root[data-dot] .wm-body:not(.wm-flush) { padding: 14px 20px !important; }
   :root[data-dot] .wm-head { padding-top: 4px !important; padding-bottom: 4px !important; min-height: 0 !important; }
+  /* 1.4.3: the control windows (「迷ったら、地図」) ran 13 px over at 844x340: a little less air between the lines */
+  :root[data-dot] .wm-body:not(.wm-flush) p { line-height: 1.5; margin-top: 0; margin-bottom: 4px; }
 }
 :root[data-dot] .btn, :root[data-dot] .gf-sb-btn { padding-left: max(16px, 1em) !important; padding-right: max(16px, 1em) !important; }
 /* 1.4.2 (鏡屋 rollout #5, kit P38): the header ⓘ / × keep their icon in the middle - no side padding on these square buttons */
