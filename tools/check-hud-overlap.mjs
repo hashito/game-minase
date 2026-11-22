@@ -65,7 +65,8 @@ const COLLECT = `(() => {
   const snap = h.snapshot();
   const cs = getComputedStyle(document.documentElement); const px = (v) => parseFloat(cs.getPropertyValue(v)) || 0;
   return { parts: snap.parts, lane: snap.lane, free: snap.free, vw: document.documentElement.clientWidth, vh: document.documentElement.clientHeight,
-           safe: { t: px('--gf-safe-t'), r: px('--gf-safe-r'), b: px('--gf-safe-b'), l: px('--gf-safe-l') }, touch: document.body.classList.contains('touch') };
+           safe: { t: px('--gf-safe-t'), r: px('--gf-safe-r'), b: px('--gf-safe-b'), l: px('--gf-safe-l') }, touch: document.body.classList.contains('touch'),
+           oneMsg: document.body.classList.contains('gf-phone') && (document.body.classList.contains('gf-saying') || document.body.classList.contains('gf-hinting')) };
 })()`;
 
 function judge(c, require, label) {
@@ -84,7 +85,8 @@ function judge(c, require, label) {
   }
   const shown = c.lane.filter((i) => i.shown);
   if (shown.length > 3) bad.push(`the lane shows ${shown.length} items (max 3)`);
-  for (const r of require) if (!P.some((p) => p.id === r || p.id.endsWith(`:${r}`))) bad.push(`required part not visible: ${r}`);
+  // 1.30.1: a phone shows one message at a time (js/phone-play.js gf-saying / gf-hinting hide the [E] prompt): the prompt is not required then
+  for (const r of require) if (!(c.oneMsg && r === 'prompt') && !P.some((p) => p.id === r || p.id.endsWith(`:${r}`))) bad.push(`required part not visible: ${r}`);
   return bad.map((b) => `${label}: ${b}`);
 }
 
@@ -109,7 +111,8 @@ async function runTarget(target) {
         if (READY) await page.waitFor(READY, 60000);
         await page.waitFor("!document.body.classList.contains('gf-warming')", 30000).catch(() => {});
         await sleep(600);
-        if (pass.safe) await page.eval(`(() => { const s = document.documentElement.style; s.setProperty('--gf-safe-t', '${pass.safe[0]}px'); s.setProperty('--gf-safe-r', '${pass.safe[1]}px'); s.setProperty('--gf-safe-b', '${pass.safe[2]}px'); s.setProperty('--gf-safe-l', '${pass.safe[3]}px'); window.__gfHud.layout(); })()`);
+        if (pass.safe) await page.eval(`(() => { const s = document.documentElement.style; s.setProperty('--gf-safe-t', '${pass.safe[0]}px'); s.setProperty('--gf-safe-r', '${pass.safe[1]}px'); s.setProperty('--gf-safe-b', '${pass.safe[2]}px'); s.setProperty('--gf-safe-l', '${pass.safe[3]}px'); window.__gfHud.layout(); dispatchEvent(new Event('resize')); })()`);   // 1.30.1: a resize too, so js/phone-play.js re-measures (the say band width, the button column)
+        if (pass.safe) await sleep(400);
         // 1. everything at once
         await page.eval("window.__gfHud.stress()");
         await sleep(900);
@@ -123,7 +126,7 @@ async function runTarget(target) {
           await page.eval("window.__gfHud.unstress()");
           await page.eval(`(() => { const h = window.__gfHud, L = h.lane, T = '${"長い通知の文章を最後まで読めるように折り返す。".repeat(4)}ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789'; h.stress(); L.clear();
             if ('${k}' === 'carry-hint') L.sticky('carry-hint', true, T); else L.push({ kind: '${k}', title: '見出し', html: T, ttl: 600000, sticky: ${k === "prompt"} }); })()`);
-          await sleep(700);
+          await sleep(1000);   // 1.30.1: the stacks move with a short transition (a race showed menu x work-chip at 812x375)
           const one = await page.eval(COLLECT);
           const b = judge(one, [], `${label} [${k}]`);
           per[k] = { shown: one.lane.filter((i) => i.shown).length, problems: b.length };

@@ -40,6 +40,10 @@
 //   1.21.1 (水無瀬病院 ドット版, the user's iPhone play 2026-11-21; tools/hud-checks.mjs), at 390 x 844, 375 x 667 and 844 x 390:
 //   P35 a close button that a finger cannot tap: something else is on top at its centre, or a real tap leaves its box there (an error)
 //       (「上の通知でしゃがむの案内を閉じるで閉じられないです」)
+//   P45 (1.27.0, 鏡屋 「ライトの土がズレている」) a lamp whose light (pooled or its own) is more than 5 cm from its bulb (a warning)
+//   P46 (1.27.0, 鏡屋 「画像を全面に出して、ジョイスティックを重ねる」) photo-focus cfg.full: the picture fills the screen and the controls over it are
+//       on the screen and do not overlap (an error), at every phone size of the pass (portrait too)
+//   P44 (1.26.0) a mini game that scrolls or has a control off the screen on a landscape phone (844x390, 667x375, 844x340) (an error)
 //   P36 a library mini game whose controls move when a caption / message gets longer (an error) (「文字が改行されると回す位置が変わってハンチングする」)
 //   1.21.3 (鏡屋, the user's play 2026-11-21; tools/menu-checks.mjs):
 //   P37 every entry of the menu opened (所持品, 気になること・写真, 覚え書き ...): a picture that does not load, a no-picture box taller than
@@ -54,6 +58,11 @@
 //   1.22.0 (the 鏡屋 dot play test rolled out): P42 a mark (▼, arrow, the next-place pointer, a glow) drawn through a wall, every room
 //   (tools/mark-sight.mjs; js/mark-sight.js markSight().clear() fixes it); P43 a pickup cut into by another thing - a wall clock over an
 //   item (tools/pick-overlap.mjs)
+//   P52 (1.32.0, 夜勤明けの街 「ゾンビのゲーム重すぎて開かない」): the JS heap behind the title - over 400 MB a warning, over 600 MB an error
+//   1.28.0 (夜勤明けの街 play test 2026-11-22; tools/rest-check.mjs): P47 a placed thing floating - nothing under it within 4 cm, not a thin wall
+//   thing against a wall, not hanging (「空中にものが浮いています（ラジオや紙）」); P48 a thing of a known kind out of body size - desks 0.66-0.8 m,
+//   counters 0.82-1.05, doors 1.9-2.25, eyes 1.5-1.72, cars 3.6-5.4 long ... (「自分の体のサイズに合わせてサイズを考え直してください」).
+//   Warnings until the fleet is cleared; game.json "checks": { "rest": "error" } makes them errors (夜勤明けの街 does).
 //   P21+ a wall paper that flickers on a still picture (tools/frame-flicker.mjs, the dot layers too: 「張り紙よりも大きな枠が見えて、ちらついている」)
 //   1.21.0: P33 (dot games) a visible material in a room that is not dot: a photo texture, a plain material, a smooth texture - walls,
 //     floors and ceilings included (tools/dot-scene.mjs; js/dot-world.js dotifyScene draws them as dot tiles in the palette) (error)
@@ -63,7 +72,8 @@
 //     content spilling out of a frame (error); an inner line drawn as a negative outline, a squashed picture (warning) (tools/frame-nest.mjs)
 //   1.21.0: P31 phone layout at 844x390 / 667x375 (landscape) and 390x844 (portrait): the HUD covers more than PHONE_HUD_MAX of the screen,
 //       two panels overlap (errors), the portrait notice is missing (tools/phone-layout.mjs: 「メッセージや通知で領域を使いすぎている」)
-// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+//   1.31.0: P49 a document read keeps its emphasis (glow, marks) or cannot be read again (「読んだら強調表示をやめるようにしてください」)
+// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P44, P46, P49, P47 / P48 with checks.rest = "error", P52 over 600 MB) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -77,10 +87,11 @@ import { wallDoorSource } from './wall-door.mjs';
 import { talkRingSource, TALK_RING_MIN } from './talk-ring.mjs';
 import { flickerSource, FLICKER_MAX } from './frame-flicker.mjs';
 import { phoneLayoutSource, PHONE_HUD_MAX } from './phone-layout.mjs';
-import { closeTapSource, mgStableSource, picFitSource } from './hud-checks.mjs';
+import { closeTapSource, mgFitSource, mgStableSource, picFitSource } from './hud-checks.mjs';
 import { menuPicturesSource, headButtonsSource, pictureRoomSource } from './menu-checks.mjs';
 import { markSightSource } from './mark-sight.mjs';
 import { pickOverlapSource } from './pick-overlap.mjs';
+import { restSource, sizeSource } from './rest-check.mjs';
 // P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
 const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
 
@@ -142,6 +153,11 @@ try {
   const sc = arg('--scene', null);
   await p.goto(`${base}?test=1${sc ? `&scene=${sc}` : ''}`);
   await p.waitFor("window.__game && document.getElementById('start-btn') && !document.getElementById('start-btn').disabled || (window.__game && window.__game.state && window.__game.state.started)", 120000);
+  // P52 (1.32.0, 夜勤明けの街 「重すぎて開かない」): the title is light - the JS heap behind the title stays under 400 MB (a warning; 600 MB an
+  // error). 1.2.0 held 1.5 GB there (every figure's 90 MB picture, every zombie pattern) and did not open on a phone: load by block (js/block-loader.js)
+  { const hp = await G('(performance.memory || {}).usedJSHeapSize || 0'); const mb = Math.round((hp || 0) / 1048576);
+    if (mb > 600) E('P52', `the JS heap behind the title is ${mb} MB (over 600 MB: a phone may not open it; load the heavy parts by block, js/block-loader.js)`);
+    else if (mb > 400) Wn('P52', `the JS heap behind the title is ${mb} MB (over 400 MB; load the heavy parts by block, js/block-loader.js)`); }
   if (!(await G('g.state.started'))) await G(`(document.getElementById('start-btn').click(), 1)`);
   for (let i = 0; i < 40 && !(await G('g.state.started')); i++) { await G(`([...document.querySelectorAll('button')].filter((b) => b.offsetParent && /始める|はじめる|タップ|クリック|OK|わかった/.test(b.textContent)).slice(0, 1).forEach((b) => b.click()), 1)`); await sleep(300); }
   await sleep(2000);
@@ -256,6 +272,16 @@ try {
       const md = it.userData.model || it, b = new T.Box3().setFromObject(md), s = b.getSize(new T.Vector3());
       if (isFinite(s.y) && s.y < 0.05 && Math.max(s.x, s.z) > 0.1) out.p14.push(u.id + ' at ' + it.position.x.toFixed(1) + ',' + it.position.y.toFixed(1) + ',' + it.position.z.toFixed(1));
     }
+    // P45 (1.27.0, 鏡屋 「ライトの土がズレている」): every lamp's light sits at its bulb (the pooled light's entry in world.lamps, or the room's own
+    // lamp:<room> PointLight); more than 5 cm apart sideways and the lit spot on the floor and the walls is off the pendant
+    out.p45 = [];
+    { const bulbs = []; W.group.traverse((o) => { if (/^lampbulb:/.test(o.name || '')) bulbs.push(o); });
+      for (const b of bulbs) {
+        const room = b.name.slice(9), p = b.getWorldPosition(new T.Vector3()), e = (W.lamps || []).find((x) => x.room === room);
+        let l = e ? { x: e.x, z: e.z } : null;
+        if (!l) { const o = W.group.getObjectByName('lamp:' + room); if (o) { const q = o.getWorldPosition(new T.Vector3()); l = { x: q.x, z: q.z }; } }
+        if (l) { const d = Math.hypot(l.x - p.x, l.z - p.z); if (d > 0.05) out.p45.push(room + ': the light is ' + d.toFixed(2) + ' m from its bulb'); }
+      } }
     // P21 (1.20.0, 水無瀬病院 2nd #1 「チラチラ正方形の図が見えます」): two opaque faces in one plane facing the same way, overlapping - z-fighting.
     // Box faces and planes that are axis-aligned; a notice board sunk into the wall had its front face exactly on the plaster.
     out.p21 = [];
@@ -295,6 +321,7 @@ try {
   for (const x of audit.p10.slice(0, 20)) Wn('P10', `a paper / charm with something on its face (inside a wall / a frame, or under another paper): ${x}`);
   for (const x of audit.p11.slice(0, 20)) Wn('P11', `a plain untextured box (a placeholder look; userData.plainOk if meant): ${x}`);
   for (const x of audit.p12) Wn('P12', `a doorway half blocked: ${x}`);
+  for (const x of audit.p45 || []) Wn('P45', `a lamp's light is not at its lamp (the lit spot is off the pendant): ${x}`);
   for (const x of audit.p14) Wn('P14', `a paper on the wall lies flat (sticks out of the plaster): ${x}`);
   for (const x of audit.p13.slice(0, 20)) Wn('P13', `a thing floating in the air: ${x}`);
   for (const x of (audit.p21 || []).slice(0, 20)) Wn('P21', `z-fighting (two faces in one plane flicker): ${x}`);
@@ -399,8 +426,9 @@ try {
   // P9: 操作方法 in the menu
   const ctl = await G(`(async () => { if (!g.pm) return 'no menu'; g.pm.open(); await new Promise((r) => setTimeout(r, 400)); const ok = [...document.querySelectorAll('.wm-layer button, .pm button')].some((b) => /操作方法/.test(b.textContent)); g.pm.close && g.pm.close(); return ok; })()`);
   if (ctl !== true) E('P9', `the menu has no 操作方法 (${ctl})`);
-  // P7: each death card
+  // P7: each death card (1.32.2, 継ぎ目: a room note window left open by the earlier passes was counted as "held after the retry" - close it first)
   for (const reason of Object.keys(game.deaths || {})) {
+    await G(`(g.wm && g.wm.isOpen && g.wm.close(), g.lane && g.lane.clear && g.lane.clear('card'), 1)`); await sleep(300);
     await G(`(g.die(${JSON.stringify(reason)}), 1)`);
     let seen = null;
     for (let i = 0; i < 40 && !seen; i++) { await sleep(150); seen = await G(`(() => { const c = document.querySelector('.gf-mo-card'); if (!c) return null; const r = c.getBoundingClientRect(), top = document.elementFromPoint(innerWidth / 2, innerHeight / 2); const b = c.querySelector('button'); return { covers: r.width >= innerWidth * 0.95 && r.height >= innerHeight * 0.95, onTop: !!(top && c.contains(top)), button: !!(b && b.offsetParent) }; })()`); }
@@ -408,6 +436,8 @@ try {
     if (!seen.covers || !seen.onTop || !seen.button) E('P7', `death "${reason}": the card is not on screen (covers ${seen.covers}, on top ${seen.onTop}, button ${seen.button}) - play is held behind an invisible card`);
     await sleep(500); await G(`((document.querySelector('.gf-mo-card button') || { click() {} }).click(), 1)`); await sleep(1200);
     if (await G('g.blocked ? g.blocked() : false')) { await G(`([...document.querySelectorAll('.wm-layer .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`); await sleep(800); }
+    // 1.34.1 (継ぎ目: the respawn spot starts a scene window 「南の扉 … 2 / 4 次へ」): a window that opened after the retry is paged through as a player does
+    for (let i = 0; i < 10 && await G('g.blocked ? g.blocked() : false') && await G('!!(g.wm && g.wm.isOpen)'); i++) { await G(`(([...document.querySelectorAll('.wm-win button, .wm-layer button')].filter((b) => b.offsetParent && /次へ|閉じる|わかった|OK|続ける|はじめる|歩き出す/.test(b.textContent)).pop()) || { click() {} }).click(), 1)`); await sleep(500); }
     if (await G('g.blocked ? g.blocked() : false')) E('P7', `death "${reason}": still held after the retry button`);
   }
   // P23 / P24 (1.20.2, 札の家 ドット版): the UI on a phone. P23 text too close to its frame (warning); P24 every card and document opened at
@@ -415,11 +445,12 @@ try {
   for (const [w, h] of [[390, 844], [375, 667], [844, 390]]) {
     const q = await launch({ width: w, height: h, mobile: true, dpr: 2 });
     const Q = async (expr) => { const s = await q.eval(`(async () => { const g = window.__game; return JSON.stringify(await (${expr})); })()`); return s === undefined ? undefined : JSON.parse(s); };
-    const closeAll = () => Q(`(g.lane && g.lane.clear && g.lane.clear('card'), g.wm && g.wm.isOpen && g.wm.close(), [...document.querySelectorAll('.wm-layer .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`);
+    const closeAll = () => Q(`(g.lane && g.lane.clear && g.lane.clear('card'), g.wm && g.wm.isOpen && g.wm.close(), [...document.querySelectorAll('.wm-layer .btn.primary, [role=dialog] .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`);   // 1.30.3: a game's own dialog too (署名のあとで 説明)
     try {
       await q.goto(`${base}?test=1`);
       await q.waitFor("window.__game && document.getElementById('start-btn') && !document.getElementById('start-btn').disabled || (window.__game && window.__game.state && window.__game.state.started)", 120000);
       if (!(await Q('g.state.started'))) await Q(`(document.getElementById('start-btn').click(), 1)`);
+      if (h > w) { await sleep(800); await Q(`((document.querySelector('#gf-rotate .gf-rot-ok') || { click() {} }).click(), 1)`); }   // 1.30.3: portrait: 縦のまま続ける first, as a player does (P35 found the 横向き notice over 閉じる)
       await sleep(2500);
       for (let i = 0; i < 30 && (await Q('g.blocked ? g.blocked() : false')); i++) { await closeAll(); await sleep(400); }
       await sleep(600);
@@ -472,8 +503,40 @@ try {
     } catch (e) { Wn('P24', `${w}x${h}: the phone pass could not run: ${e.message}`); }
     finally { await q.close(); }
   }
+  // P49 (1.31.0, 「読んだら強調表示をやめるようにしてください」): a document read stops calling - no glow, no mark, a quiet crosshair - and can be
+  // read again. Each placed document is read (ctx.useInteract), closed, then: still selectable, ctx.wantsEmphasis false (unless it is the STEP
+  // card's target), its emissive at the faint rest, its emphasis children hidden; a second read opens it again.
+  if (await G('typeof g.wantsEmphasis === "function" && typeof g.useInteract === "function"')) {
+    const R = await G(`(async () => {
+      const out = [], sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      const close = async () => { for (let i = 0; i < 12 && (g.blocked ? g.blocked() : false); i++) { g.lane && g.lane.clear && g.lane.clear('card'); g.wm && g.wm.isOpen && g.wm.close(); [...document.querySelectorAll('.wm-layer .btn.primary, [role=dialog] .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()); await sleep(150); } };
+      const docs = g.world.interactables.filter((m) => m.userData && m.userData.interact && m.userData.interact.kind === 'doc').slice(0, 8);
+      for (const m of docs) {
+        const ia = m.userData.interact, key = 'doc:' + ia.id;
+        g.useInteract(ia); await sleep(300); await close(); g.refreshEmphasis(); await sleep(50);
+        const bad = [];
+        if (!g.world.interactables.includes(m)) { out.push([ia.id, 'gone after reading (it cannot be read again)']); continue; }
+        if (g.wantsEmphasis(key) && g.target !== m) { const why = g.isSeen('doc', ia.id) ? 'still calling (the STEP target or renewed?)' : 'not recorded as read (state.docsRead)'; if (!/STEP/.test(why)) bad.push(why); }
+        let hot = 0; m.traverse((o) => { if (o !== m && o.userData && o.userData.emphasis && o.visible && !g.wantsEmphasis(key)) bad.push('a mark still shows: ' + (o.name || o.type)); for (const mt of [].concat(o.material || [])) if (mt && mt.emissive && mt.userData && mt.userData.emis0 > 0.05 && !g.wantsEmphasis(key) && mt.emissiveIntensity > mt.userData.emis0 * 0.5) hot++; });
+        if (hot) bad.push(hot + ' material(s) still glow');
+        const opens = (g.readLog || []).filter((x) => x[0] === 'open' && x[1] === 'doc').length;
+        g.useInteract(ia); await sleep(300);
+        const again = (g.readLog || []).filter((x) => x[0] === 'open' && x[1] === 'doc').length > opens || (g.wm && g.wm.isOpen);
+        await close();
+        if (!again) bad.push('a second read did not open it');
+        for (const b of bad) out.push([ia.id, b]);
+      }
+      return out;
+    })()`);
+    for (const [id, why] of (Array.isArray(R) ? R : []).slice(0, 12)) E('P49', `doc "${id}": ${why}`);
+  } else Wn('P49', 'ctx.wantsEmphasis is missing (kit < 1.31.0): read documents keep their emphasis');
   // P43 (1.22.0): pickups clear of other things
   { const O = await G(pickOverlapSource()); for (const x of (Array.isArray(O) ? O : []).slice(0, 12)) E('P43', `pickup "${x[0]}": "${x[1]}" cuts into it by ${JSON.stringify(x[2])} m at ${JSON.stringify(x[3])}`); }
+  // P47 / P48 (1.28.0, 夜勤明けの街): every placed thing rests on something; known kinds have a body-sized size (tools/rest-check.mjs).
+  // Warnings in 1.28.0 (errors with --strict) until the fleet is cleared; game.json "checks": { "rest": "error" } makes them errors.
+  { let ck = {}; try { ck = JSON.parse(fs.readFileSync(path.join(dir, 'game.json'), 'utf8')).checks || {}; } catch {} const R = ck.rest === 'error' ? E : Wn;
+    const F = await G(restSource()); if (F && F.error) Wn('P47', F.error); else for (const x of (Array.isArray(F) ? F : []).slice(0, 20)) R('P47', `"${x.name}" floats: its bottom is ${x.above == null ? 'over nothing' : x.above + ' m over what is under it'} at ${JSON.stringify(x.at)} (size ${JSON.stringify(x.size)})`);
+    const S = await G(sizeSource({ extraRules: ck.sizeRules || [] })); if (S && S.error) Wn('P48', S.error); else for (const x of (Array.isArray(S) ? S : []).slice(0, 20)) R('P48', `"${x.name}" (${x.kind}) ${x.measure} ${x.value} m, not ${x.min}-${x.max} m, at ${JSON.stringify(x.at)}`); }
   // P39 (1.21.4, 鏡屋): the picture of a card / document as large as the room its text leaves, on a PC and on a phone
   for (const [w, h, mob] of [[1366, 768], [1920, 1080], [390, 844, 1], [844, 390, 1], [844, 340, 1]]) {
     const q = await launch(mob ? { width: w, height: h, mobile: true, dpr: 2 } : { width: w, height: h });
@@ -532,6 +595,22 @@ try {
       const r2 = await Q(phoneLayoutSource());
       if (r2.msgs.length > 1) E('P31', `${w}x${h}: ${r2.msgs.length} message boxes at once (${r2.msgs.join(', ')}); a phone shows one (js/phone-play.js gf-saying / gf-hinting)`);
       for (const o of r2.overlaps) E('P31', `${w}x${h} (crowded): "${o[0]}" and "${o[1]}" overlap (${o[2]}x${o[3]} px)`);
+      // P44 (1.26.0): every mini game fits a landscape phone (844x390, 667x375, 844x340): no scroll, every control on screen
+      if (w > h) for (const t of (await Q(`g.data.tasks.filter((t) => t.minigame && t.minigame.type).map((t) => t.id)`)) || []) {
+        const m = await Q(mgFitSource(t)); if (!m || !m.open) continue;
+        if (m.scroll > 2) E('P44', `${w}x${h} task "${t}" (${m.type}): the mini game scrolls by ${m.scroll} px`);
+        for (const [c, by] of m.off) E('P44', `${w}x${h} task "${t}" (${m.type}): "${c}" is ${by} px off the screen`);
+        for (let i = 0; i < 10 && (await Q('g.blocked ? g.blocked() : false')); i++) { await Q(`(g.wm && g.wm.isOpen && g.wm.close(), 1)`); await sleep(300); }
+      }
+      // P46 (1.27.0, 鏡屋 「画像を全面に出して、ジョイスティックを重ねる」): a full-screen viewfinder covers the screen, its controls are on it and apart
+      for (const t of ((await Q(`g.data.tasks.filter((t) => t.minigame && t.minigame.type === 'photo-focus' && t.minigame.cfg && t.minigame.cfg.full).map((t) => t.id)`)) || []).slice(0, 1)) {
+        const m = await Q(mgFitSource(t)); if (!m || !m.open || !m.full) { if (m && m.open) E('P46', `${w}x${h} task "${t}": cfg.full but the viewfinder is not full-screen (kit < 1.27.0?)`); continue; }
+        if (m.full.cover < 0.95) E('P46', `${w}x${h} task "${t}": the picture covers ${Math.round(m.full.cover * 100)}% of the screen (95% or more)`);
+        if (m.full.helpCut) E('P46', `${w}x${h} task "${t}": the help is cut (more than two lines or 「…」): shorten 「${m.full.help}」`);
+        for (const o of m.full.overlaps) E('P46', `${w}x${h} task "${t}": "${o[0]}" and "${o[1]}" overlap (${o[2]}x${o[3]} px)`);
+        for (const [c, by] of m.off) E('P46', `${w}x${h} task "${t}": "${c}" is ${by} px off the screen`);
+        for (let i = 0; i < 10 && (await Q('g.blocked ? g.blocked() : false')); i++) { await Q(`(g.wm && g.wm.isOpen && g.wm.close(), 1)`); await sleep(300); }
+      }
       // P32 (1.21.0): framed panels in a short landscape (the address bar showing: 844x340 is checked below too)
       for (const x of await Q(frameNestSource())) (x.kind === 'squash' || x.kind === 'inset' ? Wn : E)('P32', `${w}x${h} ${x.sel}: ${x.kind}${x.text ? ` 「${x.text}」` : ''} ${JSON.stringify(x.by)}`);
     } catch (e) { Wn('P31', `${w}x${h}: the phone layout pass could not run: ${e.message}`); }

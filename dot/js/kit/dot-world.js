@@ -1,4 +1,4 @@
-/* game-kit 10bd677a (main 1.24.0): js/dot-world.js — edit in game-kit */
+/* game-kit 9d1dd813 (main 1.35.0): js/dot-world.js — edit in game-kit */
 // Dot world (standard 1.21.0; 水無瀬病院 / 札の家 ドット版, 2026-11-21: 「非常灯などがドットでないです。全て対応してください」
 // 「壁もドット絵でないです。全てドットで再構築してください」「全体の色合いを合わせる」).
 // One palette for the whole picture, and every visible surface drawn in it:

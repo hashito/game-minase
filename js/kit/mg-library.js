@@ -1,4 +1,4 @@
-/* game-kit 0641622: js/mg-library.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 9d1dd813: js/mg-library.js — edit in game-kit and run tools/kit-sync.js */
 // The mini game LIBRARY: the mini games a game made for itself, kept in the kit so the next game can use them as they are
 // (a game is not stuck with the standard set of js/task-minigames.js; each one it adds stays reusable).
 //   import pour from './kit/mg-pour.js';
@@ -47,6 +47,16 @@ export const LIBRARY = [
   { module: 'mg-jug-measure', type: 'jug-measure', from: '標準 1.8.4（御神水・お神酒・灯油）', about: '目盛りのない二つの器で、決まった量をはかり取る' },
   { module: 'mg-hold-breath', type: 'hold-breath', from: '標準 1.8.4（押入れ・床下・屏風の陰に隠れる）', about: '近づいてくる気配のあいだ息を止め、通り過ぎるのを待つ' },
   { module: 'mg-layer-board', type: 'layer-board', from: '標準 1.10.19（検案台の層・報告書の三欄・現場の盤）', about: '層や部品の向き・順番・位置をそろえて照合する' },
+  { module: 'mg-darkroom-develop', type: 'darkroom-develop', from: '標準 1.24.0（暗室・古いカメラの最後の一本・写っていないはずの人）', about: '印画紙を三つの液に移し、揺らしながら、ちょうどの濃さで引き上げる', stage: true },
+  { module: 'mg-tape-splice', type: 'tape-splice', from: '標準 1.24.0（留守電のテープ・切られた録音・消された最後の言葉）', about: '切られた録音テープを、聞きながら並べ替え・裏返してつなぎ直す', stage: true },
+  { module: 'mg-switchboard', type: 'switchboard', from: '標準 1.24.0（病院の交換台・旅館の帳場・役場の夜間電話）', about: '光った回線を取り、電話帳で部屋を探してコードを差し込む', stage: true },
+  { module: 'mg-steam-letter', type: 'steam-letter', from: '標準 1.24.0（開けた跡を残せない手紙・遺書・死者への手紙）', about: '封筒を湯気に当てて糊を溶かし、破らずにめくって中の手紙を読む', stage: true },
+  { module: 'mg-puzzle-box', type: 'puzzle-box', from: '標準 1.24.0（遺品の秘密箱・賽銭箱・鍵の入った箱）', about: '秘密箱の板を決まった順に滑らせて開ける。箱を回して裏も見る', stage: true },
+  { module: 'mg-rubbing', type: 'rubbing', from: '標準 1.24.0（読めない墓石・絵馬・扉の銘板）', about: '紙の上から炭でこすり、彫られた字を浮かび上がらせて読む', stage: true },
+  { module: 'mg-knot-untangle', type: 'knot-untangle', from: '標準 1.24.0（呪いの赤い糸・釘に巻かれた髪・水引）', about: '釘に絡んだ糸を、釘を動かしてほどき、どの糸も交わらないようにする', stage: true },
+  { module: 'mg-torn-paper', type: 'torn-paper', from: '標準 1.24.0（ちぎられたメモ・破られた日記・裂かれた札）', about: '破れた紙片を回して合わせ、元の一枚に戻して読む（別の紙がまざる）', stage: true },
+  { module: 'mg-safe-listen', type: 'safe-listen', from: '標準 1.24.0（院長室の金庫・質屋の金庫・寺の金庫）', about: 'ダイヤルを回し、かすかな音と揺れで三つの数を探して金庫を開ける', stage: true },
+  { module: 'mg-footprint-track', type: 'footprint-track', from: '標準 1.24.0（閉鎖病棟の埃・山小屋の雪・焼け跡の灰）', about: '懐中電灯で床を照らし、手がかりと同じ靴底の跡を分かれ道ごとに追う', stage: true },
 ];
 
 /** register library mini games with the game's ext: an entry is a module's default, or [default, { type, hooks, sound }] to rename / hook it
