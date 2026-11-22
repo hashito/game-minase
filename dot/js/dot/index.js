@@ -61,18 +61,23 @@ export default async function dotLayer(ext, { manifest, data }) {
   mat.name = 'dot-stack';
   // the people: their own colours plus a share as emission, so a figure reads as a person in a dark room (the lights still shape it)
   const FIG_KNEE = 0.32, FIG_CAP = 0.62;   // 1.4.4: linear light on a figure rolls off softly from the knee and never passes the cap
-  const figMat = (self, name) => {
+  const figMat = (self, name, tint = null) => {
     const m = new THREE.MeshLambertMaterial({ vertexColors: true });
     m.name = name;
     // 1.4.4 「ひなたの顔に白い横の帯」: her near-white collar under the face (albedo 0.96) took the self light and the flashlight and clipped to
     // a glowing white row (with the flashlight off it was still there). Pale colours take less self light, and the light on a figure rolls
     // off softly under FIG_CAP instead of clipping, so a face keeps its shape at 0.8 m in the flashlight (tools/dot/face-check-steps.mjs)
+    // 1.5.2: `tint` darkens a figure's own colours (あれ: her pale voxels burned to a white doll in the flashlight; darker and a little cold,
+    // she takes her shape from the rim and the water key of js/ext/chimera.js)
+    const tf = tint ? `diffuseColor.rgb *= vec3(${tint.map((v) => v.toFixed(3)).join(', ')});` : '';
     m.onBeforeCompile = (sh) => {
       sh.fragmentShader = sh.fragmentShader
+        .replace('#include <color_fragment>', `#include <color_fragment>
+ ${tf}`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n totalEmissiveRadiance += diffuseColor.rgb * ${self.toFixed(3)} * (1.0 - 0.7 * dot(diffuseColor.rgb, vec3(0.299, 0.587, 0.114)));`)
         .replace('#include <opaque_fragment>', `{ float fm = max(max(outgoingLight.r, outgoingLight.g), outgoingLight.b); const float FK = ${FIG_KNEE.toFixed(3)}, FC = ${FIG_CAP.toFixed(3)};\n  if (fm > FK) outgoingLight *= (FK + (FC - FK) * (1.0 - exp(-(fm - FK) / (FC - FK)))) / fm; }\n#include <opaque_fragment>`);
     };
-    m.customProgramCacheKey = () => `dot-fig-${self}-${FIG_KNEE}-${FIG_CAP}`;
+    m.customProgramCacheKey = () => `dot-fig-${self}-${FIG_KNEE}-${FIG_CAP}-${tint ? tint.join(',') : ''}`;
     return m;
   };
   const geoCache = new Map();
@@ -364,7 +369,7 @@ export default async function dotLayer(ext, { manifest, data }) {
     let are = null;
     if (G.chimera && G.chimera.root) {
       const C = G.chimera, k = C.root.scale.x || 1;
-      are = createFigure(THREE, areSet, { height: 1.85 / k, material: figMat(0.22, 'dot-are'), name: 'are', holdOk: ['attack', 'fear'] });
+      are = createFigure(THREE, areSet, { height: 1.85 / k, material: figMat(0.1, 'dot-are', [0.64, 0.68, 0.7]), name: 'are', holdOk: ['attack', 'fear'] });
       are.root.position.y = -0.15 / k;   // the kit model stands 0.15 above the floor (its hips at the water line); the frames stand on the floor
       const keep = new Set(); are.root.traverse((x) => keep.add(x));
       hideOwn(C.root, keep);

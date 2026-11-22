@@ -18,7 +18,7 @@ import { buildChimera } from './people.js';
 // 1.2.0 (#24 「敵の動きが早すぎる」): 2.5 m/s (you run 3.8), and only 2.0 for the first 15 s of the chase (time to understand what is behind you)
 export const SPEED = { walk: 2.5, start: 2.0, lesson: 1.3, gate: 1.3 };
 export function installChimera(ext, G) {
-  let ctx = null, fig = null, route = [], cum = [], glow = null;
+  let ctx = null, fig = null, route = [], cum = [], glow = null, key = null;
   const H = G.gh = { mode: 'off', s: 0, wait: 0, lunge: 6, hiddenT: 0, rise: 0, fade: 0, shown: false, onCatch: null, onStop: null };
   const v2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
   /** the nearest point of the route to (x, z): { s, d } */
@@ -60,8 +60,25 @@ export function installChimera(ext, G) {
     return out.sort((a, b) => b.s - a.s);
   }
   let routeDoors = [];
+  // 1.5.2 (main's check 2026-11-23 「遠くでは白い塊、近くでは暗い通路に溶ける」): how she is lit. Before, one warm light inside her (5, 12 m)
+  // and a pale self glow made a flat white shape far off and lit the corridor round her as much as her. Now: a cold rim light 1.1 m
+  // behind her (away from you) and high, which lights the wall behind her and the edges of her shoulders and head (a dark shape on a lit
+  // patch: the silhouette reads at 8-15 m), and a teal key from the water 0.8 m in front of her, low, flickering like light off ripples,
+  // which lights her front from below (the stitches, the jars, the face on top read near). Nothing else is lit by her.
+  // k: 0 off .. 1 normal (more for a flare); x / z: where she stands
+  function lit(k, x, z) {
+    if (!glow) return;
+    if (!(k > 0) || x == null) { glow.intensity = 0; key.intensity = 0; return; }
+    const cam = ctx.camera.position, y0 = ctx.world.floorY(0);
+    let dx = x - cam.x, dz = z - cam.z; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+    glow.position.set(x + dx * 1.1, y0 + 2.0, z + dz * 1.1); glow.intensity = k * 9;
+    const ripple = 0.75 + 0.25 * Math.sin(T * 3.1) * Math.sin(T * 1.7 + 1);
+    // just above the water (P3's surface is 0.42 m); the dot version's darker figure takes twice the light
+    key.position.set(x - dx * 0.8, y0 + 0.55, z - dz * 0.8); key.intensity = k * (ctx.pixelStyle ? 7 : 3.4) * ripple;
+  }
+  G.herLights = () => ({ rim: glow && { i: glow.intensity, d: glow.distance, p: glow.position.toArray() }, key: key && { i: key.intensity, d: key.distance, p: key.position.toArray() } });
   G.ghostStart = (mode, s, o = {}) => { H.dir = 1; H.ct = 0; H.bang = 0; H.anim = null; H.aheadDone = false; H.mode = mode; H.s = s; H.wait = o.wait || 0; H.lunge = 9; H.t = 0; H.pressT = 0; H.sunk = 0; H.sinkAnim = 0; H.hiddenT = 0; H.rise = o.rise || 0; H.fade = 0; H.speed = o.speed; H.onStop = o.onStop || null; H.onCatch = o.onCatch || null; H.stopAt = o.stopAt ?? null; };
-  G.ghostStop = () => { H.mode = 'off'; H.sunk = 0; H.sinkAnim = 0; if (fig) fig.root.visible = false; if (glow) glow.intensity = 0; for (const P of G.posts.values()) P.press = false; };
+  G.ghostStop = () => { H.mode = 'off'; H.sunk = 0; H.sinkAnim = 0; if (fig) fig.root.visible = false; if (glow) lit(0); for (const P of G.posts.values()) P.press = false; };
   G.ghostFade = () => { H.fade = 0.0001; };
   // she goes under (the figure sinks for 1 s, then nothing) and comes back up at s = back after sec seconds
   function sinkFor(sec, back) { H.fade = 0; H.sinkAnim = 1; H.sunk = sec + 1; H.back = back; for (const P of G.posts.values()) P.press = false; ctx.sound('noise', 'splash'); }
@@ -77,12 +94,32 @@ export function installChimera(ext, G) {
     else if (H.s >= vs + 5) ext.emit('minase:valve-behind', { id });
   });
 
+  // 1.5.2 (main's check 2026-11-23 「止水弁を回したあとの 3 秒が平坦」): one threat beat while she is held at a valve's dry band. 1 s into the
+  // press she throws herself at the edge of the band: the body lurches 0.22 m toward you and back (she is held 0.5 m back, so it stays
+  // short of the dry band: the band is 3.2 m, she stops 1.9 m from the valve's middle), the water bursts round her, something slams the pipes beside her three times, her rim light flares, the screen's dread
+  // spikes, and in the chase her voice says 「……あけて……」 (she wants the valve opened: she is held, not through). In the lesson (the
+  // press lasts until the water comes back) the beat comes again every 3.4 s, without the voice.
+  const BEAT = { first: 1.0, again: 3.4, lurch: 0.55, reach: 0.22 };
+  G.BEAT = BEAT;
+  function pressBeat(dt) {
+    H.beatT = (H.beatT || 0) + dt;
+    if (H.nextBeat == null || H.beatT < H.nextBeat) return;
+    H.nextBeat = H.mode === 'lesson' ? H.nextBeat + BEAT.again : Infinity;
+    const q = at(H.s), y0 = ctx.world.floorY(0), wy = (G.waterYAt && G.waterYAt(q.x, q.z)) ?? y0 + 0.1;
+    H.lurch = BEAT.lurch; H.flare = 0.9; H.beats = (H.beats || 0) + 1;
+    if (ctx.audio && ctx.audio.noise) {
+      ctx.audio.noise('splash', { pos: { x: q.x, y: 0.3, z: q.z }, n: 3, gain: 1.4 });
+      ctx.audio.noise('knock', { pos: { x: q.x, y: 1.1, z: q.z }, n: 3, gap: 0.11, gain: 1.6 });
+    }
+    if (G.wake) for (let i = 0; i < 3; i++) G.wake(q.x + (Math.random() - 0.5) * 0.6, wy, q.z + (Math.random() - 0.5) * 0.6, true);
+    ext.emit('minase:ghost-surge', { mode: H.mode, n: H.beats });
+  }
   let T = 0;
   function update(dt, active) {
     if (!fig) return;
     T += dt;
     for (const P of G.posts.values()) P.press = false;
-    if (H.mode === 'off' || ctx.floor !== 0) { fig.root.visible = false; glow.intensity = 0; return; }
+    if (H.mode === 'off' || ctx.floor !== 0) { fig.root.visible = false; lit(0); return; }
     if (!active) return;
     const cam = ctx.camera.position, me = project(cam.x, cam.z), ps = me.s;
     const vis = H.wait <= 0;
@@ -91,13 +128,13 @@ export function installChimera(ext, G) {
     if (H.fade > 0) { H.fade += dt; if (H.fade > 1.4) { const m = H.mode; G.ghostStop(); ext.emit('minase:ghost-gone', { mode: m }); return; } }
     if (H.sunk > 0) {   // under the water after a dry band or a valve turned on her: nothing to see, she comes back up at H.back
       H.sunk -= dt;
-      if (H.sinkAnim > 0) { H.sinkAnim -= dt; const q = at(H.s); fig.root.visible = true; fig.root.position.set(q.x, ctx.world.floorY(0) + 0.15 - (1 - H.sinkAnim) * 1.8, q.z); glow.position.set(q.x, ctx.world.floorY(0) + 1.0, q.z); glow.intensity = 2.4 * H.sinkAnim; for (const a of fig.arms) a.rotation.x += (-1.6 - a.rotation.x) * Math.min(1, dt * 4); }
-      else { fig.root.visible = false; glow.intensity = 0; }
+      if (H.sinkAnim > 0) { H.sinkAnim -= dt; const q = at(H.s); fig.root.visible = true; fig.root.position.set(q.x, ctx.world.floorY(0) + 0.15 - (1 - H.sinkAnim) * 1.8, q.z); lit(0.5 * H.sinkAnim, q.x, q.z); for (const a of fig.arms) a.rotation.x += (-1.6 - a.rotation.x) * Math.min(1, dt * 4); }
+      else { fig.root.visible = false; lit(0); }
       if (H.sunk <= 0) { H.s = Math.max(0, H.back); H.rise = 1.2; ctx.sound('noise', 'splash'); }
       return;
     }
     if (H.mode === 'cross') { crossStep(dt, cam); return; }
-    if (H.dir === -1 && H.mode === 'chase') { aheadStep(dt, ps); if (H.wait <= 0) placeFig(dt, ps); else { fig.root.visible = false; glow.intensity = 0; } return; }
+    if (H.dir === -1 && H.mode === 'chase') { aheadStep(dt, ps); if (H.wait <= 0) placeFig(dt, ps); else { fig.root.visible = false; lit(0); } return; }
     if (H.rise > 0) { H.rise -= dt; }
     else if (H.wait <= 0 && H.fade <= 0) {
       const chase = H.mode === 'chase';
@@ -110,7 +147,8 @@ export function installChimera(ext, G) {
         const walk = H.speed != null ? H.speed : chase && H.t < 15 ? SPEED.start : SPEED.walk;
         const base = walk * (ctx.calm ? 0.8 : 1) * (chase ? slowAt(H.s) : 1);
         H.s = Math.min(Math.max(H.s, stop), H.s + base * dt);
-        if (bl.length && H.s >= bl[0].s - 0.55) { if (bl[0].P) bl[0].P.press = true; if (!H.pressing) { H.pressing = true; H.pressT = 0; ext.emit('minase:ghost-press', { id: bl[0].P ? bl[0].P.def.id : bl[0].gate ? 'gate' : 'door' }); } } else H.pressing = false;
+        if (bl.length && H.s >= bl[0].s - 0.55) { if (bl[0].P) bl[0].P.press = true; if (!H.pressing) { H.pressing = true; H.pressT = 0; H.beatT = 0; H.nextBeat = BEAT.first; ext.emit('minase:ghost-press', { id: bl[0].P ? bl[0].P.def.id : bl[0].gate ? 'gate' : 'door' }); } } else H.pressing = false;
+        if (H.pressing && bl[0].P) pressBeat(dt);
         // 1.2.0 (#21, #23 「止水弁で足止めしても敵が消えずに」): held at a dry band she claws at it for 3.5 s, then sinks under; she comes back
         // up 6 m behind the band 6 s later (the water still seeps back while she is under). Stopped is now visibly "gone for now".
         if (chase && H.pressing && bl[0].P) { H.pressT += dt; if (H.pressT > 3.5) { H.pressing = false; sinkFor(6, bl[0].s - 6); ext.emit('minase:ghost-sank', { id: bl[0].P.def.id }); } }
@@ -141,9 +179,12 @@ export function installChimera(ext, G) {
   function placeFig(dt, ps) {
     const vis = H.wait <= 0;
     // the figure (her hips under the water line; rising out of the tank, she comes up from below)
-    const p = at(H.s);
+    if (H.flare > 0) H.flare = Math.max(0, H.flare - dt * 1.6);
+    if (H.lurch > 0) H.lurch = Math.max(0, H.lurch - dt);
+    const lu = H.lurch > 0 ? Math.sin(Math.PI * (1 - H.lurch / BEAT.lurch)) * BEAT.reach * (H.dir === -1 ? -1 : 1) : 0;   // the beat: a throw at the band and back
+    const p = at(H.s + lu);
     fig.root.visible = vis;
-    glow.position.set(p.x, ctx.world.floorY(0) + 1.3, p.z); glow.intensity = vis ? (H.fade > 0 ? Math.max(0, 1 - H.fade / 1.4) : 1) * (5.0 + Math.sin(T * 7) * 0.8) : 0;
+    lit(vis ? (H.fade > 0 ? Math.max(0, 1 - H.fade / 1.4) : 1) * (1 + Math.sin(T * 7) * 0.08) * (H.flare > 0 ? 1 + H.flare : 1) : 0, p.x, p.z);
     const sink = H.fade > 0 ? H.fade * H.fade * 1.3 + (Math.sin(T * 31) > 0.6 ? 0.05 : 0) : 0, up = H.rise > 0 ? Math.max(0, H.rise - 0.4) * 0.9 : 0;
     fig.root.position.set(p.x, ctx.world.floorY(0) + 0.15 - sink - up + Math.sin(T * 1.3) * 0.03, p.z);
     fig.root.rotation.y = p.yaw + (H.dir === -1 ? Math.PI : 0);
@@ -158,7 +199,7 @@ export function installChimera(ext, G) {
     if (vis && near < 16) {
       const k = Math.max(0, Math.min(1, 1 - near / 16));
       const prev = ctx.fxState || {};
-      ctx.fxState = { ...prev, danger: Math.max(prev.danger || 0, k * (H.mode === 'chase' ? 0.65 : 0.45)), mist: Math.max(prev.mist || 0, k * 0.3) };
+      ctx.fxState = { ...prev, danger: Math.max(prev.danger || 0, Math.min(1, k * (H.mode === 'chase' ? 0.65 : 0.45) + (H.flare || 0) * 0.35)), mist: Math.max(prev.mist || 0, k * 0.3) };
     }
     // the emergency lights she passes go out (the way back gets darker behind you)
     if (H.mode === 'chase') for (const [id, e] of Object.entries(G.lampEntry || {})) if (e.i > 0 && G.lampS && Math.abs(G.lampS[id] - H.s) < 1.0) { G.lampOut(id); }
@@ -167,7 +208,7 @@ export function installChimera(ext, G) {
   // ---- 1.5.0 (#18): she comes up ahead of you ----
   function goAhead(ps) {
     const s = Math.min(G.routeLen - 2, Math.max(ps + 8, (G.aheadValveS || 0) + 3.5)), q = at(s);
-    H.sunk = 0; H.sinkAnim = 0; fig.root.visible = false; glow.intensity = 0;
+    H.sunk = 0; H.sinkAnim = 0; fig.root.visible = false; lit(0);
     H.wait = 2.0; H.dir = -1; H.s = s; H.pressT = 0; H.pressing = false;
     ctx.audio && ctx.audio.noise && ctx.audio.noise('splash', { pos: { x: q.x, y: 0.3, z: q.z }, n: 3 });
     ext.emit('minase:ghost-ahead', { s });
@@ -178,7 +219,8 @@ export function installChimera(ext, G) {
     H.s = Math.max(Math.min(H.s, stop), H.s - 1.7 * (ctx.calm ? 0.8 : 1) * dt);
     if (bl.length && H.s <= bl[0].s + 0.55) {
       bl[0].P.press = true; H.pressT += dt;
-      if (!H.pressing) { H.pressing = true; ext.emit('minase:ghost-press', { id: bl[0].P.def.id }); }
+      if (!H.pressing) { H.pressing = true; H.beatT = 0; H.nextBeat = BEAT.first; ext.emit('minase:ghost-press', { id: bl[0].P.def.id }); }
+      pressBeat(dt);
       if (H.pressT > 3.0) { H.pressing = false; H.dir = 1; sinkFor(6, Math.max(0, ps - 18)); ext.emit('minase:ghost-sank', { id: bl[0].P.def.id }); }
     } else H.pressing = false;
     if (ctx.hidden) { H.dir = 1; H.wait = 6; H.s = Math.max(0, ps - 26); ext.emit('minase:ghost-lost', {}); return; }
@@ -211,7 +253,7 @@ export function installChimera(ext, G) {
       if (!H.pulled) { H.pulled = true; ctx.audio && ctx.audio.noise && ctx.audio.noise('splash', { pos: { x, y: 0.3, z }, n: 2 }); }
     }
     fig.root.position.set(x, y, z); fig.root.rotation.set(0, yaw, 0); fig.body.rotation.z = roll;
-    glow.position.set(x, y0 + 1.0, z); glow.intensity = t > C.twitch ? 3 * Math.max(0, 1 - (t - C.twitch) / 0.9) : 3.5;
+    lit(t > C.twitch ? 0.85 * Math.max(0, 1 - (t - C.twitch) / 0.9) : 1, x, z);
     for (const a of fig.arms) a.rotation.x += ((t > C.twitch ? -2.6 : -0.4) - a.rotation.x) * Math.min(1, dt * 5);
     if (t > C.pull) { H.turned = H.pulled = false; G.ghostStop(); ext.emit('minase:ghost-gone', { mode: 'cross' }); }
   }
@@ -232,7 +274,9 @@ export function installChimera(ext, G) {
       if (D && pr.d < 1.2) routeDoors.push({ d: D, s: pr.s, x: d.x, z: d.z });
     }
     G.routeDoors = routeDoors;
-    glow = new THREE.PointLight(0xc2c48a, 0, 12, 1.3); ctx.scene.add(glow);   // 1.2.0 (#20): she lights the water round her, so you see her coming
+    // 1.2.0 (#20) she lit the water round her (one warm light inside her, 12 m); 1.5.2: a cold rim behind her and a key from the water
+    glow = new THREE.PointLight(0x9fbad0, 0, 4.2, 1.6); glow.name = 'mn-her-rim'; ctx.scene.add(glow);
+    key = new THREE.PointLight(0x4f9c98, 0, 3.0, 1.3); key.name = 'mn-her-key'; ctx.scene.add(key);
     fig = buildChimera(); fig.root.visible = false; ctx.world.group.add(fig.root); G.chimera = fig;
     // warm-up: her materials compiled before play
     const warm = new THREE.Group(); warm.visible = false; warm.add(buildChimera().root); ctx.scene.add(warm); ctx.warmObjects = [...(ctx.warmObjects || []), warm];

@@ -437,7 +437,7 @@ export function installHospital(ext, G) {
     let ri = 0, last = null, herT = 0;
     const waterY = (x, z) => { const r = W.roomAt(x, z); const lv = r != null ? G.waterAt[r] : null; return lv == null || !G.water[r] || !G.water[r].visible ? null : G.water[r].position.y; };
     const spawn = (x, y, z, big) => { const R = rings[ri++ % rings.length]; R.t = 0; R.big = big; R.m.position.set(x, y + 0.006, z); R.m.visible = true; };
-    G.wake = spawn;
+    G.wake = spawn; G.waterYAt = waterY;
     // the inflow: a sheet of water pouring over the sill of the watertight door into the corridor, the corridor water rising under it
     const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.0), M.stream.clone()); sheet.material.opacity = 0; sheet.visible = false; sheet.raycast = () => {}; sheet.name = 'mn-inflow';
     sheet.rotation.x = -Math.PI / 2.6; sheet.position.set(2.6, fy('MOUTH') + 0.2, -0.25); grp.add(sheet);

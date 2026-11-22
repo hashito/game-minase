@@ -1,5 +1,5 @@
 {
-  "kit": "af139a0a",
+  "kit": "3ced2a44",
   "dest": "js/kit",
   "modules": [
     "game-core",
@@ -157,7 +157,7 @@
     "rest-check.mjs"
   ],
   "hashes": {
-    "js\\kit\\game-core.js": "be293c4867bc",
+    "js\\kit\\game-core.js": "d459d4f0fe9f",
     "js\\kit\\item-kinds.js": "9b67d808c2f3",
     "js\\kit\\item-models.js": "5cc334f5801e",
     "js\\kit\\prop-geo.js": "89b9dabf8cf4",
@@ -244,7 +244,7 @@
     "css/kit.css": "4a3f2837497b",
     "css\\theme.css": "1efaa7d1672b",
     "css\\themes.css": "3d37bee4806c",
-    "css\\shell.css": "2cabf96fa03f",
+    "css\\shell.css": "079d01f30b3c",
     "schema/chat-game.schema.json": "4463a3812a3d",
     "schema/chat-story.schema.json": "74021fbcd2f8",
     "schema/creation-brief.schema.json": "4a7c4e40cf74",

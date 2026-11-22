@@ -552,6 +552,8 @@ const talk = {
   ],
   whisper1: [{ who: A, where: '通路の奥', text: '……どこ……。' }],
   whisper2: [{ who: A, where: 'すぐうしろ', text: '……かえして……。' }],
+  // 1.5.2: her voice in the beat while a dry band holds her (chimera.js pressBeat, story.js): she asks for the valve, so she is held, not through
+  press_open: [{ who: A, where: '乾いた床の向こう', text: '……あけて……。' }],
   // 1.2.0 (#9): 黒木 at the chained door, when you go back to it before you have the jar
   kuroki_wait: [
     { who: K, where: '鎖の扉の外', text: 'まだか。……瓶を持って来るまで、ここは開けねえ。', img: P('tk-kuroki-door') },

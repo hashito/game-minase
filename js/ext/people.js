@@ -54,7 +54,7 @@ function lumpy(r, seed, seg = 22) {
 const WM = {};
 const wet = () => {
   if (WM.skin) return WM;
-  WM.skin = [0x8e8770, 0x667069, 0x8a7563, 0x58554f].map((c, i) => new THREE.MeshStandardMaterial({ color: 0xffffff, map: skinTexture(c, i + 1), roughness: 0.38, metalness: 0.05, emissive: 0x2c2f24, emissiveIntensity: 0.9 }));   // pale enough to read down a dark passage
+  WM.skin = [0x8e8770, 0x667069, 0x8a7563, 0x58554f].map((c, i) => new THREE.MeshStandardMaterial({ color: 0xffffff, map: skinTexture(c, i + 1), roughness: 0.38, metalness: 0.05, emissive: 0x2c2f24, emissiveIntensity: 0.3 }));   // 1.5.2: 0.9 -> 0.3 (a pale blob far off); the rim and the key in chimera.js make her read
   WM.socket = new THREE.MeshBasicMaterial({ color: 0x020202 });
   WM.nail = new THREE.MeshStandardMaterial({ color: 0x3a3a30, roughness: 0.3 });
   WM.wetHair = new THREE.MeshStandardMaterial({ color: 0x040404, roughness: 0.22, metalness: 0.2 });

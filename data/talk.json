@@ -708,6 +708,15 @@
       "voice": "assets/voice/whisper2-1.mp3"
     }
   ],
+  "press_open": [
+    {
+      "who": "浅井",
+      "where": "乾いた床の向こう",
+      "text": "……あけて……。",
+      "id": "press_open-1",
+      "voice": "assets/voice/press_open-1.mp3"
+    }
+  ],
   "kuroki_wait": [
     {
       "who": "黒木",

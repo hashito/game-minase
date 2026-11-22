@@ -6,6 +6,7 @@
 //   #11 the lesson: a valve one step back (K_P4, the door side) works too and ends the lesson
 //   #9  a shut door on her way holds her (she bangs on it) until she breaks it open
 //   #18 the run back: in P3 she comes up ahead (warned by a splash), the valve between stops her, and she sinks back behind
+//   #18b (1.5.2) while the valve holds her she throws herself at the band once (the beat), never reaching the dry band
 //   #12 standing on a dry band: the HUD chip says so and the steps sound dry
 import { helpers } from './lib.mjs';
 import { cueOrderSource } from '../cue-order.mjs';
@@ -70,12 +71,21 @@ export default async (api) => {
   for (let i = 0; i < 30 && !ahead; i++) { await tp(-17.6, -70 + i * 0.25); const s = await gh(); if (s.dir === -1) ahead = s; await sleep(150); }
   ok(!!ahead && ahead.s > ahead.me, '#18 she comes up ahead of you', JSON.stringify(ahead));
   if (ahead) {
-    await tp(-17.6, -62.0); await sleep(2400);   // the warning time
+    await tp(-17.6, -62.0); for (let i = 0; i < 30 && (await gh()).wait > 0; i++) await sleep(100);   // the warning time (1.5.2: until she is up, then turn at once: a fixed 2.4 s let her walk into the band on a slow run)
+    await G(`(__mn.turnValve('K_P3B'), 1)`);   // 1.5.2: turned before the shot (a slow dot shot let her walk into the band first: a flaky FAIL)
     await shot('ahead');
-    await G(`(__mn.turnValve('K_P3B'), 1)`);
-    let stopped = true, sank = false; const vs = await G(`+__mn.project(-17.6, -60).s.toFixed(2)`);
-    for (let i = 0; i < 30; i++) { const s = await gh(); if (s.dir === -1 && s.s < vs + 0.4) stopped = false; /* she presses at the valve + 0.5 */ if (s.sunk > 0 || s.dir === 1) { sank = true; break; } if (await G('!!g.dead || !!(g.deathOpen)')) break; await sleep(250); }
+    let stopped = true, sank = false, drawnMin = Infinity, beatShot = false; const vs = await G(`+__mn.project(-17.6, -60).s.toFixed(2)`);
+    const b0 = await G('__mn.gh.beats || 0');
+    for (let i = 0; i < 30; i++) {
+      const s = await gh(); if (s.dir === -1 && s.s < vs + 0.4) stopped = false; /* she presses at the valve + 0.5 */ if (s.sunk > 0 || s.dir === 1) { sank = true; break; } if (await G('!!g.dead || !!(g.deathOpen)')) break;
+      // 1.5.2: where her body is drawn (the beat's lurch included) never reaches the dry band (the valve's middle +- 1.6 m)
+      if (s.dir === -1 && s.wait <= 0) drawnMin = Math.min(drawnMin, await G(`(() => { const f = __mn.chimera.root, r = f.position; return f.visible ? +__mn.project(r.x, r.z).s.toFixed(2) : Infinity; })()`));   // seen only (under the water her root stays where it was)
+      if (!beatShot && (await G('(__mn.gh.lurch || 0) > 0.2'))) { beatShot = true; await shot('held-beat'); }
+      await sleep(120);
+    }
     ok(stopped && sank, '#18 the valve between holds her, then she sinks back behind you', `stopped ${stopped} sank ${sank}`);
+    const b1 = await G('__mn.gh.beats || 0');
+    ok(b1 > b0 && drawnMin > vs + 1.6 && drawnMin < Infinity, '#18b while held she throws herself at the band once (the beat), and never reaches the dry band', `beats ${b0}->${b1} drawn ${drawnMin} band edge ${(vs + 1.6).toFixed(2)}`);
     // #12: on the dry band
     await tp(-17.6, -60.0); await sleep(600);
     const dry = await G(`({ chip: (document.getElementById('mn-valve') || {}).className, text: (document.getElementById('mn-valve') || {}).textContent, step: g.stepSurfaceOf ? g.stepSurfaceOf('P3') : null })`);

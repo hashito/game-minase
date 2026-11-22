@@ -211,6 +211,9 @@ export function installStory(ext, G) {
   let sankN = 0;
   ext.on('minase:ghost-sank', ({ on }) => { if (sankN++ < 3) say(on ? 'ghost_sank_on' : 'ghost_sank', 5); });
   ext.on('minase:valve-behind', () => say('valve_behind', 6));
+  // 1.5.2: the beat while a dry band holds her in the chase (chimera.js pressBeat): her voice the first two times, then only the noise
+  let surgeN = 0;
+  ext.on('minase:ghost-surge', ({ mode }) => { if (mode === 'chase' && surgeN++ < 2) voice('press_open'); });
   ext.on('minase:dry-first', () => { if (!G.gh || G.gh.mode !== 'chase') say('dry_floor', 4); });
   // 1.5.0 (3rd play test #18 / #9): she comes up ahead of you; she bangs on a shut door, then breaks it
   ext.on('minase:ghost-ahead', () => later(() => say('chase_ahead', 5), 500));
