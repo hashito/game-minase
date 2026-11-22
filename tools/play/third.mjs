@@ -82,5 +82,14 @@ export default async (api) => {
     ok(/mn-dry/.test(dry.chip || '') && dry.step === 'concrete', '#12 the dry band: HUD chip and dry steps', JSON.stringify(dry));
     await shot('dry-band');
   }
+  // #18b: running past her while she is still under is not a catch: she goes down again and comes up behind (the full play found the
+  // old rule killed anyone beyond her, wherever she was)
+  await scene('escape-p3');
+  let up = null;
+  for (let i = 0; i < 30 && !up; i++) { await tp(-17.6, -70 + i * 0.25); const s = await gh(); if (s.dir === -1) up = s; await sleep(150); }
+  const d0 = await G('__mn.deaths || 0');
+  if (up) { await tp(-17.6, -50); await sleep(3500); }
+  const after = await gh(), d1 = await G('__mn.deaths || 0');
+  ok(!!up && d1 === d0 && after.dir === 1, '#18b running past her while she is under is no catch; she follows from behind', JSON.stringify({ up, after, d0, d1 }));
   log(`third: ${fails} fail(s)`);
 };

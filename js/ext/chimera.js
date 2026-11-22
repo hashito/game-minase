@@ -166,7 +166,7 @@ export function installChimera(ext, G) {
 
   // ---- 1.5.0 (#18): she comes up ahead of you ----
   function goAhead(ps) {
-    const s = Math.min(G.routeLen - 2, ps + 11), q = at(s);
+    const s = Math.min(G.routeLen - 2, Math.max(ps + 8, (G.aheadValveS || 0) + 3.5)), q = at(s);
     H.sunk = 0; H.sinkAnim = 0; fig.root.visible = false; glow.intensity = 0;
     H.wait = 2.0; H.dir = -1; H.s = s; H.pressT = 0; H.pressing = false;
     ctx.audio && ctx.audio.noise && ctx.audio.noise('splash', { pos: { x: q.x, y: 0.3, z: q.z }, n: 3 });
@@ -182,7 +182,10 @@ export function installChimera(ext, G) {
       if (H.pressT > 3.0) { H.pressing = false; H.dir = 1; sinkFor(6, Math.max(0, ps - 18)); ext.emit('minase:ghost-sank', { id: bl[0].P.def.id }); }
     } else H.pressing = false;
     if (ctx.hidden) { H.dir = 1; H.wait = 6; H.s = Math.max(0, ps - 26); ext.emit('minase:ghost-lost', {}); return; }
-    if (H.s - ps < 1.1 && !bl.length && ctx.floor === 0) { const f = H.onCatch; if (f) f(); }
+    // you got past her (ran by while she was still under): she goes down again and comes back up behind you, as in the chase before.
+    // A catch is only her at you (before: any player beyond her counted as caught, wherever she was)
+    if (ps > H.s + 1.1) { H.pressing = false; H.dir = 1; sinkFor(5, Math.max(0, ps - 12)); return; }
+    if (Math.abs(H.s - ps) < 1.1 && !bl.length && ctx.floor === 0) { const f = H.onCatch; if (f) f(); }
   }
   // ---- 1.5.0 (#1): the crossing at the far end of P2 ----
   // a broken wade (she lurches in steps, a shoulder dropping), a stop, her head (the whole body in the dot version) turned to you, a
@@ -221,6 +224,7 @@ export function installChimera(ext, G) {
     G.gateS = project(-4, -81.8).s;
     G.mouthS = project(2.6, -1.2).s;
     G.aheadAt = [project(-17.6, -72).s, project(-17.6, -64).s];
+    G.aheadValveS = project(-17.6, -60).s;   // K_P3B: she always comes up beyond it, so it lies between you and her (the answer)
     routeDoors = [];
     for (const d of ctx.data.plan.doors || []) {
       if (d.id === 'D_P1' || d.id === 'D_GATE' || (d.floor || 0) !== 0 || d.open) continue;

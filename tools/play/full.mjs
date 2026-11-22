@@ -13,7 +13,7 @@ export default async (api) => {
   const pre = (ids) => G(`(window.__gfQ = ${JSON.stringify(ids)}, Object.getOwnPropertyDescriptor(window, '__gfChoice') || Object.defineProperty(window, '__gfChoice', { configurable: true, get() { return (window.__gfQ || []).shift(); } }), 1)`);
   const use = async (x, z, y, tag) => { let pr = ''; for (let i = 0; i < 3 && !pr; i++) { if (i) await sleep(600); pr = await H.use(x, z, y); } log(' ', tag || 'use', '|', pr); return pr; };
   const crouch = async (on) => { const c = !!(await G('g.fp.crouching')); if (c !== !!on) { await p.key('KeyC'); await sleep(300); } };
-  const ghost = () => G('({ mode: mn.gh.mode, s: +mn.gh.s.toFixed(1), me: +mn.project(g.camera.position.x, g.camera.position.z).s.toFixed(1), deaths: mn.deaths || 0 })');
+  const ghost = () => G('({ mode: mn.gh.mode, s: +mn.gh.s.toFixed(1), me: +mn.project(g.camera.position.x, g.camera.position.z).s.toFixed(1), deaths: mn.deaths || 0, dir: mn.gh.dir || 1 })');
 
   const FROM = process.env.PLAY_FROM || '';   // L4: started with --query "qa=1&scene=hyohon"
   if (!FROM) {
@@ -24,7 +24,8 @@ export default async (api) => {
   // ---- L1 ----
   await H.walkTo(1.9, 21.8); await H.face(1.0, 21.2, 1.2); await sleep(300); await shot('hinata');
   await use(1.0, 21.2, 1.0, 'T_HINA'); await must('T_HINA');
-  await H.walkTo(3.0, 24.5); await H.face(3.0, 25.7, 1.1); await sleep(300); await shot('front-door');
+  if (!(await H.walkTo(3.0, 24.5))) { await H.idle(); await sleep(1500); await H.walkTo(2.6, 23.0); await H.walkTo(3.0, 24.5); }   // 1.5.0: a slow start (the talk still closing) left the run stuck here
+  await H.face(3.0, 25.7, 1.1); await sleep(300); await shot('front-door');
   await use(3.0, 25.65, 1.1, 'T_FRONT'); await must('T_FRONT');
   await H.route([[4.6, 22.1], [7.0, 22.1], [14.9, 22.1], [15.2, 24.6]]);
   await H.door(16, 24.6, 17.2, 24.6);
@@ -82,8 +83,15 @@ export default async (api) => {
   let valvesUsed = 0;
   const onStep = async () => {
     const g = await ghost();
-    if (g.mode !== 'chase' || g.me - g.s > 12) return false;
-    const c = await H.pos(); const v = VALVES.find(([x, z]) => Math.hypot(x - c.x, z - c.z) < 3.2 && mnS(x, z) < g.me - 0.6);
+    // 1.5.0 (#18): she comes up ahead (dir -1, s > me): turn the valve between, ahead of you
+    const ahead = g.mode === 'chase' && g.dir === -1 && g.s > g.me;
+    if (!ahead && (g.mode !== 'chase' || g.me - g.s > 12)) return false;
+    const c = await H.pos(); const v = VALVES.find(([x, z]) => Math.hypot(x - c.x, z - c.z) < 3.2 && (ahead ? mnS(x, z) > g.me + 0.3 && mnS(x, z) < g.s : mnS(x, z) < g.me - 0.6));
+    // she is ahead and the valve between is already drained: wait behind it until she sinks (as a player would)
+    if (ahead && (await G(`[...mn.posts.values()].some((P) => P.on && mn.project(P.def.x, P.def.z).s > ${g.me} && mn.project(P.def.x, P.def.z).s < ${g.s})`))) {
+      for (let i = 0; i < 40 && (await ghost()).dir === -1; i++) await sleep(250);
+      log('  waited for her to sink ahead', JSON.stringify(await ghost())); return false;
+    }
     if (!v || (await G(`[...mn.posts.values()].some((P) => P.on && Math.hypot(P.def.x - ${v[0]}, P.def.z - ${v[1]}) < 0.5)`))) return false;
     await H.face(v[0], v[1], 1.15); await sleep(120); await p.key('KeyE'); await sleep(350); valvesUsed++;
     log('  valve', v.join(','), JSON.stringify(await ghost()));
@@ -93,7 +101,7 @@ export default async (api) => {
   for (const [x, z] of VALVES) sCache.set(x + ',' + z, await G(`mn.project(${x}, ${z}).s`));
   const runTo = (x, z, o = {}) => H.walkTo(x, z, { run: true, onStep, ...o });
   // the way back as waypoints [x, z, crouch, tag]; after a death the run goes on from the waypoint nearest the checkpoint
-  const WAY = [[9, -100.2, 0], [9, -82.2, 0, 'P5'], [-17.6, -81.8, 0, 'P4'], [-17.6, -46.0, 0], [-17.6, -41.8, 0, 'P3'], [-5.0, -41.8, 1], [2.6, -41.8, 1, 'P2'], [2.6, -30, 0], [2.6, -1.8, 0], [2.6, 1.2, 0, 'P1']];
+  const WAY = [[9, -100.2, 0], [9, -82.2, 0, 'P5'], [-17.3, -81.4, 0, 'P4'], [-17.6, -46.0, 0], [-17.6, -41.8, 0, 'P3'], [-5.0, -41.8, 1], [2.6, -41.8, 1, 'P2'], [2.6, -30, 0], [2.6, -1.8, 0], [2.6, 1.2, 0, 'P1']];
   let pressedF = false, wi = 0, deaths0 = await G('mn.deaths || 0');
   for (let guard = 0; wi < WAY.length && guard < 60; guard++) {
     const [x, z, low, tag] = WAY[wi];
