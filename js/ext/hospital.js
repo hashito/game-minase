@@ -20,6 +20,85 @@ const HIT = {
 };
 // where ひなた stands at each moment: js/ext/hina.js (she walks between them)
 
+/** 1.5.0 (3rd play test #4 「浮いている紙に、読めそうな文字」): the papers carry a plausible page of this hospital (canvas, no picture file):
+ *  a chart (診療録) with a blacked-out name, a ledger of specimens (標本台帳) with numbers and red lines, a stamped consent form with the family's
+ *  box empty; the handwriting is soft (blurred, run by the water), the print sharp */
+function paperTex(kind, seed = 1) {
+  if (typeof document === 'undefined') return null;
+  const W0 = 240, H0 = 320, c = document.createElement('canvas'); c.width = W0; c.height = H0; const g = c.getContext('2d');
+  let r = seed * 9301 + 49297; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  g.fillStyle = '#d9d2bb'; g.fillRect(0, 0, W0, H0);
+  for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(120,105,70,${0.05 + rnd() * 0.08})`; g.beginPath(); g.arc(rnd() * W0, rnd() * H0, 10 + rnd() * 40, 0, 7); g.fill(); }
+  const print = (t, x, y, px, col = '#2a2622') => { g.filter = 'none'; g.fillStyle = col; g.font = `${px}px serif`; g.fillText(t, x, y); };
+  const hand = (t, x, y, px, col = '#1c2a4a', blur = 0.9) => { g.filter = `blur(${blur}px)`; g.fillStyle = col; g.font = `${px}px serif`; g.fillText(t, x, y); g.filter = 'none'; };
+  const line = (x0, y0, x1, y1, col = '#5a544a', w = 1) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); };
+  if (kind === 'chart') {
+    print('診 療 録', 80, 30, 20); print('水無瀬病院', 160, 52, 11);
+    for (let y = 66; y < 300; y += 22) line(14, y, 226, y, '#9a927e');
+    print('氏名', 16, 84, 12); g.fillStyle = '#121010'; g.fillRect(56, 70, 110, 17);
+    print('年齢', 16, 106, 12); hand('五十八', 60, 106, 14);
+    print('病名', 16, 128, 12); hand('心不全', 60, 128, 15);
+    hand('三月九日　死亡確認', 20, 172, 14); hand('病理解剖　葛城', 20, 194, 14); hand('臓器保存　家族同意（　　）', 20, 216, 13);
+    g.strokeStyle = 'rgba(170,30,25,0.85)'; g.lineWidth = 2; g.beginPath(); g.arc(196, 262, 18, 0, 7); g.stroke(); hand('七', 186, 270, 20, '#a31d18', 0.5);
+  } else if (kind === 'ledger') {
+    print('標 本 台 帳', 64, 28, 19);
+    const cols = [14, 50, 120, 176, 226]; for (const x of cols) line(x, 40, x, 306, '#8a826e'); for (let y = 40; y <= 306; y += 22) line(14, y, 226, y, '#8a826e');
+    print('番号', 18, 56, 11); print('氏名', 70, 56, 11); print('臓器', 132, 56, 11); print('同意', 186, 56, 11);
+    const org = ['右腕', '眼球', '心臓', '左足', '皮膚', '肝臓', '手', '脳', '腎臓', '舌', '指'];
+    for (let i = 0; i < 11; i++) {
+      const y = 78 + i * 22, n = 1 + Math.floor(rnd() * 34);
+      hand(String(i === 3 ? 7 : n), 22, y, 13); hand(org[(i + seed) % org.length], 126, y, 13); hand(i % 3 ? '―' : '無', 192, y, 13);
+      g.filter = 'blur(1.4px)'; g.fillStyle = '#26314d'; g.fillRect(56, y - 10, 50 + rnd() * 10, 3); g.filter = 'none';
+      line(52, y - 4, 116, y - 4, 'rgba(180,30,25,0.8)', 1.5);
+    }
+    hand('合成標本へ', 120, 300, 13, '#a31d18', 0.6);
+  } else {
+    print('臓器保存についての同意書', 30, 32, 15);
+    for (let y = 60; y < 200; y += 16) { g.filter = 'blur(0.4px)'; g.fillStyle = '#3c3832'; g.fillRect(18, y, 150 + rnd() * 50, 3); g.filter = 'none'; }
+    print('ご家族の署名', 18, 232, 12); line(100, 236, 222, 236, '#3c3832');
+    print('担当医', 18, 270, 12); hand('葛城', 80, 270, 16);
+    g.strokeStyle = 'rgba(180,35,28,0.9)'; g.lineWidth = 2.5; g.strokeRect(150, 248, 44, 44); hand('葛城', 156, 278, 17, '#b3221b', 0.3);
+  }
+  // the water: a run of the ink at one edge, a tide mark
+  g.globalCompositeOperation = 'multiply'; const gr = g.createLinearGradient(0, H0 * 0.7, 0, H0); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(1, 'rgba(140,130,95,0.75)'); g.fillStyle = gr; g.fillRect(0, 0, W0, H0); g.globalCompositeOperation = 'source-over';
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+
+/** 1.5.0 (3rd play test #2 「しゃがみ通路が単調」): marks for the walls of the low passage: claw gouges, hand prints, a rust run, a peek gap */
+function markTex(kind, seed = 1) {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas'); c.width = 256; c.height = 256; const g = c.getContext('2d');
+  let r = seed * 7919 + 13; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  g.clearRect(0, 0, 256, 256);
+  if (kind === 'gouge') {
+    for (let s = 0; s < 2; s++) for (let f = 0; f < 4; f++) { const x = 40 + s * 110 + f * 14; g.strokeStyle = 'rgba(20,18,16,0.9)'; g.lineWidth = 5; g.beginPath(); g.moveTo(x, 20 + f * 4); g.bezierCurveTo(x + 6, 90, x + 14, 160, x + 22 + rnd() * 6, 236); g.stroke(); g.strokeStyle = 'rgba(190,185,170,0.5)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x + 3, 22 + f * 4); g.bezierCurveTo(x + 9, 90, x + 17, 160, x + 25, 230); g.stroke(); }
+  } else if (kind === 'hands') {
+    for (let i = 0; i < 7; i++) { const x = 30 + rnd() * 190, y = 30 + rnd() * 190, s = 0.6 + rnd() * 0.7, a = rnd() * 1.4 - 0.7; g.save(); g.translate(x, y); g.rotate(a); g.scale(s, s); g.fillStyle = `rgba(40,30,22,${0.55 + rnd() * 0.3})`; g.beginPath(); g.ellipse(0, 10, 16, 20, 0, 0, 7); g.fill(); for (let f = 0; f < 5; f++) { g.beginPath(); g.ellipse(-14 + f * 7, -16 - (f === 2 ? 6 : f % 4 ? 3 : -4), 3.4, 11, (f - 2) * 0.15, 0, 7); g.fill(); } g.restore(); }
+  } else if (kind === 'stain') {
+    for (let i = 0; i < 9; i++) { const x = 30 + i * 24 + rnd() * 10; const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(90,60,30,0.7)'); gr.addColorStop(1, 'rgba(90,60,30,0)'); g.fillStyle = gr; g.fillRect(x, 0, 3 + rnd() * 6, 120 + rnd() * 136); }
+    g.fillStyle = 'rgba(70,50,30,0.55)'; g.fillRect(0, 0, 256, 18);
+  } else {   // gap: a ragged hole into the dark, two pale eyes far in it
+    g.fillStyle = '#050505'; g.beginPath(); for (let k = 0; k <= 24; k++) { const t = (k / 24) * Math.PI * 2, rr = 70 + Math.sin(t * 5 + seed) * 14 + rnd() * 10; g.lineTo(128 + Math.cos(t) * rr * 1.3, 128 + Math.sin(t) * rr * 0.55); } g.fill();
+    g.fillStyle = 'rgba(210,214,196,0.85)'; g.beginPath(); g.ellipse(112, 126, 5, 3, 0, 0, 7); g.ellipse(142, 128, 5, 3, 0, 0, 7); g.fill();
+    g.fillStyle = '#0a0a0a'; g.beginPath(); g.arc(112, 126, 1.6, 0, 7); g.arc(142, 128, 1.6, 0, 7); g.fill();
+    for (let k = 0; k < 4; k++) { g.fillStyle = 'rgba(160,130,110,0.8)'; g.fillRect(70 + k * 9, 150 + (k % 2) * 3, 5, 18); }
+  }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+
+/** a tiling normal map of small ripples (canvas, no picture file) */
+function rippleTex() {
+  if (typeof document === 'undefined') return null;
+  const n = 128, c = document.createElement('canvas'); c.width = c.height = n; const g = c.getContext('2d'), img = g.createImageData(n, n);
+  const h = (x, y) => Math.sin((x / n) * Math.PI * 6) * 0.5 + Math.sin(((x + y) / n) * Math.PI * 10) * 0.3 + Math.sin(((y * 2 - x) / n) * Math.PI * 4) * 0.4 + Math.sin((y / n) * Math.PI * 14 + Math.sin((x / n) * Math.PI * 4)) * 0.25;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const dx = h(x + 1, y) - h(x - 1, y), dy = h(x, y + 1) - h(x, y - 1), i = (y * n + x) * 4;
+    img.data[i] = 128 + dx * 90; img.data[i + 1] = 128 + dy * 90; img.data[i + 2] = 255; img.data[i + 3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); return t;
+}
+
 export function installHospital(ext, G) {
   ext.on('game:ready', (ctx) => {
     const W = ctx.world, grp = new THREE.Group(); grp.name = 'mn-hospital'; W.group.add(grp);
@@ -29,7 +108,8 @@ export function installHospital(ext, G) {
       white: std(0xcfcfc6, { roughness: 0.5 }), cream: std(0xb9b39f, { roughness: 0.8 }), paper: std(0xd6d1bf, { roughness: 1, side: THREE.DoubleSide }),
       glass: std(0x4f6a6a, { roughness: 0.05, metalness: 0.3, transparent: true, opacity: 0.28, depthWrite: false }),
       pipe: std(0x3e4442, { roughness: 0.6, metalness: 0.55 }), red: std(0x8a1d16, { roughness: 0.55, metalness: 0.3 }), green: std(0x2d4a3c, { roughness: 0.7 }),
-      water: std(0x1d2b28, { roughness: 0.04, metalness: 0.7, transparent: true, opacity: 0.8, depthWrite: false }),
+      // 1.5.0 (3rd play test #17 「水をもう少し濁らせて」): murky green-brown water you cannot see the floor through, with a moving ripple
+      water: std(0x323a2a, { roughness: 0.22, metalness: 0.35, transparent: true, opacity: 0.93, depthWrite: false, normalMap: rippleTex(), normalScale: new THREE.Vector2(0.55, 0.55) }),
       formalin: std(0x8a7b30, { roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.85, emissive: 0x2a2408, emissiveIntensity: 0.6 }),
       jarLiquid: std(0xb3a148, { roughness: 0.1, transparent: true, opacity: 0.55, emissive: 0x2a2408, emissiveIntensity: 0.4, depthWrite: false }),
       organ: std(0x9b8a7a, { roughness: 0.6 }), heart: std(0x6b5550, { roughness: 0.55 }), chain: std(0x6a6c68, { metalness: 0.7, roughness: 0.4 }),
@@ -37,6 +117,8 @@ export function installHospital(ext, G) {
       emerg: new THREE.MeshBasicMaterial({ color: 0x9ce8b8 }), emergOff: std(0x3a3f3c, { roughness: 0.6 }), black: std(0x050505, { roughness: 1 }),
       hidden: new THREE.MeshBasicMaterial({ visible: false }), stream: std(0x9fb3b0, { roughness: 0.05, transparent: true, opacity: 0.45, depthWrite: false }),
     };
+    // 1.5.0 (#4): papers that read as this hospital's records
+    M.papers = ['chart', 'ledger', 'form', 'chart', 'ledger'].map((k, i) => { const m = std(0xffffff, { roughness: 1, side: THREE.DoubleSide, map: paperTex(k, i + 1) }); m.name = `paper-${k}`; return m; });
     G.M = M;
     const fy = (room) => W.yOf(room);
     const solids = [];
@@ -186,9 +268,9 @@ export function installHospital(ext, G) {
     // 1.3.0 (2nd play test #12): the broken ceiling is built in js/ext/dress.js (a torn hole with joists and a pipe; stains elsewhere)
     for (let i = 0; i < 4; i++) plane('MACHI', 7.2 + i * 0.25, 25.4, 0.12, 0.28, M.cream, 0.01, 0.2 * i, -Math.PI / 2);
     // ---------------- 受付: papers on the floor, the window with the hand prints (a thing to look at) ----------------
-    for (let i = 0; i < 6; i++) flat('UKE', 17.4 + (i % 3) * 0.6, 22.3 + Math.floor(i / 3) * 1.1, 0.21, 0.3, M.paper, 0.01 + i * 0.001, i * 0.7);
+    for (let i = 0; i < 6; i++) flat('UKE', 17.4 + (i % 3) * 0.6, 22.3 + Math.floor(i / 3) * 1.1, 0.21, 0.3, M.papers[i % 5], 0.01 + i * 0.001, i * 0.7);
     // ---------------- カルテ庫: charts all over the floor ----------------
-    for (let i = 0; i < 14; i++) flat('KARTE', 1.6 + (i * 1.37) % 3.4, 10.4 + (i * 0.83) % 3.6, 0.24, 0.32, i % 3 ? M.paper : std(0x7b8a96, { roughness: 1, side: THREE.DoubleSide }), 0.01 + i * 0.0008, i * 0.9);
+    for (let i = 0; i < 14; i++) flat('KARTE', 1.6 + (i * 1.37) % 3.4, 10.4 + (i * 0.83) % 3.6, 0.24, 0.32, i % 3 ? M.papers[i % 5] : std(0x7b8a96, { roughness: 1, side: THREE.DoubleSide }), 0.01 + i * 0.0008, i * 0.9);
     // ---------------- 診察室: the sink that keeps running ----------------
     // ---------------- 階段ホール: wet footprints from the stairs ----------------
 
@@ -218,7 +300,7 @@ export function installHospital(ext, G) {
       G.drainHands = new THREE.Group(); G.drain.add(G.drainHands); G.drainHands.visible = false;
       for (let i = 0; i < 5; i++) { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.6, 8), [M.organ, M.white, M.cream][i % 3]); const ang = i * 1.25; a.position.set(Math.cos(ang) * 0.12, 0.25, Math.sin(ang) * 0.12); a.rotation.set(Math.sin(ang) * 0.4, 0, Math.cos(ang) * 0.4); G.drainHands.add(a); }
       box('JIMU', 7.3, 9.07, 0.7, 0.5, 0.03, M.dark, 1.3, false); plane('JIMU', 7.3, 9.09, 0.62, 0.42, M.cream, 1.55);
-      for (let i = 0; i < 5; i++) flat('JIMU', 7.0 + i * 0.5, 10.4 + (i % 2) * 0.6, 0.22, 0.3, M.paper, 0.01 + i * 0.001, i);
+      for (let i = 0; i < 5; i++) flat('JIMU', 7.0 + i * 0.5, 10.4 + (i % 2) * 0.6, 0.22, 0.3, M.papers[(i + 1) % 5], 0.01 + i * 0.001, i);
     }
     // ---------------- 霊安室: the hearse doors (両開き) in the east wall ----------------
     {
@@ -241,7 +323,22 @@ export function installHospital(ext, G) {
     // P1: water dripping from the pipe joints, hair caught in the pipes
     // P2: hand prints (a thing to look at), more hair
     // P3: a chart floating on the water (a thing), hair in the water
-    plane('P3', -17.2, -58.0, 0.22, 0.3, M.paper, 0.14, 0, -Math.PI / 2);
+    // 1.5.0 (#4, #17): the papers float ON the knee water (0.42 m) and bob; each a page of the hospital's records
+    G.floatPapers = [[-17.2, -58.0, 0], [-17.9, -63.4, 1], [-17.3, -66.8, 2], [-18.0, -52.5, 1], [-17.5, -71.2, 0], [-17.1, -47.6, 2]].map(([x, z, k], i) => {
+      const m = plane('P3', x, z, 0.22, 0.3, M.papers[k], 0.425, 0, -Math.PI / 2); m.rotation.z = i * 1.3; m.userData.bob = i; m.name = 'float-paper'; return m;
+    });
+    // (#2) the low passage P2: claw gouges, hand prints, rust runs and a gap in the wall with something in it, low on both walls (seen crouching)
+    {
+      const marks = [['gouge', -2.5, 1], ['stain', -4.6, -1], ['hands', -7.2, 1], ['gap', -9.4, -1], ['gouge', -11.6, -1], ['hands', -13.4, 1], ['stain', 0.0, -1], ['gap', -15.2, 1]];
+      marks.forEach(([k, x, side], i) => {
+        const m = std(0xffffff, { map: markTex(k, i + 3), transparent: true, depthWrite: false, roughness: 0.9 }); m.name = `p2-mark-${k}`;
+        const z = side > 0 ? -41.0 - 0.012 : -42.6 + 0.012, w = k === 'gap' ? 0.9 : 1.1;
+        const pl = plane('P2', x, z, w, k === 'gap' ? 0.45 : 1.0, m, k === 'gap' ? 0.62 : 0.55, side > 0 ? Math.PI : 0); pl.renderOrder = 2; pl.raycast = () => {}; pl.name = `p2-mark:${k}`;
+      });
+      // a burst pipe dribbling down the north wall, a vent with a pale finger through the slats
+      const pp = cyl('P2', -6.0, -42.45, 0.05, 0.05, 1.1, M.rust, 0.05, false, 8); void pp;
+      G.p2Vent = box('P2', -12.4, -42.56, 0.4, 0.22, 0.03, M.steel, 0.3, false);
+    }
     // P4: broken tiles, the broken jar on the floor
     for (let i = 0; i < 7; i++) flat('P4B', 5.6 + (i % 3) * 0.2, -82.0 + (i % 2) * 0.3, 0.08, 0.06, M.glass, 0.014, i).userData.rectOk = true;   // glass shards
     // P5: something dragged along the damp floor
@@ -299,7 +396,7 @@ export function installHospital(ext, G) {
       const hb = box(s.room, lx, lz, 0.4, 0.1, 0.18, M.emergOff, 2.82, false, alongZ ? Math.PI / 2 : 0);
       const glow = box(s.room, lx, lz, 0.32, 0.03, 0.12, M.emerg, 2.79, false, alongZ ? Math.PI / 2 : 0); glow.visible = false;
       void hb; G.lampFlame[id] = glow;
-      const e = { room: s.room, floor: 0, x: lx, y: fy(s.room) + 2.4, z: lz, i: 0, d: 17 }; lamps.push(e); G.lampEntry[id] = e;
+      const e = { room: s.room, floor: 0, x: lx, y: fy(s.room) + 2.4, z: lz, i: 0, d: 24 }; lamps.push(e); G.lampEntry[id] = e;   // 1.5.0 (#3): reach 24 m
     }
     G.hyoGlow = { room: 'HYOHON', floor: 0, x: 9, y: 2.4, z: -104, i: 0, d: 9 }; lamps.push(G.hyoGlow);
     G.tankGlow = { room: 'HYOHON', floor: 0, x: 6.9, y: 0.6, z: -104, i: 0, d: 4 }; lamps.push(G.tankGlow);
@@ -334,6 +431,42 @@ export function installHospital(ext, G) {
     const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(dp, 3));
     const drips = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xaac4c0, size: 0.035, transparent: true, opacity: 0.7, depthWrite: false })); drips.frustumCulled = false; grp.add(drips);
 
+    // ---------------- 1.5.0 (#17 「歩いたときに波紋」): wakes on the water, a pool of rings ----------------
+    const wakeM = new THREE.MeshBasicMaterial({ color: 0x7d8a78, transparent: true, opacity: 0, depthWrite: false });   // dim: a basic material ignores the dark
+    const rings = Array.from({ length: 14 }, () => { const m = new THREE.Mesh(new THREE.RingGeometry(0.93, 1, 32), wakeM.clone()); m.rotation.x = -Math.PI / 2; m.visible = false; m.renderOrder = 3; m.raycast = () => {}; m.name = 'mn-wake'; grp.add(m); return { m, t: 9 }; });
+    let ri = 0, last = null, herT = 0;
+    const waterY = (x, z) => { const r = W.roomAt(x, z); const lv = r != null ? G.waterAt[r] : null; return lv == null || !G.water[r] || !G.water[r].visible ? null : G.water[r].position.y; };
+    const spawn = (x, y, z, big) => { const R = rings[ri++ % rings.length]; R.t = 0; R.big = big; R.m.position.set(x, y + 0.006, z); R.m.visible = true; };
+    G.wake = spawn;
+    // the inflow: a sheet of water pouring over the sill of the watertight door into the corridor, the corridor water rising under it
+    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.0), M.stream.clone()); sheet.material.opacity = 0; sheet.visible = false; sheet.raycast = () => {}; sheet.name = 'mn-inflow';
+    sheet.rotation.x = -Math.PI / 2.6; sheet.position.set(2.6, fy('MOUTH') + 0.2, -0.25); grp.add(sheet);
+    let flow = null;
+    G.inflow = (sec, room, from, to) => { flow = { t: 0, sec, room, from, to }; sheet.visible = true; };
+    G.flowStep = (dt) => {
+      if (!flow) return;
+      flow.t += dt; const k = Math.min(1, flow.t / flow.sec), m = G.water[flow.room];
+      sheet.material.opacity = 0.75 * Math.sin(Math.PI * Math.min(1, k * 1.2)) * (0.85 + Math.random() * 0.15); sheet.scale.y = 0.8 + Math.random() * 0.25;
+      if (m) { m.visible = true; m.position.y = fy(flow.room) + flow.from + (flow.to - flow.from) * k; }
+      if (Math.random() < dt * 8) spawn(2.6 + (Math.random() - 0.5) * 1.2, fy(flow.room) + flow.from + (flow.to - flow.from) * k, 0.2 + Math.random() * 2.2, true);
+      if (k >= 1) { G.waterAt[flow.room] = flow.to; sheet.visible = false; flow = null; }
+    };
+    function wakes(dt) {
+      const c = ctx.camera.position;
+      if (ctx.floor === 0) {
+        const y = waterY(c.x, c.z);
+        if (y != null) { if (!last || Math.hypot(c.x - last.x, c.z - last.z) > 0.45) { if (last) spawn(c.x, y, c.z, false); last = { x: c.x, z: c.z }; } } else last = null;
+        const H = G.gh, f = G.chimera && G.chimera.root;
+        if (H && f && f.visible && H.mode !== 'off') { herT -= dt; if (herT <= 0) { herT = 0.45; const yy = waterY(f.position.x, f.position.z); if (yy != null) spawn(f.position.x, yy, f.position.z, true); } }
+      }
+      for (const R of rings) {
+        if (!R.m.visible) continue;
+        R.t += dt; const k = R.t / (R.big ? 1.9 : 1.4);
+        if (k >= 1) { R.m.visible = false; continue; }
+        const s = (R.big ? 0.4 : 0.22) + k * (R.big ? 1.6 : 0.9); R.m.scale.set(s, s, s); R.m.material.opacity = 0.2 * (1 - k) * (1 - k);
+      }
+    }
+
     grp.updateMatrixWorld(true);
     for (const s of solids) W.colliders.push({ box: new THREE.Box3().setFromObject(s), off: false });
     ctx.seatPickups && ctx.seatPickups();
@@ -356,6 +489,10 @@ export function installHospital(ext, G) {
         if (Math.random() < dt * 0.6 * fade && ctx.floor === 0 && ctx.audio && ctx.audio.noise) { const d = Rd.dr[Math.floor(Math.random() * Rd.dr.length)]; ctx.audio.noise('drip', { pos: { x: d.x, y: Rd.y0 + 0.05, z: d.z } }); }
       }
       if (G.tap) G.tap.scale.x = 1 + Math.sin(t * 30) * 0.2;
+      // 1.5.0 (#17): the ripple drifts; wakes spread round your legs (and hers) as you wade
+      if (G.floatPapers) for (const m of G.floatPapers) { m.position.y = fy('P3') + 0.425 + Math.sin(t * 1.3 + m.userData.bob) * 0.012; m.rotation.z += dt * 0.02 * (m.userData.bob % 2 ? 1 : -1); }
+      if (M.water.normalMap) { M.water.normalMap.offset.x = t * 0.03; M.water.normalMap.offset.y = Math.sin(t * 0.4) * 0.05; }
+      wakes(dt); G.flowStep(dt);
       M.torch.opacity = G.kurokiThere === false ? 0 : 0.5 + Math.sin(t * 1.3) * 0.12 + Math.sin(t * 4.1) * 0.06;
       // the watertight doors slide; their wheels spin while worked
       for (const D of Object.values(G.wt)) {

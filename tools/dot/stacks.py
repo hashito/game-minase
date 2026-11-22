@@ -53,6 +53,29 @@ M2 = ['hina-backpack', 'hina-camera', 'bucket-leak', 'number-display', 'receptio
       # 1.4.3: the large machines of the pump room as fine (res 2) dot parts
       'generator-off', 'generator-on', 'pump-unit']
 
+# 1.5.0 (3rd play test #2 #15): helper M3 parts drawn straight from the kit's design code (kit tools/sprite-stacks/design/fam_m3_minase.py,
+# kit 1.36.0), not through the catalog: id in the dot version -> (family, variant, res)
+# library wall marks for P2 (1.5.0), built with the M3 parts (--m3)
+PLAIN_M3 = {'claw-scratches': 'atmos-k3-claw-scratches', 'handprints': 'atmos-k3-handprints', 'pipe-drip': 'atmos-k3-pipe-drip',
+            'stain-wall': 'building-worn-wall-water-stained-plaster', 'recorder': 'game-recorder', 'wall-plaque': 'c-wall-plaque',
+            'candle-stub': 'atmos-k5-candle-stub', 'candle-jar': 'atmos-k5-candle-jar'}
+M3 = {**{f'jar-{k:02d}': ('minase-jar', f'{k:02d}', 1) for k in range(1, 21)},
+      'p2-gap-eyes': ('minase-p2-wall', 'eyes', 1), 'p2-gap-fingers': ('minase-p2-wall', 'fingers', 1), 'p2-gouge': ('minase-p2-wall', 'gouge', 1)}
+
+
+def build_m3(kit, fam, var, res):
+    design = os.path.join(kit, 'tools', 'sprite-stacks', 'design')
+    if design not in sys.path:
+        sys.path.insert(0, design)
+    import registry
+    if not registry.FAMILIES:
+        registry.load_families()
+    v = registry.build(fam, {'variant': var, 'res': res, 'seed': f'{fam}:{var}'})
+    vol = v.shade().transpose(2, 1, 0, 3).copy()          # (z, y, x) -> (x, y, z)
+    vol[..., 3] = np.where(vol[..., 3] > 127, 255, 0)
+    mpp = registry.SCALES[registry.FAMILIES[fam].scale] / max(1, getattr(v, 'res', 1))
+    return vol, round(mpp, 5)
+
 
 def load(kit, lib_id):
     if not hasattr(load, 'cat'):
@@ -102,12 +125,30 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--kit', required=True, help='a checkout of game-kit with the sprite-stack library')
     ap.add_argument('--sheet', help='write a review sheet of every stack (front, side, back, from above)')
+    ap.add_argument('--m3', action='store_true', help='only (re)build the M3 parts into the existing index')
     a = ap.parse_args()
     os.makedirs(OUT, exist_ok=True)
     index = {}
-    for out_id, lib in PLAIN.items():
+    if a.m3:
+        with open(os.path.join(OUT, 'index.json'), encoding='utf-8') as f:
+            index = json.load(f)
+        for out_id, (fam, var, res) in M3.items():
+            vol, mpp = build_m3(a.kit, fam, var, res)
+            save(vol, out_id, {'src': f'{fam}:{var}', 'mpp': mpp}, index)
+        for out_id, lib in PLAIN_M3.items():
+            vol, e = load(a.kit, lib)
+            save(vol, out_id, {'src': lib, 'mpp': e.get('metersPerPixel')}, index)
+        with open(os.path.join(OUT, 'index.json'), 'w', encoding='utf-8', newline='\n') as f:
+            json.dump(index, f, ensure_ascii=False, indent=1)
+            f.write('\n')
+        print(f'{len(M3)} M3 stacks -> {OUT}')
+        return
+    for out_id, lib in {**PLAIN, **PLAIN_M3}.items():
         vol, e = load(a.kit, lib)
         save(vol, out_id, {'src': lib, 'mpp': e.get('metersPerPixel')}, index)
+    for out_id, (fam, var, res) in M3.items():
+        vol, mpp = build_m3(a.kit, fam, var, res)
+        save(vol, out_id, {'src': f'{fam}:{var}', 'mpp': mpp}, index)
     for slug in M2:
         vol, e = load(a.kit, 'minase-m2-' + slug)
         save(vol, slug, {'src': 'minase-m2-' + slug, 'mpp': e.get('metersPerPixel')}, index)

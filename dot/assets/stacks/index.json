@@ -656,5 +656,222 @@
   "n": 82,
   "src": "minase-m2-pump-unit",
   "mpp": 0.0125
+ },
+ "jar-01": {
+  "w": 15,
+  "d": 16,
+  "n": 27,
+  "src": "minase-jar:01",
+  "mpp": 0.012
+ },
+ "jar-02": {
+  "w": 17,
+  "d": 18,
+  "n": 31,
+  "src": "minase-jar:02",
+  "mpp": 0.012
+ },
+ "jar-03": {
+  "w": 13,
+  "d": 14,
+  "n": 24,
+  "src": "minase-jar:03",
+  "mpp": 0.012
+ },
+ "jar-04": {
+  "w": 19,
+  "d": 20,
+  "n": 25,
+  "src": "minase-jar:04",
+  "mpp": 0.012
+ },
+ "jar-05": {
+  "w": 13,
+  "d": 15,
+  "n": 34,
+  "src": "minase-jar:05",
+  "mpp": 0.012
+ },
+ "jar-06": {
+  "w": 11,
+  "d": 11,
+  "n": 30,
+  "src": "minase-jar:06",
+  "mpp": 0.012
+ },
+ "jar-07": {
+  "w": 17,
+  "d": 18,
+  "n": 29,
+  "src": "minase-jar:07",
+  "mpp": 0.012
+ },
+ "jar-08": {
+  "w": 11,
+  "d": 12,
+  "n": 20,
+  "src": "minase-jar:08",
+  "mpp": 0.012
+ },
+ "jar-09": {
+  "w": 15,
+  "d": 16,
+  "n": 25,
+  "src": "minase-jar:09",
+  "mpp": 0.012
+ },
+ "jar-10": {
+  "w": 15,
+  "d": 17,
+  "n": 28,
+  "src": "minase-jar:10",
+  "mpp": 0.012
+ },
+ "jar-11": {
+  "w": 13,
+  "d": 15,
+  "n": 25,
+  "src": "minase-jar:11",
+  "mpp": 0.012
+ },
+ "jar-12": {
+  "w": 21,
+  "d": 22,
+  "n": 21,
+  "src": "minase-jar:12",
+  "mpp": 0.012
+ },
+ "jar-13": {
+  "w": 11,
+  "d": 13,
+  "n": 36,
+  "src": "minase-jar:13",
+  "mpp": 0.012
+ },
+ "jar-14": {
+  "w": 15,
+  "d": 16,
+  "n": 26,
+  "src": "minase-jar:14",
+  "mpp": 0.012
+ },
+ "jar-15": {
+  "w": 17,
+  "d": 18,
+  "n": 31,
+  "src": "minase-jar:15",
+  "mpp": 0.012
+ },
+ "jar-16": {
+  "w": 17,
+  "d": 19,
+  "n": 30,
+  "src": "minase-jar:16",
+  "mpp": 0.012
+ },
+ "jar-17": {
+  "w": 11,
+  "d": 13,
+  "n": 22,
+  "src": "minase-jar:17",
+  "mpp": 0.012
+ },
+ "jar-18": {
+  "w": 13,
+  "d": 15,
+  "n": 31,
+  "src": "minase-jar:18",
+  "mpp": 0.012
+ },
+ "jar-19": {
+  "w": 17,
+  "d": 18,
+  "n": 25,
+  "src": "minase-jar:19",
+  "mpp": 0.012
+ },
+ "jar-20": {
+  "w": 9,
+  "d": 9,
+  "n": 15,
+  "src": "minase-jar:20",
+  "mpp": 0.012
+ },
+ "p2-gap-eyes": {
+  "w": 39,
+  "d": 3,
+  "n": 26,
+  "src": "minase-p2-wall:eyes",
+  "mpp": 0.025
+ },
+ "p2-gap-fingers": {
+  "w": 39,
+  "d": 4,
+  "n": 26,
+  "src": "minase-p2-wall:fingers",
+  "mpp": 0.025
+ },
+ "p2-gouge": {
+  "w": 28,
+  "d": 1,
+  "n": 35,
+  "src": "minase-p2-wall:gouge",
+  "mpp": 0.025
+ },
+ "claw-scratches": {
+  "w": 53,
+  "d": 6,
+  "n": 71,
+  "src": "atmos-k3-claw-scratches",
+  "mpp": 0.025
+ },
+ "handprints": {
+  "w": 57,
+  "d": 3,
+  "n": 101,
+  "src": "atmos-k3-handprints",
+  "mpp": 0.025
+ },
+ "pipe-drip": {
+  "w": 69,
+  "d": 9,
+  "n": 29,
+  "src": "atmos-k3-pipe-drip",
+  "mpp": 0.025
+ },
+ "stain-wall": {
+  "w": 64,
+  "d": 7,
+  "n": 80,
+  "src": "building-worn-wall-water-stained-plaster",
+  "mpp": 0.05
+ },
+ "recorder": {
+  "w": 29,
+  "d": 16,
+  "n": 16,
+  "src": "game-recorder",
+  "mpp": 0.007
+ },
+ "wall-plaque": {
+  "w": 29,
+  "d": 3,
+  "n": 17,
+  "src": "c-wall-plaque",
+  "mpp": 0.012
+ },
+ "candle-stub": {
+  "w": 22,
+  "d": 21,
+  "n": 16,
+  "src": "atmos-k5-candle-stub",
+  "mpp": 0.007
+ },
+ "candle-jar": {
+  "w": 13,
+  "d": 13,
+  "n": 23,
+  "src": "atmos-k5-candle-jar",
+  "mpp": 0.007
  }
 }

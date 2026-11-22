@@ -13,7 +13,7 @@ const API = 'http://127.0.0.1:8765';
 const args = process.argv.slice(2), force = args.includes('--force'), dry = args.includes('--dry');
 const only = args.includes('--only') ? new Set(args[args.indexOf('--only') + 1].split(',')) : null;
 // VOICEVOX speakers (by the queue's speaker number) and speed per character
-export const VOICES = { 'ひなた': { speaker: 8, speed: 1.05 }, '黒木': { speaker: 13, speed: 0.95 }, '浅井': { speaker: 14, speed: 0.8 }, '私': { speaker: 11, speed: 1.0 } };
+export const VOICES = { 'ひなた': { speaker: 8, speed: 1.05 }, '黒木': { speaker: 13, speed: 0.95 }, '浅井': { speaker: 14, speed: 0.8 }, '私': { speaker: 11, speed: 1.0 }, '葛城': { speaker: 21, speed: 0.9 } };
 const talk = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/talk.json'), 'utf8'));
 const lines = new Map();
 const add = (L) => { if (L && L.id && L.text && VOICES[L.who] && !lines.has(L.id)) lines.set(L.id, L); };

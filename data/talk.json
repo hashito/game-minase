@@ -937,6 +937,29 @@
       "voice": "assets/voice/radio1-1.mp3"
     }
   ],
+  "tape": [
+    {
+      "who": "葛城",
+      "where": "録音",
+      "text": "九月十五日、二十三時五十分。研究棟の地下は、水の中だ。合成標本は、槽ごと沈んだ。",
+      "id": "tape-1",
+      "voice": "assets/voice/tape-1.mp3"
+    },
+    {
+      "who": "葛城",
+      "where": "録音",
+      "text": "……浅井くんが、槽のふちにいた。父親の瓶を抱えて。私は、扉を閉めるよう言った。",
+      "id": "tape-2",
+      "voice": "assets/voice/tape-2.mp3"
+    },
+    {
+      "who": "葛城",
+      "where": "録音",
+      "text": "水の中から、腕が何本も伸びて、彼女を……。あれは、標本だ。動くはずがない。記録は、ここで止める。",
+      "id": "tape-3",
+      "voice": "assets/voice/tape-3.mp3"
+    }
+  ],
   "radio2": [
     {
       "who": "ひなた",

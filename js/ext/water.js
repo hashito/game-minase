@@ -33,7 +33,7 @@ export function installWater(ext, G) {
     let best = null;
     for (const P of posts.values()) if (P.on && (!best || P.burn > best.burn)) best = P;
     chip.hidden = !best;
-    if (best) { const n = Math.max(0, Math.round((1 - best.burn) * 5)); chip.textContent = `止水弁：水が戻るまで ${'■'.repeat(n)}${'□'.repeat(5 - n)}`; chip.classList.toggle('mn-none', n <= 1); }
+    if (best) { const n = Math.max(0, Math.round((1 - best.burn) * 5)); chip.textContent = `${G.dryNow ? '乾いた床の上　' : ''}止水弁：水が戻るまで ${'■'.repeat(n)}${'□'.repeat(5 - n)}`; chip.classList.toggle('mn-none', n <= 1); }
   };
 
   const red = new THREE.MeshStandardMaterial({ color: 0x8a1d16, roughness: 0.55, metalness: 0.3 });
@@ -63,9 +63,14 @@ export function installWater(ext, G) {
     const g = add(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.1 : 0.6, def.along === 'z' ? 0.6 : across - 0.1), grateM, def.x, fy + 0.012, def.z); g.rotation.x = -Math.PI / 2;
     // 1.3.0 (2nd play test #10): the dry band is wet concrete that shows as the water runs into the grate (soft ragged edges, a sheen), not a grey
     // rectangle that appears at once
-    const mat = new THREE.MeshStandardMaterial({ color: 0x3a3e3b, roughness: 0.28, metalness: 0.25, alphaMap: bandAlpha(), transparent: true, depthWrite: false });
+    // 1.5.0 (3rd play test #12 「乾いた床が分かりにくい」): the dry band lies ON the water (it was under the knee water of P3), pale matt
+    // concrete with no sheen, a dark wet rim where the water stands against it (the rim plane under it), and the steps on it sound dry
+    const mat = new THREE.MeshStandardMaterial({ color: 0x9a9888, roughness: 0.97, metalness: 0, alphaMap: bandAlpha(), transparent: true, depthWrite: false });
+    mat.name = 'dry-floor';
     if (def.along !== 'z' && mat.alphaMap) { mat.alphaMap = mat.alphaMap.clone(); mat.alphaMap.center.set(0.5, 0.5); mat.alphaMap.rotation = Math.PI / 2; mat.alphaMap.needsUpdate = true; }   // the soft edges at the ends of the band, along the passage
-    const band = add(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.04 : 3.2, def.along === 'z' ? 3.2 : across - 0.04), mat, def.x, fy + 0.13, def.z); band.rotation.x = -Math.PI / 2; band.visible = false; band.renderOrder = 2;
+    const band = add(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.04 : 3.2, def.along === 'z' ? 3.2 : across - 0.04), mat, def.x, fy + 0.13, def.z); band.rotation.x = -Math.PI / 2; band.visible = false; band.renderOrder = 4;
+    const rimM = new THREE.MeshStandardMaterial({ color: 0x0d1210, roughness: 0.05, metalness: 0.6, transparent: true, opacity: 0.85, depthWrite: false }); rimM.name = 'dry-rim';
+    const rim = new THREE.Mesh(new THREE.PlaneGeometry(def.along === 'z' ? across - 0.04 : 3.6, def.along === 'z' ? 3.6 : across - 0.04), rimM); rim.rotation.x = -Math.PI / 2; rim.renderOrder = 3; rim.raycast = () => {}; band.add(rim); rim.rotation.x = 0; rim.position.z = -0.004;
     // 1.2.0 (#21): the [E] box spans the passage from wheel to wheel (either wheel, or the grate between, turns it)
     const hit = new THREE.Mesh(new THREE.BoxGeometry(def.along === 'z' ? across - 0.1 : 0.8, 1.2, def.along === 'z' ? 0.8 : across - 0.1), hidden);
     hit.position.set(def.x, fy + 1.15, def.z); hit.name = `valvehit:${def.id}`; hit.userData.interact = { kind: 'valve', id: def.id };
@@ -88,6 +93,7 @@ export function installWater(ext, G) {
   G.setPost = (id, on, burn = 0) => {
     const P = posts.get(id); if (!P) return;
     P.on = on; P.burn = burn; P.band.visible = on; P.band.scale.set(1, 1, 1); P.fill = on && burn === 0 && !G.restoring ? 0 : 1;
+    { const r = ctx.world.roomAt(P.def.x, P.def.z), lv = r != null ? G.waterAt && G.waterAt[r] : null; P.band.position.y = P.fy + Math.max(0.02, (lv || 0) + 0.012); }
     G.postsOn[id] = on; G.showValve();
   };
   function buildGrate(def) {
@@ -150,7 +156,8 @@ export function installWater(ext, G) {
       const k = Math.min(1 - P.burn, P.fill);
       if (P.along === 'z') P.band.scale.y = Math.max(0.05, k); else P.band.scale.x = Math.max(0.05, k);
       P.swirl.material.opacity = P.fill < 1 ? 0.7 * (1 - P.fill) : 0; P.swirl.rotation.z -= dt * 7;
-      P.mat.color.setRGB(0.29 * k + 0.12, 0.3 * k + 0.16, 0.29 * k + 0.17);
+      // pale and dry while it holds; it darkens back to wet as the water seeps in
+      P.mat.color.setRGB(0.2 + 0.42 * k, 0.21 + 0.41 * k, 0.19 + 0.36 * k); P.mat.roughness = 0.35 + 0.62 * k;
       if (P.burn >= 1) {
         G.setPost(P.def.id, false); P.press = false;
         ctx.sound('noise', 'splash');
@@ -158,7 +165,19 @@ export function installWater(ext, G) {
       }
     }
     if (any) G.showValve();
+    // standing on a dry band: the HUD says so (once a line, then the chip)
+    const c = ctx.camera.position, on = ctx.floor === 0 && G.onDry(c.x, c.z);
+    if (on !== G.dryNow) { G.dryNow = on; if (chip) chip.classList.toggle('mn-dry', !!on); if (on && !G.drySaid) { G.drySaid = true; ext.emit('minase:dry-first', {}); } }
   }
+  /** is (x, z) on a drained valve's dry band */
+  G.onDry = (x, z) => {
+    for (const P of posts.values()) {
+      if (!P.on) continue;
+      const k = Math.min(1 - P.burn, P.fill), half = 1.6 * k;
+      if (P.along === 'z' ? Math.abs(z - P.def.z) < half && Math.abs(x - P.def.x) < 1.2 : Math.abs(x - P.def.x) < half && Math.abs(z - P.def.z) < 1.2) return true;
+    }
+    return false;
+  };
 
   ext.on('game:ready', (c) => {
     ctx = c;

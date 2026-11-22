@@ -25,6 +25,7 @@ const at = (p) => new URL(p, LAYER).href;
 const FURN = { bench: 'bench', locker: 'locker', vendingMachine: 'vending', plant: 'plant', extinguisher: 'extinguisher', desk: 'desk', filingCabinet: 'filing',
   fileRack: 'karte-shelf', bed: 'exam-bed', pipeChair: 'pipe-chair', shelf: 'shelf', drum: 'drum', steelDesk: 'steel-desk', officeChair: 'office-chair',
   crate: 'crate', bodyCabinets: 'body-cabinets' };
+const FILL = /desk|shelf|filing|locker|cabinet|bench|bed|gurney|crate|drum|vending/;
 const FURN_ID = { F_RE_BED: 'gurney-shape' };   // 霊安室: the bed is a gurney with someone under the sheet
 // the items lying in the world (items.json kind / id) -> stack
 const ITEM_STACK = { FLASH: 'flashlight', KEY_B1: 'key', HEARSE_KEY: 'key', REN_PAPER: 'ren-paper', PAGE1: 'diary-pages', PAGE2: 'diary-pages', PAGE3: 'diary-pages', JAR: 'jar', NAMETAG: 'tag' };
@@ -113,7 +114,9 @@ export default async function dotLayer(ext, { manifest, data }) {
     const s = Math.min(bw / gs.x, bd / gs.z, (o.hmax || 2.6) / gs.y) * (o.k || 1);
     const sy = o.exactY ? size.y / gs.y : o.fillY ? Math.max(s, size.y / gs.y * 0.92) : s;
     const m = new THREE.Mesh(g, o.material || mat); m.castShadow = true; m.receiveShadow = true;
-    m.scale.set(Math.min(bw / gs.x, s * 1.25), sy, Math.min(bd / gs.z, s * 1.25));
+    // 1.5.0 (3rd play test #8 「机や開かない棚が小さい」): furniture fills the footprint of the plan (o.fill), it no longer shrinks to the
+    // part's own proportions inside it
+    if (o.fill) m.scale.set(bw / gs.x, sy, bd / gs.z); else m.scale.set(Math.min(bw / gs.x, s * 1.25), sy, Math.min(bd / gs.z, s * 1.25));
     m.rotation.y = face;
     m.position.set(c.x, box.min.y, c.z);
     m.name = `dot-stack:${k}`;
@@ -237,8 +240,17 @@ export default async function dotLayer(ext, { manifest, data }) {
       // never taller than the furniture it stands for: what lies on it (a paper, a jar) and who stands on it (ひなた on the pump-room desk,
       // hina.js rescue y 0.76) stay on its top, not inside it (hina-check: feet 32 cm into the desk); a desk, bed or bench top is exactly
       // where the game's was, so the papers on it lie on it (check-playtest P13: a chart 24 cm above a lower dot desk)
-      const st = fitStack(k, box, { face, hmax: (box.max.y - box.min.y) * 1.04, exactY: /desk|bed|bench|gurney/.test(k) || /desk|bed|bench/i.test(f.kind), fillY: k === 'karte-shelf' || k === 'shelf' || k === 'locker' || k === 'filing' });
-      W.group.add(st);
+      const fillY = k === 'karte-shelf' || k === 'shelf' || k === 'locker' || k === 'filing' || k === 'body-cabinets';
+      const o = { face, hmax: (box.max.y - box.min.y) * 1.04, exactY: /desk|bed|bench|gurney/.test(k) || /desk|bed|bench/i.test(f.kind) || fillY, fillY, fill: FILL.test(k) };
+      // a long row (a 5 m rack of charts) is several units side by side, each of its own real width, not one stretched or one shrunk
+      const gs = cgeo(k).boundingBox.getSize(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+      const q = Math.abs(Math.sin(face)) > 0.5, bw = q ? size.z : size.x, unit = gs.x * (size.y / gs.y), n = fillY ? Math.max(1, Math.round(bw / Math.max(0.4, unit))) : 1;
+      for (let i = 0; i < n; i++) {
+        const b = box.clone();
+        if (n > 1) { const a = q ? 'z' : 'x', L = (box.max[a] - box.min[a]) / n; b.min[a] = box.min[a] + i * L; b.max[a] = b.min[a] + L; }
+        const st = fitStack(k, b, o); if (i) st.name += `#${i}`;
+        W.group.add(st);
+      }
       D.furniture.push({ id: f.id, k, box: [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z].map((v) => +v.toFixed(2)) });
     }
       // what lies on the furniture (a chart, a diary page) rests on the stack's own top: a library desk's top is not always where the
@@ -467,8 +479,8 @@ export default async function dotLayer(ext, { manifest, data }) {
       // あれ
       const af = figures.are, H = G.gh;
       if (af && H && G.chimera && G.chimera.root.visible) {
-        const cam = ctx.camera.position, ps = G.project ? G.project(cam.x, cam.z).s : 0, gap = ps - (H.s || 0);
-        const st = H.pressing || (gap < 3 && H.mode === 'chase') ? 'attack' : H.sunk > 0 ? 'fear' : (H.mode !== 'off' && H.wait <= 0 && H.rise <= 0) ? 'walk' : 'idle';
+        const cam = ctx.camera.position, ps = G.project ? G.project(cam.x, cam.z).s : 0, gap = Math.abs(ps - (H.s || 0));
+        const st = H.anim ? H.anim : H.pressing || (gap < 3 && H.mode === 'chase') ? 'attack' : H.sunk > 0 ? 'fear' : (H.mode !== 'off' && H.wait <= 0 && H.rise <= 0) ? 'walk' : 'idle';
         af.anim.play(st);
         af.update(dt, { moved: st === 'walk' ? (H.mode === 'chase' ? 2.4 : 1.3) * dt / af.scale : 0 });
       }

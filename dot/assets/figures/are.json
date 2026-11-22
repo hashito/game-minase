@@ -1,10 +1,10 @@
 {
  "id": "are",
- "w": 82,
- "d": 118,
- "n": 192,
+ "w": 84,
+ "d": 126,
+ "n": 200,
  "pivot": [
-  39,
+  40,
   38
  ],
  "mpp": 0.0125,
@@ -89,8 +89,8 @@
   }
  },
  "src": {
-  "family": "monster-chimera",
-  "variant": "sickly",
+  "family": "monster-specimen",
+  "variant": "drowned",
   "params": {}
  }
 }

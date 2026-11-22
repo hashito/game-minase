@@ -5,7 +5,9 @@
 import * as THREE from 'three';
 import { W } from './words.js';
 
-const ROOM_SURFACE = { P3: 'water', P4B: 'water', B_ROKA: 'water', B_STAIR: 'water', MOUTH: 'water', P1: 'concrete', P2: 'concrete', P5: 'concrete', PUMP: 'concrete' };
+const ROOM_SURFACE = { P3: 'water', P4B: 'water', B_ROKA: 'water', B_STAIR: 'water', MOUTH: 'water', P1: 'water', P2: 'concrete', P5: 'concrete', PUMP: 'concrete' };
+// 1.5.0 (3rd play test #3 「非常灯をつけたときにもっと明るく」): 3.4 -> 8 (and 24 m of reach, hospital.js)
+const LAMP_I = 8;
 const PASSAGE = new Set(['P1', 'P2', 'P3', 'P4A', 'P4B', 'P5', 'HYOHON']);
 // the checkpoints of the run back (outside the low zone: you come back standing)
 const CP_GATE = { x: -5.2, z: -81.8, yaw: Math.PI / 2, floor: 0 }, CP_MID = { x: -17.2, z: -41.8, yaw: -Math.PI / 2, floor: 0 };
@@ -50,17 +52,20 @@ export function installStory(ext, G) {
   function apply() {
     if (!ctx || !G.water) return;
     G.genOn = done('T_GEN'); G.b1Light(done('T_GEN'));
-    for (const n of [1, 2, 3, 4]) { const id = `S_LAMP${n}`, on = done(`T_LAMP${n}`) && !G.lampsOut.includes(id); G.lampEntry[id].i = on ? 3.4 : 0; G.lampFlame[id].visible = on; }
+    for (const n of [1, 2, 3, 4]) { const id = `S_LAMP${n}`, on = done(`T_LAMP${n}`) && !G.lampsOut.includes(id); G.lampEntry[id].i = on ? LAMP_I : 0; G.lampFlame[id].visible = on; }
     G.hyoGlow.i = done('T_HYOHON') ? 1.4 : 0; G.tankGlow.i = done('T_HYOHON') ? 0.7 : 0;
     G.jar7.visible = !done('T_JAR');
     // the water
-    G.setWater('B_ROKA', 0.07); G.setWater('B_STAIR', 0.07); G.setWater('MOUTH', 0.07);
-    G.setWater('P3', 0.14); G.setWater('P4B', 0.09);
+    // 1.5.0 (3rd play test #17 「ひなたの部屋だけ深い」): the water stands at one level in rooms joined by an open door. While the pump is
+    // down (sealed, not yet rescued) the whole basement floor floods to 0.4 m with the pump room; the pump draws all of it down again.
+    const b1 = done('T_SEAL') && !done('T_RESCUE') ? 0.4 : 0.07;
+    G.setWater('B_ROKA', b1); G.setWater('B_STAIR', b1); G.setWater('MOUTH', done('T_BOUSUI') && !done('T_SEAL') ? Math.max(b1, 0.12) : b1);
+    G.setWater('P3', 0.42); G.setWater('P4B', 0.24);
     const flood = done('T_JAR') && !done('T_SEAL');
-    for (const r of ['P1', 'P2', 'P4A', 'P5']) G.setWater(r, flood || (r === 'P4A' && done('T_JAR')) ? 0.1 : null);
-    G.setWater('PUMP', done('T_SEAL') && !done('T_RESCUE') ? 0.62 : null);
+    for (const r of ['P1', 'P2', 'P4A', 'P5']) G.setWater(r, flood || (r === 'P4A' && done('T_JAR')) ? 0.12 : r === 'P1' ? 0.12 : null);
+    G.setWater('PUMP', done('T_SEAL') && !done('T_RESCUE') ? 0.4 : null);
     G.setWater('JIMU', done('T_LEDGER') && !done('T_THINK') ? 0.06 + (G.wrong || 0) * 0.18 : null, { drain: done('T_THINK') });
-    if (done('T_RESCUE')) G.waterResidue('PUMP', 0.62);   // 1.3.0 (#10): the line the flood left, also in a resumed game
+    if (done('T_RESCUE')) { G.waterResidue('PUMP', 0.4); G.waterResidue('B_ROKA', 0.4); }   // 1.3.0 (#10): the line the flood left, also in a resumed game
     if (done('T_THINK') && (G.wrong || 0) > 0) G.waterResidue('JIMU', 0.06 + G.wrong * 0.18);
     G.drainWater.visible = done('T_LEDGER') && !done('T_RETURN');
     G.drainHands.visible = done('T_THINK') && !done('T_RETURN');
@@ -85,7 +90,7 @@ export function installStory(ext, G) {
   }
 
   // ---------------- the emergency lights ----------------
-  G.lampOn = (id) => { G.lampEntry[id].i = 3.4; G.lampFlame[id].visible = true; const k = G.lampsOut.indexOf(id); if (k >= 0) G.lampsOut.splice(k, 1); ctx.world.setLampFloor(ctx.floor, true); };
+  G.lampOn = (id) => { G.lampEntry[id].i = LAMP_I; G.lampFlame[id].visible = true; const k = G.lampsOut.indexOf(id); if (k >= 0) G.lampsOut.splice(k, 1); ctx.world.setLampFloor(ctx.floor, true); };
   G.lampOut = (id) => { G.lampEntry[id].i = 0; G.lampFlame[id].visible = false; if (!G.lampsOut.includes(id)) G.lampsOut.push(id); ctx.world.setLampFloor(ctx.floor, true); ctx.sound('glitch'); };
   let relighting = false;
 
@@ -112,9 +117,12 @@ export function installStory(ext, G) {
       }
       return G.light0(true);
     };
-    ctx.stepSurfaceOf = (room) => ROOM_SURFACE[room] || null;
+    // 1.5.0 (#12): on a dry band the steps sound like dry concrete, not water
+    ctx.stepSurfaceOf = (room) => { const c = cam(); return G.onDry && ctx.floor === 0 && G.onDry(c.x, c.z) ? 'concrete' : ROOM_SURFACE[room] || null; };
     // the valves: only from the lesson on
     G.canTurn = (id) => {
+      // 1.5.0 (3rd play test #11 「一つ手前の止水弁を使うと回す理由がないと言われる」): while she comes in the lesson every valve works
+      if (G.gh && G.gh.mode === 'lesson') return true;
       if (id === 'K_LESSON') return done('T_GATE') ? true : W.valve_early;
       return done('T_POST') ? true : W.valve_early;
     };
@@ -159,7 +167,13 @@ export function installStory(ext, G) {
   // ---------------- L3: the basement and the passage ----------------
   ext.registerTask('T_GEN', { onDone: () => { G.genOn = true; G.b1Light(true); ctx.sound('noise', 'thud'); later(() => talk('gen_done', 'ポンプ室')); } });
   ext.registerTask('T_RADIO', { canStart: () => (done('T_GEN') ? true : W.radio_gen), onDone: () => later(() => talk('radio_done', '無線')) });
-  ext.registerTask('T_BOUSUI', { canStart: () => (done('T_RADIO') ? true : W.bousui_radio), onDone: () => { G.spinWheel('D_P1', 1.4); ctx.sound('creak'); door('D_P1').open(); later(() => talk('bousui_done', '防水扉'), 1200); } });
+  // 1.5.0 (3rd play test #17 「地下通路からのドアを開けた時に水が廊下に流れ込む」): the passage held its water behind the door; opened,
+  // it pours over the sill into the corridor (a sheet of water, the roar, the corridor water rising) before it settles
+  ext.registerTask('T_BOUSUI', { canStart: () => (done('T_RADIO') ? true : W.bousui_radio), onDone: () => { G.spinWheel('D_P1', 1.4); ctx.sound('creak'); door('D_P1').open(); inflow(); later(() => talk('bousui_done', '防水扉'), 2600); } });
+  function inflow() {
+    if (G.inflow) G.inflow(4.5, 'MOUTH', 0.07, 0.12);
+    later(() => { ctx.sound('noise', 'splash'); ctx.audio && ctx.audio.noiseBurst && ctx.audio.noiseBurst({ dur: 3.8, freq: 500, q: 0.7, gain: 0.55, type: 'lowpass', wet: 0.5, pos: { x: 2.6, y: 0.3, z: -0.6 } }); }, 400);
+  }
   for (const n of [1, 2, 3, 4]) ext.registerTask(`T_LAMP${n}`, {
     run: async () => { ctx.sound('noise', 'tap'); G.lampOn(`S_LAMP${n}`); return true; },
     onDone: () => { say('lamp_done', 3); if (n === 1) later(() => radio('radio1'), 9000); },
@@ -184,12 +198,12 @@ export function installStory(ext, G) {
   function lessonStart(again) {
     // 1.2.0 (#21 「最初に敵が出た時に触れても自分が死なない」): contact is a catch here too; back before the lesson, she comes again
     G.ghostStart('lesson', G.project(9, -81.8).s, { speed: 1.3, onCatch: () => { G.ghostStop(); ctx.checkpoint = { x: -3.4, z: -81.8, yaw: -Math.PI / 2, floor: 0 }; ctx.die('lesson'); } });
-    say(again ? 'lesson_again' : 'lesson_start', 5); ctx.sound('stinger');
+    say(again ? 'lesson_again' : 'lesson_start', 5); ctx.sound('stinger'); if (again) later(() => say('lesson_any', 5), 5200);
   }
   ext.on('minase:ghost-press', ({ id }) => {
-    if (id === 'K_LESSON' && !flag('post_ok')) { setFlag('post_ok'); talk('post_ok', '止水弁').then(() => say('valve_first', 5)); }
+    if ((id === 'K_LESSON' || (G.gh.mode === 'lesson' && G.posts.has(id))) && !flag('post_ok')) { setFlag('post_ok'); talk('post_ok', '止水弁').then(() => say('valve_first', 5)); }
   });
-  ext.on('minase:refill', ({ id }) => { if (id === 'K_LESSON' && G.gh.mode === 'lesson') { G.ghostFade(); ctx.completeTask('T_POST'); later(() => talk('post_done', '止水弁'), 1600); } });
+  ext.on('minase:refill', ({ id }) => { if (G.gh.mode === 'lesson' && G.posts.has(id)) { G.ghostFade(); ctx.completeTask('T_POST'); later(() => talk('post_done', '止水弁'), 1600); } });
   ext.on('minase:ghost-gone', ({ mode }) => {
     if (mode === 'lesson' && !done('T_POST')) later(() => { if (!done('T_POST') && ctx.state.room === 'P4B') lessonStart(true); }, 1500);
   });
@@ -197,6 +211,12 @@ export function installStory(ext, G) {
   let sankN = 0;
   ext.on('minase:ghost-sank', ({ on }) => { if (sankN++ < 3) say(on ? 'ghost_sank_on' : 'ghost_sank', 5); });
   ext.on('minase:valve-behind', () => say('valve_behind', 6));
+  ext.on('minase:dry-first', () => { if (!G.gh || G.gh.mode !== 'chase') say('dry_floor', 4); });
+  // 1.5.0 (3rd play test #18 / #9): she comes up ahead of you; she bangs on a shut door, then breaks it
+  ext.on('minase:ghost-ahead', () => later(() => say('chase_ahead', 5), 500));
+  let bangSaid = false;
+  ext.on('minase:door-bang', () => { if (!bangSaid) { bangSaid = true; later(() => say('door_bang', 4), 700); } });
+  ext.on('minase:door-forced', () => say('door_forced', 2.5));
   ext.on('minase:grate', () => { const n = G.grated.length; if (n >= 3) tryDone('T_SQ2'); else say('sq2_count', 3); });
 
   // ---------------- L4: the jar, the chase, the first watertight door, the pump room ----------------
@@ -240,7 +260,7 @@ export function installStory(ext, G) {
   });
   ext.registerTask('T_RESCUE', {
     canStart: () => (done('T_SEAL') ? true : done('T_GEN') ? W.pump_ok : W.pump_early),
-    onDone: () => { G.setWater('PUMP', null, { drain: true, sec: 7, at: { x: 2.2, y: 0.1, z: 10.1 } }); ctx.sound('noise', 'splash'); apply(); later(() => talk('rescue_done', 'ポンプ室')); },   // 1.3.0 (#10): the pump draws it down
+    onDone: () => { G.setWater('PUMP', null, { drain: true, sec: 7, at: { x: 2.2, y: 0.1, z: 10.1 } }); for (const r of ['B_ROKA', 'B_STAIR', 'MOUTH']) G.setWater(r, 0.07, { drain: true, sec: 8 }); ctx.sound('noise', 'splash'); apply(); later(() => talk('rescue_done', 'ポンプ室')); },   // 1.3.0 (#10): the pump draws it down
   });
 
   // ---------------- L5: the ledger, the questions under the water, the return, the endings ----------------
@@ -320,6 +340,7 @@ export function installStory(ext, G) {
     if (to === 'PUMP' && done('T_SEAL') && !done('T_RESCUE') && !flag('rescue_in')) { setFlag('rescue_in'); later(() => talk('rescue_in', 'ポンプ室'), 300); }
     if (to === 'P4A' && G.gh.mode === 'chase' && !flag('cp_gate')) { setFlag('cp_gate'); ctx.checkpoint = CP_GATE; takeSnap(); }
   });
+  ext.on('thing:look', ({ id }) => { if (id === 'HY_TAPE') { ctx.sound('noise', 'tap'); later(() => ctx.talk('tape', { title: 'カセットテープ「口述　九月」' }), 600); } });   // 1.5.0 (#10)
   ext.on('thing:look', ({ id }) => { if (id === 'GEN_DOOR' && done('T_FRONT') && !has('JAR') && !done('T_GIVE') && !done('T_RETURN')) ctx.talk('kuroki_wait', { title: '鎖の扉' }); else if (id === 'GEN_DOOR' && done('T_FRONT')) ans('front_again'); });   // 1.2.0 (#9): 黒木 answers at the door, face and all
 
   // ---------------- every frame ----------------
@@ -356,20 +377,23 @@ export function installStory(ext, G) {
     const c = cam();
     const ahead = (d) => { const p = G.routeAt(G.project(c.x, c.z).s - d); return { x: p.x, y: 1.2, z: p.z }; };
     switch (what) {
-      case 'drip': noise('drip', ahead(6), 6); say('ev_drip', 5); break;
+      // 1.5.0 (3rd play test #6): every line about a sound comes after the sound, near and loud enough to hear where it is
+      case 'drip': ctx.cueThenSay(() => noise('drip', ahead(4), 6), W.ev_drip, { lead: 1.2, sec: 5 }); break;
       case 'hair': say('ev_hair', 4); break;
       case 'flick': flick = 1.4; voice('whisper1'); say('ev_flick', 4); break;
-      case 'clang': noise('thud', { x: c.x, y: 2.4, z: c.z + 6 }, 2); ctx.body && ctx.body.play && ctx.body.play('stagger'); say('ev_clang', 4); break;
+      case 'clang': ctx.cueThenSay(() => { noise('thud', { x: c.x, y: 2.4, z: c.z + 4 }, 2); ctx.body && ctx.body.play && ctx.body.play('stagger'); }, W.ev_clang, { lead: 1.0, sec: 4 }); break;
       case 'low': say('ev_low', 5); break;
       case 'hands': say('ev_hands', 5); break;
-      case 'cross': G.ghostStart('peek', G.project(-17.6, -43.0).s, { speed: 0 }); peek = 2.2; ctx.sound('noise', 'splash'); ctx.sound('stinger'); voice('whisper1'); later(() => say('ev_cross', 4), 1200); break;
+      // 1.5.0 (3rd play test #1 「すっと消える」): she wades across the far end with a wrong gait, stops, turns her head to you, and is pulled
+      // under (chimera.js mode 'cross'); the line comes once she is gone
+      case 'cross': G.ghostStart('cross', G.project(-17.6, -46.5).s, { speed: 0 }); noise('splash', { x: -17.6, y: 0.3, z: -45 }, 2); ctx.sound('stinger'); voice('whisper1'); later(() => say('ev_cross', 4), 5200); break;
       case 'water': noise('splash', { x: c.x, y: 0.2, z: c.z }, 2); say('ev_water', 5); break;
-      case 'splash': noise('splash', { x: c.x, y: 0.2, z: c.z + 5 }, 3); say('ev_splash', 4); break;
+      case 'splash': ctx.cueThenSay(() => noise('splash', { x: c.x, y: 0.2, z: c.z + 3 }, 3), W.ev_splash, { lead: 1.1, sec: 4 }); break;
       case 'float': say('ev_float', 5); break;
-      case 'hum': black = 1.6; ctx.audio && ctx.audio.tone && ctx.audio.tone({ dur: 2.4, freq: 220, type: 'sine', gain: 0.035, vibrato: 4, wet: 0.6 }); say('ev_hum', 5); break;
+      case 'hum': black = 1.6; ctx.cueThenSay(() => ctx.audio && ctx.audio.tone && ctx.audio.tone({ dur: 3.4, freq: 220, type: 'sine', gain: 0.06, vibrato: 4, wet: 0.6 }), W.ev_hum, { lead: 1.4, sec: 5 }); break;
       case 'radio2': radio('radio2'); break;
       case 'drag': noise('scrape', ahead(8), 4); say('ev_drag', 4); break;
-      case 'clink': noise('tap', { x: 9, y: 1.2, z: -104 }, 5); voice('whisper2'); say('ev_clink', 4); break;
+      case 'clink': ctx.cueThenSay(() => noise('tap', { x: 9, y: 1.2, z: -101 }, 5), W.ev_clink, { lead: 1.3, sec: 4 }); later(() => voice('whisper2'), 3200); break;
     }
   }
   function voice(key) { const L = (ctx.data.talk[key] || [])[0]; if (!L) return; if (L.voice && ctx.voiceLine) ctx.voiceLine(L.voice, null, { prio: 'story' }); ctx.ui.say(`<span class="who">女の声</span>${L.text}`, 3); }

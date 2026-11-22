@@ -58,6 +58,9 @@
 //   1.22.0 (the 鏡屋 dot play test rolled out): P42 a mark (▼, arrow, the next-place pointer, a glow) drawn through a wall, every room
 //   (tools/mark-sight.mjs; js/mark-sight.js markSight().clear() fixes it); P43 a pickup cut into by another thing - a wall clock over an
 //   item (tools/pick-overlap.mjs)
+//   P56 (1.37.0, 水無瀬病院 #5) the map shows two player arrows after a step in the same room (js/map-svg.js) (an error)
+//   P57 (1.37.0, 水無瀬病院 #16) the bloom halo of a bright point is a square tile, not round (js/render-presets.js Post, pixel lowres) (an error)
+//   P58 (1.37.0, 水無瀬病院 #6) a thought about a sound (音・鳴った・聞こえた・はねた) said with or before its sound (tools/cue-order.mjs; play scripts too) (an error)
 //   P52 (1.32.0, 夜勤明けの街 「ゾンビのゲーム重すぎて開かない」): the JS heap behind the title - over 400 MB a warning, over 600 MB an error
 //   1.28.0 (夜勤明けの街 play test 2026-11-22; tools/rest-check.mjs): P47 a placed thing floating - nothing under it within 4 cm, not a thin wall
 //   thing against a wall, not hanging (「空中にものが浮いています（ラジオや紙）」); P48 a thing of a known kind out of body size - desks 0.66-0.8 m,
@@ -72,8 +75,10 @@
 //     content spilling out of a frame (error); an inner line drawn as a negative outline, a squashed picture (warning) (tools/frame-nest.mjs)
 //   1.21.0: P31 phone layout at 844x390 / 667x375 (landscape) and 390x844 (portrait): the HUD covers more than PHONE_HUD_MAX of the screen,
 //       two panels overlap (errors), the portrait notice is missing (tools/phone-layout.mjs: 「メッセージや通知で領域を使いすぎている」)
+//   1.36.0 (札の家 play test 2026-11-22): P53 a loud guide mark (over 30 px at 3 m, or nearly opaque: a warning); P54 a closed door or a story
+//   gate a body walks through (an error); P55 an [E] spot with nothing visible within 0.45 m of its centre (a warning)
 //   1.31.0: P49 a document read keeps its emphasis (glow, marks) or cannot be read again (「読んだら強調表示をやめるようにしてください」)
-// Exit 1 on an error (P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P44, P46, P49, P47 / P48 with checks.rest = "error", P52 over 600 MB) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+// Exit 1 on an error (P54, P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P44, P46, P49, P56, P57, P58, P47 / P48 with checks.rest = "error", P52 over 600 MB) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -92,6 +97,8 @@ import { menuPicturesSource, headButtonsSource, pictureRoomSource } from './menu
 import { markSightSource } from './mark-sight.mjs';
 import { pickOverlapSource } from './pick-overlap.mjs';
 import { restSource, sizeSource } from './rest-check.mjs';
+import { cueOrderSource } from './cue-order.mjs';
+const MARK_MAX = 30;   // P53: the guide mark's height on screen at 3 m, px on a 720 px view (js/guidance.js MARK_MAX_PX)
 // P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
 const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
 
@@ -325,6 +332,64 @@ try {
   for (const x of audit.p14) Wn('P14', `a paper on the wall lies flat (sticks out of the plaster): ${x}`);
   for (const x of audit.p13.slice(0, 20)) Wn('P13', `a thing floating in the air: ${x}`);
   for (const x of (audit.p21 || []).slice(0, 20)) Wn('P21', `z-fighting (two faces in one plane flicker): ${x}`);
+  // 1.36.0 (札の家 play test 2026-11-22, docs/playtest-findings.md):
+  // P53 a guide mark (the next-place pointer, a ▼ over a pickup) that is loud: taller than MARK_MAX_PX on a 720 px view at 3 m, or nearly opaque
+  //     (「▼が派手すぎるのでもう少し小さくて質素な感じに」). game.json pointer.look 'loud' opts the pointer out; userData.loudOk a mark of the game's own
+  // P54 a closed door (or a story gate collider) that a body walks through (「奥の部屋に扉があかなくても入れてしまう」): the step across it
+  //     must hit a solid box (ctx.fp.crosses). A door that should block but has no collider at all is the same error
+  // P55 an [E] station / thing whose box is not on its thing: nothing visible within 0.45 m of the box's centre (the spot floats beside what it
+  //     names: 「いぶしろのえん？について何も表示がありません」 - 燻し炉の縁 was a box on the bare floor a metre from the kiln)
+  {
+    const loudOk = !!(game.pointer && game.pointer.look === 'loud');
+    const r = await G(`(() => {
+      const T = g.THREE, W = g.world, cam = g.camera, out = { p53: [], p54: [], p55: [] };
+      const shown = (o) => { for (let x = o; x; x = x.parent) if (x.visible === false) return false; return true; };
+      g.scene.updateMatrixWorld(true);
+      const fov = (cam.fov || 72) * Math.PI / 180, px = (m) => (m / (2 * 3 * Math.tan(fov / 2))) * 720;
+      const seen = new Set();
+      g.scene.traverse((o) => {
+        if (!o.isSprite) return;
+        const mt = o.material || {}, guide = o.userData.guideMark || o.name === 'next-place' || /mark|pointer|arrow/i.test(mt.name || '') || /mark/i.test((o.parent && o.parent.name) || '');
+        if (!guide || o.userData.loudOk || /glow/i.test(mt.name || '')) return;
+        if (o.name === 'next-place' && ${loudOk}) return;
+        const key = (mt.uuid || '') + (o.name || ''); if (seen.has(key)) return; seen.add(key);
+        const s = new T.Vector3(); o.getWorldScale(s);
+        let size = Math.max(s.x, s.y);
+        if (o.name === 'next-place') { if (!o.visible) return; const d = o.position.distanceTo(cam.position) || 1; size = (size / d) * 3; }
+        const tall = px(size), op = mt.opacity == null ? 1 : mt.opacity;
+        if (tall > ${MARK_MAX} || op > 0.6) out.p53.push((o.name || mt.name || 'sprite') + ': ' + tall.toFixed(0) + ' px at 3 m, opacity ' + op.toFixed(2));
+      });
+      // P54: closed doors and story gates
+      const fp = g.fp, y0 = fp.floorY;
+      const across = (x, z, ax, fy) => { fp.floorY = fy; const a = ax === 'x' ? { x: x - 0.6, z } : { x, z: z - 0.6 }, b = ax === 'x' ? { x: x + 0.6, z } : { x, z: z + 0.6 }; const hit = fp.crosses(a, b) && fp.crosses(b, a); return hit; };
+      for (const [id, d] of (W.doors || new Map())) {
+        if (!d || !d.def || d.isOpen || d.def.x == null || d.def.kind === 'stairs' || d.def.kind === 'lift') continue;
+        if (d.def.open && !d.def.unlock) continue;
+        const room = (g.data.plan.rooms || []).find((r) => r.id === d.def.a), fy = W.floorY ? W.floorY((room && room.floor) || 0) : 0;
+        if (!d.col) { out.p54.push(id + ': closed, but it has no collider'); continue; }
+        const b = d.col.box, ax = (b.max.x - b.min.x) < (b.max.z - b.min.z) ? 'x' : 'z';
+        if (!across(d.def.x, d.def.z, ax, fy)) out.p54.push(id + ': closed, but a body walks through it');
+      }
+      for (const c of W.colliders || []) {
+        if (!c.gate || c.off || !c.box) continue;
+        const b = c.box, ax = (b.max.x - b.min.x) < (b.max.z - b.min.z) ? 'x' : 'z', cx = (b.min.x + b.max.x) / 2, cz = (b.min.z + b.max.z) / 2;
+        if (!across(cx, cz, ax, b.min.y)) out.p54.push('gate at ' + cx.toFixed(1) + ',' + cz.toFixed(1) + ': a body walks through it');
+      }
+      fp.floorY = y0;
+      // P55: an [E] box off its thing
+      const meshes = []; g.scene.traverse((m) => { if (!(m.isMesh || m.isInstancedMesh) || !shown(m)) return; const mats = [].concat(m.material || []); if (!mats.some((mt) => mt && mt.visible !== false && mt.colorWrite !== false)) return; const bb = new T.Box3().setFromObject(m); const z = bb.getSize(new T.Vector3()); if ([z.x, z.y, z.z].filter((v) => v > 2.5).length >= 2) return; meshes.push({ m, bb }); });
+      for (const it of W.interactables || []) {
+        const u = it.userData && it.userData.interact; if (!u || !shown(it) || it.userData.off || !(u.kind === 'station' || u.kind === 'look')) continue;
+        const c = new T.Box3().setFromObject(it).getCenter(new T.Vector3());
+        const near = meshes.some(({ m, bb }) => m !== it && !it.children.includes(m) && bb.distanceToPoint(c) < 0.45);
+        if (!near) out.p55.push(u.kind + ':' + u.id + ' at ' + c.x.toFixed(1) + ',' + c.y.toFixed(1) + ',' + c.z.toFixed(1));
+      }
+      return out;
+    })()`);
+    for (const x of r.p53) Wn('P53', `a guide mark is loud (make it small and plain: kit js/guidance.js QUIET_MARK): ${x}`);
+    for (const x of r.p54) E('P54', `a closed door lets a body through: ${x}`);
+    for (const x of r.p55) Wn('P55', `an [E] spot floats beside its thing (nothing visible within 0.45 m of its centre): ${x}`);
+  }
   // P17: people (js/npc-audit.js, 1.20.0): what the audit saw while the game ran, and now
   {
     await sleep(1200);
@@ -436,8 +501,8 @@ try {
     if (!seen.covers || !seen.onTop || !seen.button) E('P7', `death "${reason}": the card is not on screen (covers ${seen.covers}, on top ${seen.onTop}, button ${seen.button}) - play is held behind an invisible card`);
     await sleep(500); await G(`((document.querySelector('.gf-mo-card button') || { click() {} }).click(), 1)`); await sleep(1200);
     if (await G('g.blocked ? g.blocked() : false')) { await G(`([...document.querySelectorAll('.wm-layer .btn.primary')].filter((b) => b.offsetParent).forEach((b) => b.click()), 1)`); await sleep(800); }
-    // 1.34.1 (継ぎ目: the respawn spot starts a scene window 「南の扉 … 2 / 4 次へ」): a window that opened after the retry is paged through as a player does
-    for (let i = 0; i < 10 && await G('g.blocked ? g.blocked() : false') && await G('!!(g.wm && g.wm.isOpen)'); i++) { await G(`(([...document.querySelectorAll('.wm-win button, .wm-layer button')].filter((b) => b.offsetParent && /次へ|閉じる|わかった|OK|続ける|はじめる|歩き出す/.test(b.textContent)).pop()) || { click() {} }).click(), 1)`); await sleep(500); }
+    // 1.34.1 / 1.35.1 (継ぎ目: the respawn spot starts a scene window 「南の扉 … 2 / 4 次へ」): a window that opened after the retry is paged through as a player does
+    for (let i = 0; i < 10 && await G('g.blocked ? g.blocked() : false') && await G('!!(g.wm && g.wm.isOpen)'); i++) { await G(`((([...document.querySelectorAll('.wm-win button, .wm-layer button')].filter((b) => b.offsetParent && /次へ|閉じる|わかった|OK|続ける|はじめる|歩き出す/.test(b.textContent)).pop()) || { click() {} }).click(), 1)`); await sleep(500); }
     if (await G('g.blocked ? g.blocked() : false')) E('P7', `death "${reason}": still held after the retry button`);
   }
   // P23 / P24 (1.20.2, 札の家 ドット版): the UI on a phone. P23 text too close to its frame (warning); P24 every card and document opened at
@@ -530,6 +595,46 @@ try {
     })()`);
     for (const [id, why] of (Array.isArray(R) ? R : []).slice(0, 12)) E('P49', `doc "${id}": ${why}`);
   } else Wn('P49', 'ctx.wantsEmphasis is missing (kit < 1.31.0): read documents keep their emphasis');
+  // P56 (1.37.0, 水無瀬病院 #5 「マップで二重でやじるしがでる」): the map shows one player arrow - opened, the player moved inside the same room,
+  // opened again (js/map-svg.js baked a second, stale arrow into its static layer until 1.36.0)
+  if (await G('!!(g.tm && g.tm.open)')) {
+    const M = await G(`(async () => {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms)), n = () => document.querySelectorAll('.ms-svg .ms-playerG').length, out = [];
+      const c = g.camera.position, x0 = c.x, z0 = c.z;
+      try {
+        g.tm.open('map'); await sleep(400); out.push(n()); g.tm.close(); await sleep(150);
+        const r0 = g.state.room; c.x += 0.6; c.z += 0.4; if (g.state.room !== r0) { c.x = x0 - 0.6; c.z = z0 - 0.4; }
+        g.tm.open('map'); await sleep(400); out.push(n()); g.tm.close(); await sleep(150);
+      } finally { c.x = x0; c.z = z0; }
+      return out;
+    })()`);
+    if (Array.isArray(M)) M.forEach((k, i) => { if (k !== 1) E('P56', `the map shows ${k} player arrows (${i ? 'opened again after a step in the same room' : 'first open'}); one is the live arrow (js/map-svg.js renderFloor marker: false)`); });
+  }
+  // P57 (1.37.0, 水無瀬病院 #16 「光が四角形に見える」): the bloom halo round one bright point is round, not a square tile. The game is set to the
+  // high tier (bloom on) for a moment; one tiny over-bright ball 3 m ahead is drawn alone through the post pass; the halo is measured at the
+  // same distance along the axes and the diagonals (a square / bilinear tent is much brighter on the diagonal)
+  if (await G('!!(g.look && g.look.setTier)')) {
+    const B = await G(`(async () => {
+      const T = g.THREE, L = g.look, tier0 = L.tier, R = g.renderer;
+      try {
+        if (L.tier !== 'high') L.setTier('high');
+        const P = L.post; if (!P || !P.bloomOn) return { skip: 'no bloom on the high tier' };
+        const S = new T.Scene(); S.background = new T.Color(0, 0, 0);
+        const cam = g.camera, fwd = new T.Vector3(0, 0, -1).applyQuaternion(cam.quaternion);
+        const ds = R.getDrawingBufferSize(new T.Vector2()), px = (2 * 3 * Math.tan((cam.fov * Math.PI) / 360)) / ds.y;   // one buffer pixel at 3 m
+        const mat = new T.MeshBasicMaterial({ toneMapped: false }); mat.color.setRGB(60, 60, 60);
+        const ball = new T.Mesh(new T.SphereGeometry(px * 0.6, 8, 6), mat); ball.position.copy(cam.position).addScaledVector(fwd, 3); S.add(ball);
+        P.render(S, cam, 0);
+        const gl = R.getContext(), w = ds.x, h = ds.y, buf = new Uint8Array(w * h * 4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, buf);
+        ball.geometry.dispose(); mat.dispose();
+        const lum = (x, y) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= w || y >= h) return 0; const i = (y * w + x) * 4; return buf[i] * 0.2126 + buf[i + 1] * 0.7152 + buf[i + 2] * 0.0722; };
+        const cx = w / 2, cy = h / 2, rows = [];
+        for (const d of [2, 3, 4, 5, 6, 8]) { const ax = (lum(cx + d, cy) + lum(cx - d, cy) + lum(cx, cy + d) + lum(cx, cy - d)) / 4, q = d / Math.SQRT2, dg = (lum(cx + q, cy + q) + lum(cx - q, cy + q) + lum(cx + q, cy - q) + lum(cx - q, cy - q)) / 4; rows.push([d, +ax.toFixed(1), +dg.toFixed(1)]); }
+        return { rows, w, h, small: !!P.small };
+      } finally { if (L.tier !== tier0) L.setTier(tier0); }
+    })()`);
+    if (B && B.rows) for (const [d, ax, dg] of B.rows) if (Math.max(ax, dg) > 12 && (dg > ax * 1.6 + 4 || ax > dg * 1.6 + 4)) { E('P57', `the bloom halo of a bright point is not round at ${d} px (axis ${ax}, diagonal ${dg}; buffer ${B.w}x${B.h}${B.small ? ' lowres' : ''}): lights show as squares (js/render-presets.js Post)`); break; }
+  }
   // P43 (1.22.0): pickups clear of other things
   { const O = await G(pickOverlapSource()); for (const x of (Array.isArray(O) ? O : []).slice(0, 12)) E('P43', `pickup "${x[0]}": "${x[1]}" cuts into it by ${JSON.stringify(x[2])} m at ${JSON.stringify(x[3])}`); }
   // P47 / P48 (1.28.0, 夜勤明けの街): every placed thing rests on something; known kinds have a body-sized size (tools/rest-check.mjs).
@@ -616,6 +721,8 @@ try {
     } catch (e) { Wn('P31', `${w}x${h}: the phone layout pass could not run: ${e.message}`); }
     finally { await q.close(); }
   }
+  // P58 (1.37.0, 水無瀬病院 #6 「音が聞こえたの前にしっかり音を出してください」): every thought about a sound said during this run came after a sound
+  { const C = await G(cueOrderSource()); if (C && C.missing) Wn('P58', 'ctx.cueLog is missing (kit < 1.37.0): sound-before-line order unchecked'); else for (const x of (Array.isArray(C) ? C : []).slice(0, 8)) E('P58', `「${x.text}」: ${x.why}`); }
   if (p.errors.length) for (const e of [...new Set(p.errors)].filter((x) => !/favicon/.test(x)).slice(0, 5)) Wn('P0', `page error: ${e.slice(0, 200)}`);
 } catch (e) { E('P0', `the check could not run: ${e.message}`); }
 finally { await p.close(); server.kill(); }
