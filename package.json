@@ -20,6 +20,8 @@
     "check:contrast": "node tools/check-text-contrast.mjs index.html --hooks tools/contrast-hooks/std.mjs --viewport 390x844,1920x1080 --shots shots/contrast",
     "sync-kit": "node ../minase-kit/tools/kit-sync.js .",
     "build": "node tools/build-site.js && node tools/build-dot.mjs",
+    "check:figures": "node tools/figure-phone.mjs . --public --path dot-fps/ --query \"qa=1&scene=genkan\"",
+    "check:talk": "node tools/talk-move.mjs . --public --path dot-fps/ --query \"qa=1&scene=genkan\"",
     "check:traps": "node tools/check-traps-floors.mjs .",
     "data": "node tools/gen-data.mjs",
     "images": "node tools/gen-images.mjs"

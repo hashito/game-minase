@@ -32,11 +32,15 @@ export function installAnswers(ext, G) {
   ext.on('game:ready', (c) => {
     ctx = c;
     const cs0 = ctx.canStart;
+    let inner = false;
     ctx.canStart = (task) => {
       const r = cs0(task);
-      if (r === true || !task || typeof r !== 'string' || !GENERIC.test(r)) return r;
-      // 1.4.2 (dot rollout #7: no small completion comments): a place already done says what comes next, not that it is done
-      if (/^この作業は、もう終わっています/.test(r)) { const nx = ctx.nextTask && ctx.nextTask(); return nx && nx.title ? `次は、${nx.title}。` : W.done_here; }
+      if (inner || r === true || !task || typeof r !== 'string' || !GENERIC.test(r)) return r;
+      // 1.4.2 (dot rollout #7: no small completion comments): a place already done says what comes next, not that it is done.
+      // 1.4.5 (「ひなたと喋った後に携帯で動けなくなります」): ctx.nextTask asks ctx.canStart of every task, this one among them, and a done task
+      // asked for ctx.nextTask again - endless, a stack overflow on every frame once any task was done; the frame never reached the walk.
+      // While nextTask runs, the answers are the kit's own (inner).
+      if (/^この作業は、もう終わっています/.test(r)) { let nx = null; inner = true; try { nx = ctx.nextTask && ctx.nextTask(); } finally { inner = false; } return nx && nx.title ? `次は、${nx.title}。` : W.done_here; }
       return why(task) || W.not_yet;
     };
     // a station whose task is not open yet still offers [E] (the answer says what is missing)
