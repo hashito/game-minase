@@ -5,7 +5,11 @@
 import * as THREE from 'three';
 import { W } from './words.js';
 
-const ROOM_SURFACE = { P3: 'water', P4B: 'water', B_ROKA: 'water', B_STAIR: 'water', MOUTH: 'water', P1: 'water', P2: 'concrete', P5: 'concrete', PUMP: 'concrete' };
+// 1.6.0 (4th play test #5 「水の中を歩いているのに水の音がしません」): the step is the water under it (G.waterYAt): to the shin or deeper 'wade'
+// (kit 1.38.0: the leg pushed through, the splash of the foot), ankle water 'water', else the floor of the room
+const ROOM_SURFACE = { P2: 'concrete', P5: 'concrete', PUMP: 'concrete' };
+const W_LV = 0.42, FLOOD = 0.46, PRE = 0.56;   // the passage's knee water; after the jar; behind a shut watertight door (above its 0.5 m coaming)
+const PASS_W = ['P1', 'P2', 'P3', 'P4A'], PASS_E = ['P4B', 'P5'], B1W = ['B_ROKA', 'B_STAIR', 'MOUTH'];
 // 1.5.0 (3rd play test #3 「非常灯をつけたときにもっと明るく」): 3.4 -> 8 (and 24 m of reach, hospital.js)
 const LAMP_I = 8;
 const PASSAGE = new Set(['P1', 'P2', 'P3', 'P4A', 'P4B', 'P5', 'HYOHON']);
@@ -56,15 +60,10 @@ export function installStory(ext, G) {
     G.hyoGlow.i = done('T_HYOHON') ? 1.4 : 0; G.tankGlow.i = done('T_HYOHON') ? 0.7 : 0;
     G.jar7.visible = !done('T_JAR');
     // the water
-    // 1.5.0 (3rd play test #17 「ひなたの部屋だけ深い」): the water stands at one level in rooms joined by an open door. While the pump is
-    // down (sealed, not yet rescued) the whole basement floor floods to 0.4 m with the pump room; the pump draws all of it down again.
-    const b1 = done('T_SEAL') && !done('T_RESCUE') ? 0.4 : 0.07;
-    G.setWater('B_ROKA', b1); G.setWater('B_STAIR', b1); G.setWater('MOUTH', done('T_BOUSUI') && !done('T_SEAL') ? Math.max(b1, 0.12) : b1);
-    G.setWater('P3', 0.42); G.setWater('P4B', 0.24);
-    const flood = done('T_JAR') && !done('T_SEAL');
-    for (const r of ['P1', 'P2', 'P4A', 'P5']) G.setWater(r, flood || (r === 'P4A' && done('T_JAR')) ? 0.12 : r === 'P1' ? 0.12 : null);
-    G.setWater('PUMP', done('T_SEAL') && !done('T_RESCUE') ? 0.4 : null);
-    G.setWater('JIMU', done('T_LEDGER') && !done('T_THINK') ? 0.06 + (G.wrong || 0) * 0.18 : null, { drain: done('T_THINK') });
+    // 1.6.0 (4th play test #11 「水の各場面での水位を整理してつながったら同期するようにしてください」): one level for every set of rooms an
+    // open doorway joins, at every point of the story (levels()); a sill higher than the water stands in every doorway between two levels
+    // (hospital.js SILLS). Opening a watertight door brings the two sides together over its coaming (the pour), see the tasks below.
+    for (const [r, y] of Object.entries(levels())) G.setWater(r, y.y, y.o);
     if (done('T_RESCUE')) { G.waterResidue('PUMP', 0.4); G.waterResidue('B_ROKA', 0.4); }   // 1.3.0 (#10): the line the flood left, also in a resumed game
     if (done('T_THINK') && (G.wrong || 0) > 0) G.waterResidue('JIMU', 0.06 + G.wrong * 0.18);
     G.drainWater.visible = done('T_LEDGER') && !done('T_RETURN');
@@ -73,7 +72,7 @@ export function installStory(ext, G) {
     const p1 = door('D_P1'); if (done('T_BOUSUI') && !done('T_SEAL')) { if (!p1.isOpen) p1.open(); } else if (p1.isOpen) p1.close();
     const gt = door('D_GATE'); if (done('T_GATE') && !gt.isOpen) gt.open();
     const de = door('D_END'); if (done('T_JAR') && !done('T_ESCAPE') && de && !de.isOpen) de.open();   // the jar room's door stands open for the run back
-    for (const D of Object.values(G.wt)) D.open = D.d.isOpen ? 1 : 0;
+    for (const D of Object.values(G.wt)) { D.open = D.d.isOpen ? 1 : 0; D.want = D.open; }
     G.cabLock.visible = !done('T_LEDGER');
     G.hearseOpen = flag('end_name') || flag('end_return') ? 1 : null; G.hearseOut.visible = G.hearseOpen != null;
     G.hinaGo(hinaKey());   // 1.2.0 (#13): she walks there (a resumed game or a test scene places her)
@@ -81,6 +80,19 @@ export function installStory(ext, G) {
     sealSpot();
   }
   G.applyStory = apply;
+  /** the level of every basement room now: { room: { y, o } } */
+  function levels() {
+    const sealed = done('T_SEAL') && !done('T_RESCUE'), out = {};
+    const b1 = sealed ? 0.4 : done('T_BOUSUI') && !done('T_SEAL') ? 0.12 : 0.07;
+    for (const r of B1W) out[r] = { y: b1 };
+    out.PUMP = { y: sealed ? 0.4 : null }; out.REIAN = { y: sealed ? 0.4 : null };
+    out.JIMU = { y: sealed ? 0.4 : done('T_LEDGER') && !done('T_THINK') ? 0.06 + (G.wrong || 0) * 0.18 : null, o: { drain: done('T_THINK') } };
+    const lv = done('T_JAR') ? FLOOD : W_LV;
+    for (const r of PASS_W) out[r] = { y: done('T_BOUSUI') ? lv : PRE };
+    for (const r of PASS_E) out[r] = { y: done('T_GATE') ? lv : PRE };
+    return out;
+  }
+  G.levels = levels;
   // the [E] box on the MOUTH side of the open watertight door (the kit's door box is gone while the door stands open)
   let sealHit = null;
   function sealSpot() {
@@ -118,7 +130,11 @@ export function installStory(ext, G) {
       return G.light0(true);
     };
     // 1.5.0 (#12): on a dry band the steps sound like dry concrete, not water
-    ctx.stepSurfaceOf = (room) => { const c = cam(); return G.onDry && ctx.floor === 0 && G.onDry(c.x, c.z) ? 'concrete' : ROOM_SURFACE[room] || null; };
+    ctx.stepSurfaceOf = (room) => {
+      const c = cam(); if (ctx.floor !== 0) return null; if (G.onDry && G.onDry(c.x, c.z)) return 'concrete';
+      const wy = G.waterYAt && G.waterYAt(c.x, c.z), d = wy == null ? 0 : wy - ctx.world.floorY(0) - (G.sillLiftAt ? G.sillLiftAt(c.x, c.z) : 0);
+      return d >= 0.2 ? 'wade' : d > 0.03 ? 'water' : ROOM_SURFACE[room] || null;
+    };
     // the valves: only from the lesson on
     G.canTurn = (id) => {
       // 1.5.0 (3rd play test #11 「一つ手前の止水弁を使うと回す理由がないと言われる」): while she comes in the lesson every valve works
@@ -126,7 +142,7 @@ export function installStory(ext, G) {
       if (id === 'K_LESSON') return done('T_GATE') ? true : W.valve_early;
       return done('T_POST') ? true : W.valve_early;
     };
-    G.mouthShut = () => !door('D_P1').isOpen;
+    G.mouthShut = () => !door('D_P1').isOpen || (G.wt.D_P1 && G.wt.D_P1.open < 0.6);
     G.lampS = {}; for (const [id, e] of Object.entries(G.lampEntry)) G.lampS[id] = G.project(e.x, e.z).s;
     G.evS = EVENTS.map(([id, x, z, what]) => ({ id, s: G.project(x, z).s, what }));
     // the watertight doors: our own [E] (the handle), locked by the story
@@ -170,9 +186,12 @@ export function installStory(ext, G) {
   // 1.5.0 (3rd play test #17 「地下通路からのドアを開けた時に水が廊下に流れ込む」): the passage held its water behind the door; opened,
   // it pours over the sill into the corridor (a sheet of water, the roar, the corridor water rising) before it settles
   ext.registerTask('T_BOUSUI', { canStart: () => (done('T_RADIO') ? true : W.bousui_radio), onDone: () => { G.spinWheel('D_P1', 1.4); ctx.sound('creak'); door('D_P1').open(); inflow(); later(() => talk('bousui_done', '防水扉'), 2600); } });
+  // 1.6.0 (#11): the knee water of the passage (above the coaming behind the shut door) pours over it into the basement as the slab slides:
+  // the passage comes down to its level, the basement corridor up to the ankle-and-more of 0.12 m, all of it over 6.5 s
   function inflow() {
-    if (G.inflow) G.inflow(4.5, 'MOUTH', 0.07, 0.12);
-    later(() => { ctx.sound('noise', 'splash'); ctx.audio && ctx.audio.noiseBurst && ctx.audio.noiseBurst({ dur: 3.8, freq: 500, q: 0.7, gain: 0.55, type: 'lowpass', wet: 0.5, pos: { x: 2.6, y: 0.3, z: -0.6 } }); }, 400);
+    later(() => G.pourOver && G.pourOver('D_P1', 'MOUTH', 6.5), 1200);   // once the slab has slid a third of the way
+    for (const r of PASS_W) G.setWater(r, W_LV, { sec: 7.7, from: PRE });
+    for (const r of B1W) G.setWater(r, 0.12, { sec: 7.7, from: 0.07 });
   }
   for (const n of [1, 2, 3, 4]) ext.registerTask(`T_LAMP${n}`, {
     run: async () => { ctx.sound('noise', 'tap'); G.lampOn(`S_LAMP${n}`); return true; },
@@ -181,7 +200,8 @@ export function installStory(ext, G) {
   ext.registerTask('T_GATE', {
     canStart: () => (!flag('gate_seen') ? W.gate_look : G.gh.mode === 'gate' ? W.gate_wait : true),
     run: async () => { G.spinWheel('D_GATE', 1.4); ctx.sound('creak'); return true; },
-    onDone: () => { door('D_GATE').open(); },
+    // 1.6.0 (#11): the deeper water behind the second door pours over its coaming into P4A as it opens; both sides come to one level
+    onDone: () => { door('D_GATE').open(); for (const r of PASS_E) G.setWater(r, W_LV, { sec: 8.2, from: PRE }); later(() => G.pourOver && G.pourOver('D_GATE', 'P4A', 7), 1200); },
   });
   ext.registerTask('T_JAR', { onDone: () => rise() });
 
@@ -232,7 +252,11 @@ export function installStory(ext, G) {
     G.jar7.visible = false;
     await talk('rise', '病理標本室');
     ctx.setLight(false); G.lightOut = true; ctx.sound('stinger'); ctx.fx && ctx.fx.spook && ctx.fx.spook(1);
-    G.tankGlow.i = 1.6; apply();
+    G.tankGlow.i = 1.6;
+    // 1.6.0 (#11): the pipes burst as she rises: streams fall into the passage and the water comes up (one level everywhere it joins)
+    for (const r of [...PASS_W, ...PASS_E]) G.setWater(r, FLOOD, { sec: 16, from: W_LV });
+    if (G.pourFrom) for (const [x, z, r] of [[8.9, -92, 'P5'], [-17.6, -61, 'P3'], [-17.6, -74, 'P3'], [2.6, -20, 'P1'], [-9, -81.8, 'P4A']]) G.pourFrom(x, z, r, 16);
+    apply();
     { const d = door('D_END'); if (d && !d.isOpen) d.open(); }   // the way out stands open (she pushed it as she rose)
     takeSnap(); chaseFrom(0, 5.0);   // 5 s: time to turn, see what rises out of the tank, and still run
     ctx.checkpoint = { x: 9, z: -106.4, yaw: 0, floor: 0 };
@@ -258,12 +282,12 @@ export function installStory(ext, G) {
     if (done('T_LEDGER') && !done('T_THINK')) { G.wrong = 0; apply(); }
   });
   ext.registerTask('T_SEAL', {
-    run: async () => { const d = door('D_P1'); G.spinWheel('D_P1', 1.6); ctx.sound('noise', 'slide'); d.close(); G.ghostStop(); ctx.sound('noise', 'thud'); ctx.answer(W.seal_shut, 2.5); return true; },
-    onDone: () => { for (const P of G.posts.values()) G.setPost(P.def.id, false); apply(); later(async () => { await talk('seal_done', '防水扉'); say('rescue_go', 4); }, 600); },
+    run: async () => { const d = door('D_P1'); G.spinWheel('D_P1', 1.6); d.close(); G.ghostStop(); ctx.answer(W.seal_shut, 2.5); return true; },   // 1.6.0 (#9): the slab's own grind and clank (hospital.js)
+    onDone: () => { for (const P of G.posts.values()) G.setPost(P.def.id, false); for (const r of [...B1W, 'PUMP', 'JIMU', 'REIAN']) G.setWater(r, 0.4, { sec: 10 }); if (G.gurgle) G.gurgle({ x: 6, y: 0.1, z: 7.5 }, 6); apply(); later(async () => { await talk('seal_done', '防水扉'); say('rescue_go', 4); }, 600); },
   });
   ext.registerTask('T_RESCUE', {
     canStart: () => (done('T_SEAL') ? true : done('T_GEN') ? W.pump_ok : W.pump_early),
-    onDone: () => { G.setWater('PUMP', null, { drain: true, sec: 7, at: { x: 2.2, y: 0.1, z: 10.1 } }); for (const r of ['B_ROKA', 'B_STAIR', 'MOUTH']) G.setWater(r, 0.07, { drain: true, sec: 8 }); ctx.sound('noise', 'splash'); apply(); later(() => talk('rescue_done', 'ポンプ室')); },   // 1.3.0 (#10): the pump draws it down
+    onDone: () => { G.setWater('PUMP', null, { drain: true, sec: 7, at: { x: 2.2, y: 0.1, z: 10.1 } }); for (const r of B1W) G.setWater(r, 0.07, { drain: true, sec: 8 }); for (const r of ['JIMU', 'REIAN']) G.setWater(r, null, { drain: true, sec: 8 }); ctx.sound('noise', 'splash'); apply(); later(() => talk('rescue_done', 'ポンプ室')); },   // 1.3.0 (#10): the pump draws it down
   });
 
   // ---------------- L5: the ledger, the questions under the water, the return, the endings ----------------
@@ -273,6 +297,7 @@ export function installStory(ext, G) {
   });
   ext.registerTask('T_THINK', { run: async () => {
     const Q = ctx.data.water.think;
+    { const dj = door('D_JIMU'); if (dj && dj.isOpen) { dj.close(); ctx.audio && ctx.audio.noise && ctx.audio.noise('thud', { pos: { x: 9, y: 1, z: 9 } }); } }   // 1.6.0 (#1): the questions' water stands higher than the office's sill: the door shuts on it
     await ctx.talk([{ who: '私', text: Q.intro }], { title: '事務机' });
     G.wrong = G.wrong || 0;
     for (const [i, q] of Q.questions.entries()) {
@@ -379,19 +404,22 @@ export function installStory(ext, G) {
   function moment(what) {
     const c = cam();
     const ahead = (d) => { const p = G.routeAt(G.project(c.x, c.z).s - d); return { x: p.x, y: 1.2, z: p.z }; };
+    const behind = () => { const p = G.routeAt(G.project(c.x, c.z).s + 3.5); return { x: p.x, y: 1.0, z: p.z }; };   // the route runs from the tank (s 0) out: behind you on the way in is a larger s
     switch (what) {
       // 1.5.0 (3rd play test #6): every line about a sound comes after the sound, near and loud enough to hear where it is
       case 'drip': ctx.cueThenSay(() => noise('drip', ahead(4), 6), W.ev_drip, { lead: 1.2, sec: 5 }); break;
       case 'hair': say('ev_hair', 4); break;
       case 'flick': flick = 1.4; voice('whisper1'); say('ev_flick', 4); break;
-      case 'clang': ctx.cueThenSay(() => { noise('thud', { x: c.x, y: 2.4, z: c.z + 4 }, 2); ctx.body && ctx.body.play && ctx.body.play('stagger'); }, W.ev_clang, { lead: 1.0, sec: 4 }); break;
+      // 1.6.0 (4th play test #4 「振り向いても～は実際に自分が振り向いた場合に表示」「音が実際にするように」): the sound plays 3.5 m behind you on
+      // the way you came (kit ctx.cueBehind), loud and placed; the line comes only when you turn to look
+      case 'clang': ctx.cueBehind((p) => { noise('thud', { x: p.x, y: 2.4, z: p.z }, 2); ctx.audio && ctx.audio.noise && ctx.audio.noise('rattle', { pos: { x: p.x, y: 2.4, z: p.z } }); ctx.body && ctx.body.play && ctx.body.play('stagger'); }, W.ev_clang, { place: behind, sec: 4 }); break;
       case 'low': say('ev_low', 5); break;
       case 'hands': say('ev_hands', 5); break;
       // 1.5.0 (3rd play test #1 「すっと消える」): she wades across the far end with a wrong gait, stops, turns her head to you, and is pulled
       // under (chimera.js mode 'cross'); the line comes once she is gone
       case 'cross': G.ghostStart('cross', G.project(-17.6, -46.5).s, { speed: 0 }); noise('splash', { x: -17.6, y: 0.3, z: -45 }, 2); ctx.sound('stinger'); voice('whisper1'); later(() => say('ev_cross', 4), 5200); break;
       case 'water': noise('splash', { x: c.x, y: 0.2, z: c.z }, 2); say('ev_water', 5); break;
-      case 'splash': ctx.cueThenSay(() => noise('splash', { x: c.x, y: 0.2, z: c.z + 3 }, 3), W.ev_splash, { lead: 1.1, sec: 4 }); break;
+      case 'splash': ctx.cueBehind((p) => { noise('splash', { x: p.x, y: 0.35, z: p.z }, 3); const wy = G.waterYAt && G.waterYAt(p.x, p.z); if (wy != null && G.wake) for (let i = 0; i < 3; i++) G.wake(p.x + (Math.random() - 0.5) * 0.5, wy, p.z + (Math.random() - 0.5) * 0.5, true); }, W.ev_splash, { place: behind, sec: 4 }); break;
       case 'float': say('ev_float', 5); break;
       case 'hum': black = 1.6; ctx.cueThenSay(() => ctx.audio && ctx.audio.tone && ctx.audio.tone({ dur: 3.4, freq: 220, type: 'sine', gain: 0.06, vibrato: 4, wet: 0.6 }), W.ev_hum, { lead: 1.4, sec: 5 }); break;
       case 'radio2': radio('radio2'); break;

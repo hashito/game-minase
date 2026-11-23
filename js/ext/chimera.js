@@ -43,14 +43,17 @@ export function installChimera(ext, G) {
   // how fast she can go at s: the low pipes (P2) hold her back
   const slowAt = (s) => { const p = at(s), r = ctx.world.roomAt(p.x, p.z); return r === 'P2' ? 0.3 : 1; };   // 0.9 m/s: a little slower than you crouching (1.1)
   /** the dry bands and shut doors between her and the player (their s), nearest first */
+  const DOOR_GAP = 0.8;
   function blockers(from, to) {
     const out = [];
     for (const P of G.posts.values()) if (P.on) { const s = P.s ?? (P.s = project(P.def.x, P.def.z).s); if (s > from - 0.05 && s < to) out.push({ s: s - 1.4, P }); }
-    if (G.gateShut && G.gateShut()) { const s = G.gateS; if (s > from - 0.05 && s < to) out.push({ s, gate: true }); }
-    if (G.mouthShut && G.mouthShut()) { const s = G.mouthS; if (s > from - 0.05 && s < to + 1) out.push({ s, door: true }); }
+    // 1.6.0 (4th play test #6 「二枚目の防水扉のところでモンスターが扉を少し貫通しているように見えます」): her stop is 1.3 m short of a shut door's
+    // plane (it was 0.5 m: her reaching arms and the jars on her back went through the slab); check-playtest P61 / third.mjs #6b measure it
+    if (G.gateShut && G.gateShut()) { const s = G.gateS; if (s > from - 0.05 && s < to) out.push({ s: s - DOOR_GAP, gate: true }); }
+    if (G.mouthShut && G.mouthShut()) { const s = G.mouthS; if (s > from - 0.05 && s < to + 1) out.push({ s: s - DOOR_GAP, door: true }); }
     // 1.5.0 (3rd play test #9 「キメラが扉を貫通」): every other shut door on her way stops her too; in the chase she bangs on it and
     // forces it open after a while (story doors D_P1 / D_GATE above have their own rule)
-    for (const R of routeDoors) if (!R.d.isOpen && R.s > from - 0.05 && R.s < to + 0.6) out.push({ s: R.s - 0.5, shut: R });
+    for (const R of routeDoors) if (!R.d.isOpen && R.s > from - 0.05 && R.s < to + 0.6) out.push({ s: R.s - DOOR_GAP, shut: R });
     return out.sort((a, b) => a.s - b.s);
   }
   /** for dir -1 (she comes from ahead): the dry bands between the player and her, nearest to her first */
@@ -186,7 +189,7 @@ export function installChimera(ext, G) {
     fig.root.visible = vis;
     lit(vis ? (H.fade > 0 ? Math.max(0, 1 - H.fade / 1.4) : 1) * (1 + Math.sin(T * 7) * 0.08) * (H.flare > 0 ? 1 + H.flare : 1) : 0, p.x, p.z);
     const sink = H.fade > 0 ? H.fade * H.fade * 1.3 + (Math.sin(T * 31) > 0.6 ? 0.05 : 0) : 0, up = H.rise > 0 ? Math.max(0, H.rise - 0.4) * 0.9 : 0;
-    fig.root.position.set(p.x, ctx.world.floorY(0) + 0.15 - sink - up + Math.sin(T * 1.3) * 0.03, p.z);
+    fig.root.position.set(p.x, ctx.world.floorY(0) + 0.15 - sink - up + Math.sin(T * 1.3) * 0.03 + (G.sillLiftAt ? G.sillLiftAt(p.x, p.z) : 0), p.z);   // 1.6.0: over a sill she rises with it
     fig.root.rotation.y = p.yaw + (H.dir === -1 ? Math.PI : 0);
     fig.body.rotation.z = Math.sin(T * 2.4) * 0.06; fig.head.rotation.z = 0.35 + Math.sin(T * 0.9) * 0.12;
     for (const [i, s] of fig.strands.entries()) s.rotation.x = Math.sin(T * 1.7 + i) * 0.06;
@@ -277,7 +280,7 @@ export function installChimera(ext, G) {
     // 1.2.0 (#20) she lit the water round her (one warm light inside her, 12 m); 1.5.2: a cold rim behind her and a key from the water
     glow = new THREE.PointLight(0x9fbad0, 0, 4.2, 1.6); glow.name = 'mn-her-rim'; ctx.scene.add(glow);
     key = new THREE.PointLight(0x4f9c98, 0, 3.0, 1.3); key.name = 'mn-her-key'; ctx.scene.add(key);
-    fig = buildChimera(); fig.root.visible = false; ctx.world.group.add(fig.root); G.chimera = fig;
+    fig = buildChimera(); fig.root.visible = false; fig.root.userData.figure = 'are'; ctx.world.group.add(fig.root); G.chimera = fig;   // userData.figure: check-playtest P61 (a figure through a shut door)
     // warm-up: her materials compiled before play
     const warm = new THREE.Group(); warm.visible = false; warm.add(buildChimera().root); ctx.scene.add(warm); ctx.warmObjects = [...(ctx.warmObjects || []), warm];
     ctx.systems.push({ id: 'minase-chimera', def: { update: (dt, c2, active) => update(dt, active) }, inst: null });

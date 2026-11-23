@@ -125,13 +125,18 @@ export function installWater(ext, G) {
       if (P.press) { ctx.answer('あれが、乾いた床の向こうで止まっている。今開けたら、すぐに来る。'); return; }
       G.setPost(id, false); P.turn = -1; ctx.sound('creak'); ext.emit('minase:unvalve', { id }); ctx.save(); return;
     }
+    // 1.6.0 (4th play test #10 「防水弁は同時に１つしか利用できない制限をつけるべきです」): one valve holds at a time. Turning another lets the
+    // water back at the one that held (its wheels turn back, the water rushes in): you choose where to stand her off
+    const prev = [...posts.values()].filter((Q) => Q.on && Q !== P);
+    for (const Q of prev) { G.setPost(Q.def.id, false); Q.turn = -1; Q.press = false; if (G.gurgle) G.gurgle({ x: Q.def.x, y: Q.fy + 0.1, z: Q.def.z }, 0.8); ext.emit('minase:unvalve', { id: Q.def.id, by: id }); }
     G.setPost(id, true); P.turn = 1; ctx.sound('noise', 'splash'); ctx.sound('creak'); if (G.gurgle) G.gurgle({ x: P.def.x, y: P.fy + 0.1, z: P.def.z }, 1.8);
-    ext.emit('minase:valve', { id }); ctx.save();
+    if (prev.length) ctx.answer('止水弁は一つずつしか効かない。……前の弁のところに、水が戻った。', 3);
+    ext.emit('minase:valve', { id, released: prev.map((Q) => Q.def.id) }); ctx.save();
   }
   G.turnValve = postRun;
 
   ext.registerInteract('valve', {
-    prompt: (o) => { const P = posts.get(o.id); if (!P) return ''; if (P.on) return P.press ? '止水弁（水を抜いてある）' : '[E] 止水弁を開ける（水を戻す）'; return G.canTurn(o.id) === true ? '[E] 止水弁を回す（水を抜く）' : '止水弁'; },
+    prompt: (o) => { const P = posts.get(o.id); if (!P) return ''; if (P.on) return P.press ? '止水弁（水を抜いてある）' : '[E] 止水弁を開ける（水を戻す）'; if (G.canTurn(o.id) !== true) return '止水弁'; return [...posts.values()].some((Q) => Q.on) ? '[E] 止水弁を回す（前の弁の水は戻る）' : '[E] 止水弁を回す（水を抜く）'; },
     run: (o) => postRun(o.id),
   });
   ext.registerInteract('grate', {
@@ -142,6 +147,7 @@ export function installWater(ext, G) {
   // ---------------- every frame: the wheels turning, the water seeping back ----------------
   function update(dt, active) {
     for (const P of posts.values()) if (P.turn) { const k = Math.sign(P.turn); for (const w of P.wheels) w.children.forEach((c) => { c.rotation.z += k * dt * 8; }); P.turn = Math.abs(P.turn) > 0.02 ? P.turn - k * dt * 1.5 : 0; if (Math.sign(P.turn) !== k) P.turn = 0; }
+    for (const P of posts.values()) if (P.on && G.waterYAt) { const wy = G.waterYAt(P.def.x, P.def.z); if (wy != null) P.band.position.y = wy + 0.012; }   // 1.6.0: the dry band stays on the surface as it rises
     for (const P of posts.values()) { const c = P.on ? 0xff6a00 : G.canTurn && G.canTurn(P.def.id) === true ? 0x00ff3c : 0x241010; for (const l of P.lamps) l.material.color.setHex(c); }
     if (!active) return;
     let any = false;

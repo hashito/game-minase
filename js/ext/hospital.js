@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { buildHinata } from './people.js';
 import { lowZone } from '../kit/low-zone.js';
+import { buildSpecimenJars, SPECIMEN_KINDS } from '../kit/specimen-parts.js';
 
 // where each station's invisible [E] box goes (height above the floor; x / z moves; size of the box). Stations with a "look" are the kit's.
 const HIT = {
@@ -64,6 +65,36 @@ function paperTex(kind, seed = 1) {
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
 }
 
+/** a photograph lying on the water: the picture inside a white border (loaded from a file) */
+function photoTex(url) {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas'); c.width = 320; c.height = 256; const g = c.getContext('2d');
+  g.fillStyle = '#e6e1d2'; g.fillRect(0, 0, 320, 256); g.fillStyle = '#3a3a34'; g.fillRect(14, 14, 292, 212);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const im = new Image(); im.onload = () => { g.drawImage(im, 14, 14, 292, 212); g.fillStyle = 'rgba(120,110,80,0.25)'; g.fillRect(0, 200, 320, 56); t.needsUpdate = true; }; im.src = url;
+  return t;
+}
+/** 1.6.0 (4th play test #7 「壁に貼られたラベルが空中にうているように見えます」): the labels peeled off the jars, pasted in rows on the wall */
+function labelsTex() {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
+  let r = 77; const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  const org = ['右腕', '眼球', '皮膚（背）', '心臓', '左足', '手', '脳', '腎臓', '指', '肝臓', '舌', '耳'];
+  const kan = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八'];
+  for (let row = 0; row < 5; row++) for (let col = 0; col < 7; col++) {
+    if (rnd() < 0.12) continue;
+    const x = 8 + col * 72 + rnd() * 6, y = 8 + row * 50 + rnd() * 4, w = 62, h = 40, a = (rnd() - 0.5) * 0.12;
+    g.save(); g.translate(x + w / 2, y + h / 2); g.rotate(a); g.translate(-w / 2, -h / 2);
+    g.fillStyle = `rgb(${205 + rnd() * 20},${195 + rnd() * 20},${160 + rnd() * 20})`; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(110,90,50,0.25)'; g.fillRect(0, h - 8, w, 8);
+    g.fillStyle = '#2a2420'; g.font = '11px serif'; g.fillText(`第${kan[(row * 7 + col) % kan.length]}号`, 4, 13); g.fillText(org[(row * 3 + col) % org.length], 4, 27);
+    g.strokeStyle = 'rgba(175,30,25,0.9)'; g.lineWidth = 1.6; g.beginPath(); g.moveTo(3, 34); g.lineTo(w - 4, 33); g.stroke();
+    g.restore();
+  }
+  g.fillStyle = 'rgba(165,28,22,0.9)'; g.font = 'bold 22px serif'; g.fillText('合成標本へ', 360, 250);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return t;
+}
+
 /** 1.5.0 (3rd play test #2 「しゃがみ通路が単調」): marks for the walls of the low passage: claw gouges, hand prints, a rust run, a peek gap */
 function markTex(kind, seed = 1) {
   if (typeof document === 'undefined') return null;
@@ -112,6 +143,9 @@ export function installHospital(ext, G) {
       water: std(0x323a2a, { roughness: 0.22, metalness: 0.35, transparent: true, opacity: 0.93, depthWrite: false, normalMap: rippleTex(), normalScale: new THREE.Vector2(0.55, 0.55) }),
       formalin: std(0x8a7b30, { roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.85, emissive: 0x2a2408, emissiveIntensity: 0.6 }),
       jarLiquid: std(0xb3a148, { roughness: 0.1, transparent: true, opacity: 0.55, emissive: 0x2a2408, emissiveIntensity: 0.4, depthWrite: false }),
+      // 1.6.0 (#8): thin, darker glass and fluid - the pale double-sided glass and the glowing fluid washed every specimen to white in the torch
+      jarFluid: std(0x7d6e26, { roughness: 0.3, transparent: true, opacity: 0.2, depthWrite: false }),
+      jarGlass: std(0x8f9384, { roughness: 0.35, metalness: 0, transparent: true, opacity: 0.1, depthWrite: false }),
       organ: std(0x9b8a7a, { roughness: 0.6 }), heart: std(0x6b5550, { roughness: 0.55 }), chain: std(0x6a6c68, { metalness: 0.7, roughness: 0.4 }),
       hair: std(0x060606, { roughness: 0.5, side: THREE.DoubleSide }), torch: new THREE.MeshBasicMaterial({ color: 0xd8d2b0, transparent: true, opacity: 0.0 }),
       emerg: new THREE.MeshBasicMaterial({ color: 0x9ce8b8 }), emergOff: std(0x3a3f3c, { roughness: 0.6 }), black: std(0x050505, { roughness: 1 }),
@@ -170,10 +204,21 @@ export function installHospital(ext, G) {
       const pts = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xaec6c2, size: 0.03, transparent: true, opacity: 0.75, depthWrite: false })); pts.frustumCulled = false; g2.add(pts);
       G.residue[room] = { g: g2, dr, pos, dg, y0, t: 0, R };
     };
+    // 1.6.0 (4th play test #11 「水位を整理してつながったら同期」「水が入っていく表現」): G.setWater(room, y, { sec }) moves the surface to y
+    // over sec seconds, up or down (rooms an opened door joins come to one level as the water runs over the sill: G.pourOver)
+    G.moving = {};
     G.setWater = (room, y, o = {}) => {
       const m = G.water[room]; if (!m) return;
-      const cur = G.waterAt[room], D = G.draining[room];
+      const cur = G.waterAt[room], D = G.draining[room], Mv = G.moving[room];
       if (D && D.to === (y ?? null)) return;   // already going there
+      if (Mv && Mv.to === y) return;
+      if (o.sec && !o.drain && y != null && (o.from != null || cur == null || Math.abs(cur - y) > 0.004)) {
+        if (D) delete G.draining[room];
+        const from = o.from ?? (Mv || D ? m.position.y - fy(room) : cur ?? 0.004);
+        m.visible = true; m.position.y = fy(room) + from; G.moving[room] = { from, to: y, t: 0, sec: o.sec, m }; G.waterAt[room] = y;
+        return;
+      }
+      if (Mv) delete G.moving[room];
       if (o.drain && cur != null && (y == null || y < cur - 0.02)) {
         if (!m.userData.ownMat) { m.material = m.material.clone(); m.userData.ownMat = true; }   // the rooms share one water material
         G.draining[room] = { from: cur, to: y ?? null, t: 0, sec: o.sec || Math.max(4, cur * 9), m, room };
@@ -233,11 +278,51 @@ export function installHospital(ext, G) {
       // the heavy frame round the opening
       for (const s of [-1, 1]) { const o = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.3, 0.3), M.rust); o.position.set(s * (w / 2 + 0.084), 1.15, 0); g.add(o); }   // 4 mm back from the wall's end face (1.3.0: they shared one plane)
       const top = new THREE.Mesh(new THREE.BoxGeometry(w + 0.32, 0.2, 0.3), M.rust); top.position.set(0, 2.2, 0); g.add(top);
-      G.wt[id] = { d, slab, wheels, open: d.isOpen ? 1 : 0, spin: 0, w };
+      G.wt[id] = { d, slab, wheels, open: d.isOpen ? 1 : 0, want: d.isOpen ? 1 : 0, spin: 0, w };
     };
     wtDoor('D_P1'); wtDoor('D_GATE');
     G.spinWheel = (id, sec = 1.2) => { const D = G.wt[id]; if (D) D.spin = sec; };
-    G.gateShut = () => !W.doors.get('D_GATE').isOpen;
+    // 1.6.0 (4th play test #9 「防水扉は少しゆっくり開けしめ」): the slab slides over 3.4 s with the grind of steel on its track and a clank at the
+    // end; the way is open (to you and to her) only once it is more than 60 % open
+    G.gateShut = () => !W.doors.get('D_GATE').isOpen || (G.wt.D_GATE && G.wt.D_GATE.open < 0.6);
+    G.WT_SEC = 3.4;
+    G.doorSound = (D, want) => {
+      const A = ctx.audio; if (!A || !A.ctx) return; const pos = { x: D.d.def.x, y: fy(D.d.def.a) + 1.0, z: D.d.def.z };
+      A.noise && A.noise('scrape', { pos, gain: 1.4 });
+      A.noiseBurst && A.noiseBurst({ dur: G.WT_SEC - 0.2, freq: 150, q: 1.4, gain: 0.55, type: 'lowpass', wet: 0.5, pos });   // the grind on the track
+      A.noiseBurst && A.noiseBurst({ at: 0.2, dur: G.WT_SEC - 0.6, freq: 900, q: 6, gain: 0.08, wet: 0.5, sweep: want ? 0.8 : 1.2, pos });   // the squeal of the rollers
+      A.noise && setTimeout(() => { A.noise('thud', { pos, gain: 1.5 }); A.noise('rattle', { pos }); }, G.WT_SEC * 1000);
+    };
+
+    // ---------------- 1.6.0 (4th play test #1 「水の断面が見える作りはやめてください」, #11): sills ----------------
+    // Every doorway between two waters that can stand at different levels has a concrete sill higher than the higher water, so the side of
+    // the water ends against it (check-playtest P60 walks every edge of every surface). The watertight doors have a high coaming (0.5 m) with
+    // a step on each side, the specimen room a raised threshold, the doors of the basement rooms an ankle sill. Rooms an open doorway joins
+    // share one level (story.js levels()). You step over a sill (the eye rises, G.sillLiftAt) and so does she (chimera.js).
+    const SILLS = { D_P1: 0.5, D_GATE: 0.5, D_END: 0.5, D_PUMP: 0.22, D_JIMU: 0.22, D_REIAN: 0.22 };
+    const sillM = std(0x6b6c64, { roughness: 0.95 }); sillM.name = 'concrete-sill';
+    G.sills = [];
+    for (const [id, h] of Object.entries(SILLS)) {
+      const d = W.doors.get(id); if (!d) continue;
+      const def = d.def, R = W.rooms.get(def.a).room, y0 = fy(def.a);
+      const alongX = Math.abs(def.z - R.z) < 0.2 || Math.abs(def.z - (R.z + R.d)) < 0.2;   // the door's plane runs along x (a north / south wall)
+      const w = (def.width || 1.1) + 0.14, dep = 0.26;
+      const add = (hh, dd, off) => { const m = new THREE.Mesh(new THREE.BoxGeometry(alongX ? w : dd, hh, alongX ? dd : w), sillM); m.position.set(def.x + (alongX ? 0 : off), y0 + hh / 2, def.z + (alongX ? off : 0)); m.name = `sill:${id}`; m.castShadow = true; m.receiveShadow = true; grp.add(m); return m; };
+      add(h, dep, 0);
+      if (h > 0.3) for (const s of [-1, 1]) add(h / 2, 0.3, s * (dep / 2 + 0.15));   // a step up on each side
+      G.sills.push({ id, x: def.x, z: def.z, alongX, half: w / 2, h, dep, y0 });
+    }
+    /** the height of the sill (or its step) under (x, z): 0 off the sills */
+    G.sillLiftAt = (x, z) => {
+      for (const S of G.sills) {
+        const a = S.alongX ? Math.abs(x - S.x) : Math.abs(z - S.z), d = S.alongX ? Math.abs(z - S.z) : Math.abs(x - S.x);
+        if (a > S.half) continue;
+        if (d < S.dep / 2 + 0.05) return S.h;
+        if (S.h > 0.3 && d < S.dep / 2 + 0.35) return S.h / 2;
+      }
+      return 0;
+    };
+    G.sillY = 0;
 
     // ---------------- 玄関ホール: the glass front door with the chain round its handles, 黒木's torch behind it ----------------
     {
@@ -323,10 +408,25 @@ export function installHospital(ext, G) {
     // P1: water dripping from the pipe joints, hair caught in the pipes
     // P2: hand prints (a thing to look at), more hair
     // P3: a chart floating on the water (a thing), hair in the water
-    // 1.5.0 (#4, #17): the papers float ON the knee water (0.42 m) and bob; each a page of the hospital's records
-    G.floatPapers = [[-17.2, -58.0, 0], [-17.9, -63.4, 1], [-17.3, -66.8, 2], [-18.0, -52.5, 1], [-17.5, -71.2, 0], [-17.1, -47.6, 2]].map(([x, z, k], i) => {
-      const m = plane('P3', x, z, 0.22, 0.3, M.papers[k], 0.425, 0, -Math.PI / 2); m.rotation.z = i * 1.3; m.userData.bob = i; m.name = 'float-paper'; return m;
-    });
+    // 1.6.0 (4th play test #2 「水に浮いている紙などもアイテムみたいな形で表示するべきです。写真も」): the papers on the water are documents
+    // (docs DOC_F_*: [E] to read, a picture on each), drawn as the page they are (a chart, a ledger, a consent form, a photograph), a little
+    // larger than before, lying ON the surface wherever it stands and bobbing; a pale rim round each until it has been read. (dressFloatDocs)
+    const FLOAT = { DOC_F_KARTE: 'chart', DOC_F_LEDGER: 'ledger', DOC_F_CONSENT: 'form', DOC_F_PHOTO: 'photo' };
+    G.floatDocs = [];
+    const dressFloatDocs = () => {
+      let i = 0;
+      for (const [id, k] of Object.entries(FLOAT)) {
+        const pk = W.interactables.find((o) => o.name === `doc:${id}`); if (!pk || G.floatDocs.some((f) => f.pk === pk)) continue;
+        const model = pk.userData.model; if (model) model.visible = false;
+        const tex = k === 'photo' ? photoTex('assets/photos/doc-float-photo.webp') : paperTex(k, i + 1);
+        const sheet = new THREE.Mesh(new THREE.PlaneGeometry(k === 'photo' ? 0.2 : 0.26, k === 'photo' ? 0.16 : 0.35), std(0xffffff, { roughness: 1, side: THREE.DoubleSide, map: tex }));
+        sheet.rotation.set(-Math.PI / 2, 0, i * 1.1 + 0.3); sheet.name = `float-doc:${id}`; sheet.renderOrder = 3; sheet.raycast = () => {};
+        const rim = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0xe8f0dc, transparent: true, opacity: 0.0, depthWrite: false })); rim.name = 'float-doc-rim'; rim.renderOrder = 2; rim.raycast = () => {};
+        rim.scale.set(sheet.geometry.parameters.width + 0.05, sheet.geometry.parameters.height + 0.05, 1); rim.position.z = -0.002; sheet.add(rim);
+        grp.add(sheet); G.floatDocs.push({ id, pk, sheet, rim, bob: i * 1.7 }); i++;
+      }
+    };
+    G.dressFloatDocs = dressFloatDocs;
     // (#2) the low passage P2: claw gouges, hand prints, rust runs and a gap in the wall with something in it, low on both walls (seen crouching)
     {
       const marks = [['gouge', -2.5, 1], ['stain', -4.6, -1], ['hands', -7.2, 1], ['gap', -9.4, -1], ['gouge', -11.6, -1], ['hands', -13.4, 1], ['stain', 0.0, -1], ['gap', -15.2, 1]];
@@ -339,6 +439,15 @@ export function installHospital(ext, G) {
       const pp = cyl('P2', -6.0, -42.45, 0.05, 0.05, 1.1, M.rust, 0.05, false, 8); void pp;
       G.p2Vent = box('P2', -12.4, -42.56, 0.4, 0.22, 0.03, M.steel, 0.3, false);
     }
+    // P4B: the labels peeled off the jars (thing P4_LABELS), flat on the plaster of the south wall (found by a ray: never in the air)
+    {
+      const lm = std(0xffffff, { roughness: 0.95, map: labelsTex(), transparent: true, alphaTest: 0.05 }); lm.name = 'labels-paper';
+      const pl = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.65), lm); pl.name = 'p4-labels'; pl.raycast = () => {};
+      const from = new THREE.Vector3(1.0, fy('P4B') + 1.4, -81.8), ray = new THREE.Raycaster(from, new THREE.Vector3(0, 0, -1), 0, 2);
+      W.group.updateMatrixWorld(true);
+      const hit = ray.intersectObjects(W.group.children.filter((o) => o !== grp), true).find((h) => h.object.isMesh && h.face && h.object.material && h.object.material.visible !== false && h.object.material.colorWrite !== false && !/^(look|station|item|doc):/.test(h.object.name));
+      pl.position.set(1.0, fy('P4B') + 1.4, hit ? hit.point.z + 0.006 : -82.515); grp.add(pl); G.labelsAt = pl.position.z;
+    }
     // P4: broken tiles, the broken jar on the floor
     for (let i = 0; i < 7; i++) flat('P4B', 5.6 + (i % 3) * 0.2, -82.0 + (i % 2) * 0.3, 0.08, 0.06, M.glass, 0.014, i).userData.rectOk = true;   // glass shards
     // P5: something dragged along the damp floor
@@ -350,17 +459,17 @@ export function installHospital(ext, G) {
       for (const [x, face] of [[12.75, -1], [5.25, 1]]) {
         for (const y of [0.5, 1.0, 1.5, 2.0]) box('HYOHON', x, -104, 0.45, 0.04, 6.4, shelfM, y, false);
         for (const zz of [-107.1, -100.9]) box('HYOHON', x, zz, 0.45, 2.2, 0.04, shelfM, 0, true);
-        for (const y of [0.52, 1.02, 1.52, 2.02]) for (let z = -106.8; z < -101; z += 0.3) if (Math.sin(z * 7.3 + y * 3.1 + x) > -0.6 && !(x < 6 && y < 0.6 && z > -105.2 && z < -102.8)) rows.push([x + face * 0.02, y, z]);
+        for (const y of [0.54, 1.04, 1.54, 2.04]) for (let z = -106.8; z < -101; z += 0.3) if (Math.sin(z * 7.3 + y * 3.1 + x) > -0.6 && !(x < 6 && y < 0.6 && z > -105.2 && z < -102.8)) rows.push([x + face * 0.02, y, z, face]);
       }
-      const jarG = new THREE.CylinderGeometry(0.1, 0.1, 0.32, 10), lidG = new THREE.CylinderGeometry(0.105, 0.105, 0.04, 10), orgG = new THREE.SphereGeometry(0.075, 8, 6);
-      const jars = new THREE.InstancedMesh(jarG, M.jarLiquid, rows.length), lids = new THREE.InstancedMesh(lidG, M.dark, rows.length), orgs = new THREE.InstancedMesh(orgG, M.organ, rows.length), o = new THREE.Object3D();
-      rows.forEach(([x, y, z], i) => {
-        o.position.set(x, fy('HYOHON') + y + 0.16, z); o.rotation.set(0, 0, 0); o.scale.set(1, 1, 1); o.updateMatrix(); jars.setMatrixAt(i, o.matrix);
-        o.position.y = fy('HYOHON') + y + 0.34; o.updateMatrix(); lids.setMatrixAt(i, o.matrix);
-        o.position.y = fy('HYOHON') + y + 0.12; o.scale.set(1 + (i % 3) * 0.2, 0.8 + (i % 4) * 0.15, 1); o.updateMatrix(); orgs.setMatrixAt(i, o.matrix);
-      });
-      for (const im of [jars, lids, orgs]) { im.frustumCulled = false; grp.add(im); }
-      jars.renderOrder = 2;
+      // 1.6.0 (4th play test #8 「標本室のホルマリンが改善されていないです。腕や臓器などいろいろな物をホルマリンにつけてください」): each jar holds
+      // one thing you know at a glance - a hand, an arm, a heart with its vessels, a brain, a pair of kidneys, eyes, a foot on its heel, cut
+      // fingers - as fine dot models (game-kit js/specimen-parts.js, 5 mm voxels), never two of a kind side by side; large jars on the floor
+      // under the shelves hold whole forearms and feet. Each faces the room, its label out.
+      const K = SPECIMEN_KINDS, spots = rows.map(([x, y, z, face], i) => ({ x, y: fy('HYOHON') + y, z, yaw: face > 0 ? Math.PI / 2 : -Math.PI / 2, kind: K[(i * 3 + Math.round(y * 2)) % K.length] }));
+      for (const [x, z, kind, face] of [[12.62, -106.55, 'arm', -1], [12.62, -105.2, 'foot', -1], [12.62, -103.5, 'brain', -1], [12.62, -101.6, 'arm', -1], [5.4, -106.55, 'foot', 1], [5.4, -101.5, 'arm', 1]])
+        spots.push({ x, y: fy('HYOHON') + 0.005, z, yaw: face > 0 ? Math.PI / 2 : -Math.PI / 2, kind, big: true });
+      const jars = buildSpecimenJars(THREE, spots, { glass: M.jarGlass, liquid: M.jarFluid, lid: M.dark, label: M.cream });
+      grp.add(jars); G.jars = jars;
       // the formalin tank sunk in the floor (west half): a rim and the yellow liquid; a white rag floats on it
       const tx = 6.9, tz = -104;
       for (const [w, d, x, z] of [[1.6, 0.12, tx, tz - 1.1], [1.6, 0.12, tx, tz + 1.1], [0.12, 2.32, tx - 0.8, tz], [0.12, 2.32, tx + 0.8, tz]]) box('HYOHON', x, z, w, 0.3, d, M.white, 0, true);
@@ -372,7 +481,7 @@ export function installHospital(ext, G) {
       for (const s of [-1, 1]) box('HYOHON', cx + s * 0.78, cz + 0.2, 0.04, 2.0, 0.44, M.steel, 0, true);
       for (const y of [0.6, 1.1, 1.6, 1.98]) box('HYOHON', cx, cz + 0.2, 1.56, 0.03, 0.42, M.steel, y, false);
       box('HYOHON', cx, cz + 0.43, 1.56, 1.9, 0.02, M.glass, 0.05, false);
-      for (const [x, y] of [[-0.55, 0.62], [-0.2, 0.62], [0.4, 0.62], [-0.5, 1.62], [0.15, 1.62], [0.5, 1.62]]) { cyl('HYOHON', cx + x, cz + 0.2, 0.09, 0.09, 0.3, M.jarLiquid, y); cyl('HYOHON', cx + x, cz + 0.2, 0.06, 0.06, 0.1, M.organ, y + 0.06); }
+      grp.add(buildSpecimenJars(THREE, [[-0.55, 0.62, 'eyes'], [-0.2, 0.62, 'hand'], [0.4, 0.62, 'kidney'], [-0.5, 1.62, 'fingers'], [0.15, 1.62, 'brain'], [0.5, 1.62, 'heart']].map(([x, y, kind]) => ({ x: cx + x, y: fy('HYOHON') + y, z: cz + 0.2, yaw: 0, kind })), { glass: M.jarGlass, liquid: M.jarFluid, lid: M.dark, label: M.cream }));   // 1.6.0 (#8): the cabinet's jars too
       G.jar7 = new THREE.Group(); G.jar7.position.set(cx + 0.05, fy('HYOHON') + 1.12, cz + 0.18); grp.add(G.jar7);
       const j = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.34, 14), M.jarLiquid); j.position.y = 0.17; G.jar7.add(j);
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), M.heart); h.position.y = 0.14; h.scale.set(1, 1.2, 0.9); G.jar7.add(h);
@@ -438,18 +547,48 @@ export function installHospital(ext, G) {
     const waterY = (x, z) => { const r = W.roomAt(x, z); const lv = r != null ? G.waterAt[r] : null; return lv == null || !G.water[r] || !G.water[r].visible ? null : G.water[r].position.y; };
     const spawn = (x, y, z, big) => { const R = rings[ri++ % rings.length]; R.t = 0; R.big = big; R.m.position.set(x, y + 0.006, z); R.m.visible = true; };
     G.wake = spawn; G.waterYAt = waterY;
-    // the inflow: a sheet of water pouring over the sill of the watertight door into the corridor, the corridor water rising under it
-    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 1.0), M.stream.clone()); sheet.material.opacity = 0; sheet.visible = false; sheet.raycast = () => {}; sheet.name = 'mn-inflow';
-    sheet.rotation.x = -Math.PI / 2.6; sheet.position.set(2.6, fy('MOUTH') + 0.2, -0.25); grp.add(sheet);
-    let flow = null;
-    G.inflow = (sec, room, from, to) => { flow = { t: 0, sec, room, from, to }; sheet.visible = true; };
+    // 1.6.0 (4th play test #11 「水が入っていく表現も欲しいです」): water you can see coming in. G.pourOver(doorId, intoRoom, sec) - a sheet
+    // pouring over a sill into the lower side, foaming where it lands (rings, a pale churn) with the rush of it; G.pourFrom(x, z, room, sec) -
+    // a stream falling from a burst joint of the ceiling pipes into the water. Each runs sec seconds, strongest in the middle.
+    const pours = [];
+    const streamM = () => { const m = M.stream.clone(); m.side = THREE.DoubleSide; m.opacity = 0; return m; };
+    const foamM = new THREE.MeshBasicMaterial({ color: 0xb8c4bc, transparent: true, opacity: 0, depthWrite: false });
+    const addPour = (P) => {
+      P.t = 0; pours.push(P);
+      const A = ctx.audio; if (A && A.noiseBurst) { A.noiseBurst({ dur: P.sec, freq: P.big ? 420 : 900, q: 0.6, gain: P.big ? 0.7 : 0.35, type: 'lowpass', wet: 0.5, pos: P.at }); A.noiseBurst({ dur: P.sec, freq: 2400, q: 0.8, gain: P.big ? 0.12 : 0.08, wet: 0.5, pos: P.at }); }
+      return P;
+    };
+    G.pourOver = (doorId, into, sec = 6) => {
+      const S = G.sills.find((x) => x.id === doorId), R = W.rooms.get(into); if (!S || !R) return null;
+      const r = R.room, sg = S.alongX ? Math.sign(r.z + r.d / 2 - S.z) : Math.sign(r.x + r.w / 2 - S.x);
+      const g = new THREE.Group(); g.position.set(S.x, S.y0, S.z); if (!S.alongX) g.rotation.y = Math.PI / 2; grp.add(g); g.name = `pour:${doorId}`;
+      // in the group: x along the doorway, z towards the lower side (sg), y up
+      const zs = S.alongX ? sg : -sg, top = S.h + 0.03, low = (G.waterAt[into] ?? 0.02) + 0.01, z0 = zs * (S.dep / 2 + 0.01), z1 = zs * (S.dep / 2 + (S.h > 0.3 ? 0.42 : 0.12));
+      const L = Math.hypot(z1 - z0, top - low), sheet = new THREE.Mesh(new THREE.PlaneGeometry(S.half * 2 - 0.1, 1), streamM());
+      sheet.position.set(0, (top + low) / 2, (z0 + z1) / 2); sheet.scale.y = L; sheet.rotation.x = Math.atan2(z0 - z1, top - low); sheet.name = 'mn-pour-sheet'; g.add(sheet);
+      const foam = new THREE.Mesh(new THREE.PlaneGeometry(S.half * 2 - 0.05, 0.5), foamM.clone()); foam.rotation.x = -Math.PI / 2; foam.position.set(0, low + 0.004, z1 + zs * 0.2); foam.name = 'mn-pour-foam'; g.add(foam);
+      const at = new THREE.Vector3(0, low, z1); g.updateMatrixWorld(true); at.applyMatrix4(g.matrixWorld);
+      return addPour({ g, sheet, foam, sec, big: true, at: { x: at.x, y: at.y + 0.2, z: at.z }, spread: S.half, into });
+    };
+    G.pourFrom = (x, z, room, sec = 8) => {
+      const y0 = fy(room), low = (G.waterAt[room] ?? 0.02) + 0.01, g = new THREE.Group(); g.position.set(x, y0, z); grp.add(g); g.name = 'pour:pipe';
+      const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 1), streamM()); sheet.position.y = (2.55 + low) / 2; sheet.scale.y = 2.55 - low; sheet.rotation.y = Math.random() * 3; g.add(sheet);
+      const s2 = sheet.clone(); s2.material = sheet.material; s2.rotation.y += Math.PI / 2; g.add(s2);
+      const foam = new THREE.Mesh(new THREE.CircleGeometry(0.4, 18), foamM.clone()); foam.rotation.x = -Math.PI / 2; foam.position.y = low + 0.004; g.add(foam);
+      return addPour({ g, sheet, foam, sec, big: false, at: { x, y: y0 + 1.0, z }, spread: 0.2, into: room });
+    };
+    G.pours = pours;
+    G.inflow = (sec) => G.pourOver('D_P1', 'MOUTH', sec);   // 1.5.x name
     G.flowStep = (dt) => {
-      if (!flow) return;
-      flow.t += dt; const k = Math.min(1, flow.t / flow.sec), m = G.water[flow.room];
-      sheet.material.opacity = 0.75 * Math.sin(Math.PI * Math.min(1, k * 1.2)) * (0.85 + Math.random() * 0.15); sheet.scale.y = 0.8 + Math.random() * 0.25;
-      if (m) { m.visible = true; m.position.y = fy(flow.room) + flow.from + (flow.to - flow.from) * k; }
-      if (Math.random() < dt * 8) spawn(2.6 + (Math.random() - 0.5) * 1.2, fy(flow.room) + flow.from + (flow.to - flow.from) * k, 0.2 + Math.random() * 2.2, true);
-      if (k >= 1) { G.waterAt[flow.room] = flow.to; sheet.visible = false; flow = null; }
+      for (let i = pours.length - 1; i >= 0; i--) {
+        const P = pours[i]; P.t += dt; const k = Math.min(1, P.t / P.sec), env = Math.min(1, k * 6, (1 - k) * 4);
+        P.sheet.material.opacity = 0.7 * env * (0.85 + Math.random() * 0.15); P.foam.material.opacity = 0.35 * env * (0.8 + Math.random() * 0.2);
+        P.sheet.material.map && (P.sheet.material.map.offset.y -= dt * 2);
+        // the landing follows the water as it rises
+        const ly = (G.waterYAt(P.at.x, P.at.z) ?? null); if (ly != null) P.foam.position.y = ly - P.g.position.y + 0.004;
+        if (Math.random() < dt * (P.big ? 14 : 6)) { const o = new THREE.Vector3((Math.random() - 0.5) * P.spread * 2, 0, 0); P.foam.localToWorld(o.set(o.x, 0, 0)); const yy = G.waterYAt(o.x, o.z); if (yy != null) spawn(o.x, yy, o.z, true); }
+        if (k >= 1) { grp.remove(P.g); pours.splice(i, 1); }
+      }
     };
     function wakes(dt) {
       const c = ctx.camera.position;
@@ -469,7 +608,7 @@ export function installHospital(ext, G) {
 
     grp.updateMatrixWorld(true);
     for (const s of solids) W.colliders.push({ box: new THREE.Box3().setFromObject(s), off: false });
-    ctx.seatPickups && ctx.seatPickups();
+    ctx.seatPickups && ctx.seatPickups(); dressFloatDocs();
     let t = 0;
     ctx.systems.push({ id: 'mn-hospital', def: { update: (dt) => {
       t += dt;
@@ -490,13 +629,24 @@ export function installHospital(ext, G) {
       }
       if (G.tap) G.tap.scale.x = 1 + Math.sin(t * 30) * 0.2;
       // 1.5.0 (#17): the ripple drifts; wakes spread round your legs (and hers) as you wade
-      if (G.floatPapers) for (const m of G.floatPapers) { m.position.y = fy('P3') + 0.425 + Math.sin(t * 1.3 + m.userData.bob) * 0.012; m.rotation.z += dt * 0.02 * (m.userData.bob % 2 ? 1 : -1); }
+      // 1.6.0 (#2): the documents on the water ride its surface (it rises and falls), bob, turn slowly; a pale rim until read
+      for (const F of G.floatDocs) {
+        const p = F.pk.position, wy = G.waterYAt(p.x, p.z), y = (wy ?? fy('P3') + 0.01) + 0.006 + Math.sin(t * 1.3 + F.bob) * 0.008;
+        F.sheet.position.set(p.x, y, p.z); F.sheet.rotation.z += dt * 0.02 * (F.bob > 2 ? 1 : -1); p.y = y + 0.01;
+        const read = ctx.state && ctx.state.docsRead && ctx.state.docsRead.includes(F.id); F.rim.material.opacity = read ? 0 : 0.18 + Math.sin(t * 2.2 + F.bob) * 0.1;
+        F.sheet.visible = F.pk.visible !== false && !F.pk.userData.off;
+      }
+      for (const [room, Mv] of Object.entries(G.moving)) { Mv.t += dt; const k = Math.min(1, Mv.t / Mv.sec), e = k * k * (3 - 2 * k); Mv.m.position.y = fy(room) + Mv.from + (Mv.to - Mv.from) * e; if (k >= 1) delete G.moving[room]; }
+      // 1.6.0 (#1): over a sill the eye rises with the step (and goes down again on the other side)
+      if (ctx.fp && ctx.floor === 0) { const c = ctx.camera.position, want = G.sillLiftAt(c.x, c.z); G.sillY += (want - G.sillY) * Math.min(1, dt * 9); if (Math.abs(G.sillY) > 0.002 || G.sillSet) { ctx.fp.yOff = Math.abs(G.sillY) > 0.002 ? G.sillY : 0; G.sillSet = Math.abs(G.sillY) > 0.002; } }
       if (M.water.normalMap) { M.water.normalMap.offset.x = t * 0.03; M.water.normalMap.offset.y = Math.sin(t * 0.4) * 0.05; }
       wakes(dt); G.flowStep(dt);
       M.torch.opacity = G.kurokiThere === false ? 0 : 0.5 + Math.sin(t * 1.3) * 0.12 + Math.sin(t * 4.1) * 0.06;
       // the watertight doors slide; their wheels spin while worked
       for (const D of Object.values(G.wt)) {
-        const want = D.d.isOpen ? 1 : 0; D.open += Math.sign(want - D.open) * Math.min(Math.abs(want - D.open), dt / 1.4);
+        const want = D.d.isOpen ? 1 : 0; if (want !== D.want) { D.want = want; G.doorSound(D, want); }
+        D.open += Math.sign(want - D.open) * Math.min(Math.abs(want - D.open), dt / G.WT_SEC);
+        if (D.d.col) D.d.col.off = want === 1 && D.open > 0.6;   // 1.6.0 (#9): the way opens with the slab, not at the press of [E]
         D.slab.position.x = -D.open * (D.w + 0.05);
         if (D.spin > 0) { D.spin -= dt; for (const w of D.wheels) w.rotation.z += dt * 6; }
       }

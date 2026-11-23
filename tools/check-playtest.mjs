@@ -80,7 +80,10 @@
 //   P59 (1.37.8, 札の家 2.4.0) on the shortest route to an end task (the walk out), the guide shows another task (an error) or a task of the branch
 //       not taken still starts (a warning) (tools/stale-guide.mjs: 「作業台で、考えをまとめる」 on the way to the front door)
 //   1.31.0: P49 a document read keeps its emphasis (glow, marks) or cannot be read again (「読んだら強調表示をやめるようにしてください」)
-// Exit 1 on an error (P54, P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P44, P46, P49, P56, P57, P58, P59, P47 / P48 with checks.rest = "error", P52 over 600 MB) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+//   1.38.0 (水無瀬病院 4th play test 2026-11-23; tools/water-edge.mjs): P60 a water surface whose side stands open over a lower or dry floor
+//   (a cut face: 「水の断面が見える」) (an error); P61 a figure reaching through a shut door (「モンスターが扉を少し貫通」) (an error); P62 a
+//   hiding place's look standing in a wall of its room (「ロッカーが壁に埋まっています」) (an error)
+// Exit 1 on an error (P54, P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P44, P46, P49, P56, P57, P58, P59, P60, P61, P62, P47 / P48 with checks.rest = "error", P52 over 600 MB) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -101,6 +104,7 @@ import { pickOverlapSource } from './pick-overlap.mjs';
 import { restSource, sizeSource } from './rest-check.mjs';
 import { cueOrderSource } from './cue-order.mjs';
 import { staleGuideSource } from './stale-guide.mjs';
+import { waterEdgeSource, doorClipSource, hideRoomSource } from './water-edge.mjs';
 const MARK_MAX = 30;   // P53: the guide mark's height on screen at 3 m, px on a 720 px view (js/guidance.js MARK_MAX_PX)
 // P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
 const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
@@ -731,6 +735,10 @@ try {
   // P59 (1.37.8, 札の家 2.4.0 「玄関まで歩くのに、案内が『作業台で、考えをまとめる』のまま」): on the shortest route to each end task, the guide shows that task
   // and no task of a branch the player decided against still starts (tools/stale-guide.mjs)
   { const S = await G(staleGuideSource()); if (S && S.missing) Wn('P59', 'ctx.nextTask is missing: the guide after a branch is unchecked'); else for (const x of (Array.isArray(S) ? S : [])) (x.error ? E : Wn)('P59', x.error ? `on the way to "${x.end}" the guide shows "${x.guide}" (a stale step: close it with a canStart once the branch is decided, or order the end task first)${x.left.length ? `; still open: ${x.left.join(', ')}` : ''}` : `on the way to "${x.end}" these tasks still start: ${x.left.join(', ')} (a branch already decided: give them a canStart that closes them)`); }
+  // P60 / P61 / P62 (1.38.0, 水無瀬病院 #1 #6 #3): no water shows a cut face, no figure reaches through a shut door, no hiding place stands in a wall
+  { const Wt = await G(waterEdgeSource()); for (const x of (Array.isArray(Wt) ? Wt : []).slice(0, 8)) E('P60', `the side of ${x.water} (y ${x.y}) stands open at ${x.open} points, e.g. ${x.at.map((p) => p.join(',')).join(' / ')}: a sill higher than the water in the doorway, or one level for rooms an open door joins`); }
+  { const Dc = await G(doorClipSource()); for (const x of (Array.isArray(Dc) ? Dc : []).slice(0, 8)) E('P61', `${x.figure} reaches ${x.depth} m through the shut door ${x.door}: stop it 1 m before the door`); }
+  { const Hr = await G(hideRoomSource()); for (const x of (Array.isArray(Hr) ? Hr : []).slice(0, 8)) E('P62', `the hiding place ${x.id} stands ${x.over} m into a wall of ${x.room} (js/hide-looks.js clampInRoom; move its x / z)`); }
   if (p.errors.length) for (const e of [...new Set(p.errors)].filter((x) => !/favicon/.test(x)).slice(0, 5)) Wn('P0', `page error: ${e.slice(0, 200)}`);
 } catch (e) { E('P0', `the check could not run: ${e.message}`); }
 finally { await p.close(); server.kill(); }
