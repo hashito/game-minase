@@ -1,4 +1,4 @@
-/* game-kit 799ff6ce: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 53118a5e: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
 // The standard bootstrap of a 3D first-person game (docs/standard-3d.md). Wires the standard modules from DATA (game.json + data/*.json):
 //   runtime base  render-presets (renderer, lights, fog, post, quality tiers; the preset may be a name or { base, ...overrides }),
 //                 frame-guard (?perf overlay, dynamic resolution, job queue), controller (walk / look / touch),
@@ -78,7 +78,7 @@ import { installTimedShot } from './timed-shot.js';
 import { VoiceQueue } from './voice-queue.js';
 import { installNpcAudit } from './npc-audit.js';
 
-export const CORE_VERSION = '1.39.1';
+export const CORE_VERSION = '1.39.12';
 // the mini game library's types (js/mg-library.js LIBRARY; test/story-hooks.test.mjs keeps the two equal): game.json "minigames" naming one of these loads the library
 export const MG_LIB_TYPES = ['pour', 'turn-dials', 'match-mark', 'timing', 'code-drums', 'tune-radio', 'trace-path', 'slide-tiles', 'search-dark', 'rotate-pipes', 'sort-items', 'memory-pairs', 'lock-pick', 'photo-focus', 'rhythm-taps', 'connect-dots', 'balance-scale', 'echo-bells', 'switch-panel', 'rotate-pieces', 'count-shadows', 'spot-difference', 'maze-path', 'cipher-wheel', 'steady-hand', 'pump-gauge', 'order-steps', 'compass-bearing', 'mirror-beam', 'kana-word', 'jug-measure', 'hold-breath', 'layer-board', 'darkroom-develop', 'tape-splice', 'switchboard', 'steam-letter', 'puzzle-box', 'rubbing', 'knot-untangle', 'torn-paper', 'safe-listen', 'footprint-track'];
 const $ = (id) => document.getElementById(id);
@@ -252,6 +252,7 @@ export function createGame(cfg) {
   const prog = ctx.prog = new Progression(def);
   prog.on('levelup', (e) => { if (!ctx.skipping) bus.emit('stage:up', { level: e.level.id, unlocks: e.unlocks }); });   // ctx.skipping: a test scene walks there quietly
   const world = ctx.world = wdef ? wdef.build(ctx) : buildWorld(plan, { ...(plan.dims || {}), isUnlocked: (k) => prog.isUnlocked(k) });   // 1.28.0: plan.dims (doorH, wallH ...: the body-sized world of 夜勤明けの街 #3)
+  if (wdef && world && world.provided == null) world.provided = true;   // 1.39.4: the game's own world (check-playtest P54 measures its doors through doors[].blocks)
   world.onBarrierOpen = () => { if (state.started && !ctx.skipping) safe(() => ctx.audio.noiseBurst({ dur: 0.7, freq: 300, q: 0.8, gain: 0.22, type: 'lowpass', wet: 0.3 })); };
   if (world.group && !world.group.parent) scene.add(world.group);
   world.floorY = world.floorY || (() => 0);
@@ -318,8 +319,21 @@ export function createGame(cfg) {
     const model = mesh.userData.model;
     if (!mesh.userData.stood) { mesh.userData.stood = true; mesh.geometry.rotateX(Math.PI / 2); if (model) { model.position.set(0, 0, 0); model.rotation.set(Math.PI / 2, 0, 0); for (const c of model.children) c.rotation.y = 0; } }   // 1.18.2: the sheet's own lying yaw (paperSheet ry 0.25, on the model's child group) would tilt it on the wall
     const y = fy + x.y + 0.15, r = pasteOn(ctx, mesh, { from: { x: x.x - w.dx * 0.5, y, z: x.z - w.dz * 0.5 }, dir: { x: w.dx, z: w.dz }, gap: 0.006, avoid: !mesh.userData.pasted, roll: ((hue(x.id) % 7) - 3) * 0.012 });
-    if (r.ok) mesh.userData.pasted = { normal: { x: r.normal.x, y: r.normal.y, z: r.normal.z } };
+    if (r.ok) mesh.userData.pasted = { normal: { x: r.normal.x, y: r.normal.y, z: r.normal.z }, at: { x: r.point.x, y: r.point.y, z: r.point.z } };
+    if (r.ok) flushBack(mesh, r);
   };
+  // 1.39.2 (水無瀬病院 第 5 回 #1 「記録版が壁から離れて見えます」): what is drawn (the model inside the pick box - a dot board is thicker or
+  // thinner than the paper the box was made for) has its back 6 mm off the plaster, not the pick box
+  const flushBack = (mesh, r) => {
+    if (!r.point || !mesh.children.length) return;
+    mesh.updateMatrixWorld(true);
+    const bb = new THREE.Box3(); for (const c of mesh.children) bb.union(new THREE.Box3().setFromObject(c));
+    if (bb.isEmpty()) return;
+    const n = r.normal, plane = r.point.x * n.x + r.point.y * n.y + r.point.z * n.z;
+    let back = Infinity; for (const x of [bb.min.x, bb.max.x]) for (const y of [bb.min.y, bb.max.y]) for (const z of [bb.min.z, bb.max.z]) back = Math.min(back, x * n.x + y * n.y + z * n.z);
+    const d = plane + 0.006 - back; if (Math.abs(d) > 0.003 && Math.abs(d) < 0.4) { mesh.position.x += n.x * d; mesh.position.y += n.y * d; mesh.position.z += n.z * d; mesh.userData.flushed = +d.toFixed(3); }
+  };
+  ctx.flushPasted = () => { for (const mesh of pickups.values()) { const P = mesh.userData.pasted; if (!P || !P.at) continue; flushBack(mesh, { point: P.at, normal: P.normal }); } };
   ctx.seatPickups = () => {
     const used = new Map();   // top -> things on it
     for (const mesh of pickups.values()) {
@@ -529,8 +543,11 @@ export function createGame(cfg) {
   ctx.levelIndex = (stage) => prog.levels.findIndex((l) => l.id === stage);
   ctx.canStart = (task) => {
     if (state.tasks.includes(task.id)) return 'この作業は、もう終わっています。';
-    if (ctx.levelIndex(task.stage) > prog.index) return 'まだ、この作業には進めません。先に、いまの目標を進めましょう。';
+    if (ctx.levelIndex(task.stage) > prog.index) { const ny = task.notYet; const own = typeof ny === 'string' ? ny : ny && ny['*']; return own || 'まだ、この作業には進めません。先に、いまの目標を進めましょう。'; }   // 1.39.6: the thing's own reason (notYet) here too
     const pending = (task.needs || []).filter((n) => !state.tasks.includes(n));
+    // 1.39.6 (夜勤明けの街 D-15 「先に済ませることがある：〜」 reads like a to-do list, not like the thing): task "notYet" - the reason the
+    // thing itself gives (a string, or { <need id>: line } with "*" for the rest); the generic line stays for a task without one
+    if (pending.length) { const ny = task.notYet; const own = typeof ny === 'string' ? ny : ny && typeof ny === 'object' ? (pending.map((n) => ny[n]).find(Boolean) || ny['*']) : null; if (own) return own; }
     if (pending.length) return `先に済ませることがある：${pending.map((n) => (taskById.get(n) || {}).title || n).join('、')}`;
     const reg = ext.reg.task.get(task.id);
     if (task.timer && !(reg && reg.canStart)) return `時間が来るまで待つ（あと ${Math.ceil(Math.max(0, task.timer.seconds - ((state.timers || {})[task.id] || 0)))} 秒）`;   // a timed task finishes by itself (standard 1.7)
@@ -547,19 +564,26 @@ export function createGame(cfg) {
     if (!o.noSave) ctx.save();
     checkEndings();
   };
+  const runningTasks = new Set(); ctx.runningTasks = runningTasks;
   ctx.startTask = async (id) => {
     const task = taskById.get(id), ok = ctx.canStart(task);
     if (ok !== true) return ui.say(esc(ok), 5, { urgent: true });
-    bus.emit('task:start', { id });
     const reg = ext.reg.task.get(id) || {};
+    // 1.39.2 (札の家 2.5.2, D-10: 「[E] で表の戸を開ける」 stayed on the step card until the words after the door were over): once a task's
+    // run has begun, its step card closes (the last step was the [E] just pressed); it comes back only if the run gives up.
+    // registerTask(id, { keepGuide: true }) keeps the card for a run that still waits on the player in the world.
+    if (!reg.keepGuide) runningTasks.add(id);
+    bus.emit('task:start', { id });
     const mgDef = reg.minigame || task.minigame;
     let done = true;
+    try {
     if (reg.run) done = await reg.run(ctx, task);
     else if (mgDef) done = await runMinigame(task, mgDef);
     else done = await new Promise((res) => { // no mini game: a plain confirm window
       let yes = false;
       wm.open('task', { title: task.title, size: 's', onClose: () => res(yes), render: (el) => { el.innerHTML = `<p>${esc(task.meaning)}</p><p><button class="btn primary" data-yes>作業する</button> <button class="btn" data-no>やめる</button></p>`; el.querySelector('[data-yes]').onclick = () => { yes = true; wm.close(); }; el.querySelector('[data-no]').onclick = () => wm.close(); } });
     });
+    } finally { runningTasks.delete(id); }
     if (done) ctx.completeTask(id); else bus.emit('task:abort', { id });
     if (!state.ended && !ui.open && !wm.isOpen && state.started && !blocked()) fp.lock();
   };
@@ -655,6 +679,9 @@ export function createGame(cfg) {
       // the climb: rung by rung
       let last = -1;
       await tween(flight ? 0.55 : 0.8, (k) => { const i = Math.floor(k * n); if (i !== last && i < n) { last = i; rung(i); } const step = (k * n) % 1; fp.yOff = (up ? 1 : -1) * rise * k + Math.sin(step * Math.PI) * 0.035; if (k > 0.7) dark(true, 0.18); });
+      // 1.39.6 (夜勤明けの街 D-21: the climb up the shaft was flat): ctx.climbBeat(o, { up, dark }) - a game's moment in the dark of the shaft,
+      // before the hatch (a noise above, something falling past); a promise holds the climb there until it resolves
+      if (typeof ctx.climbBeat === 'function') { try { const b = ctx.climbBeat(o, { up, dark }); if (b && typeof b.then === 'function') await b; } catch (e) { console.error(e); } dark(true, 0.12); }
       // through the hatch / round the landing
       ctx.setFloor(to.floor || 0, to);
       fp.yOff = (up ? -1 : 1) * rise * 0.8; fp.pitch = up ? 0.35 : -0.3; const yaw1 = fp.yaw;
@@ -687,7 +714,7 @@ export function createGame(cfg) {
   // own colour), and an item a task still needs (tasks.json "needItems": ["ID"]) is marked where it lies, once the task is the one to do
   // (its `needs` done, its stage reached) - 「マッチ（ランプに要る）」. game.json "mapView": { "next": false } keeps the old pins.
   const pickupOf = (id) => world.interactables.find((o) => o.name === `item:${id}`);
-  ctx.nextTask = () => { const ok = (x) => x.steps && x.steps.length && ctx.canStart(x) === true; return tasks.find((x) => ok(x) && !x.optional) || tasks.find(ok) || null; };
+  ctx.nextTask = () => { const ok = (x) => x.steps && x.steps.length && !runningTasks.has(x.id) && ctx.canStart(x) === true; return tasks.find((x) => ok(x) && !x.optional) || tasks.find(ok) || null; };
   const mapPins = () => {
     const nextOn = !(manifest.mapView && manifest.mapView.next === false), nx = nextOn ? ctx.nextTask() : null;
     const out = tasks.filter((t) => t.station && ctx.canStart(t) === true).map((t) => ({ id: t.id, room: t.room, ...stationPos(t.station), label: nx && nx.id === t.id ? `次：${t.title}` : t.title, kind: 'task', next: !!(nx && nx.id === t.id) }));
@@ -776,7 +803,7 @@ export function createGame(cfg) {
   const kt = (x) => (x == null ? x : keyText(x, ctx.input === 'pad' ? 'pad' : ctx.isTouch ? 'touch' : 'mouse'));   // the step card's key names follow the device
   ctx.keyText = kt; ui.keys = () => (ctx.input === 'pad' ? 'pad' : ctx.isTouch ? 'touch' : 'mouse');
   function refreshGuide() {
-    const ok = (x) => x.steps && x.steps.length && ctx.canStart(x) === true;   // a required task first: an optional one (shiogaeri's 量水標) only when nothing required has steps
+    const ok = (x) => x.steps && x.steps.length && !runningTasks.has(x.id) && ctx.canStart(x) === true;   // a required task first: an optional one (shiogaeri's 量水標) only when nothing required has steps
     const t = tasks.find((x) => ok(x) && !x.optional) || tasks.find(ok) || null;
     if ((t && guideTask && t.id === guideTask.id) || (!t && !guideTask)) return;
     if (guide) { guide.destroy(); guide = null; }
@@ -793,7 +820,7 @@ export function createGame(cfg) {
     });
   }
   ctx.refreshGuide = refreshGuide;
-  for (const ev of ['game:start', 'task:done', 'stage:up', 'door:open', 'item:pickup', 'item:given', 'player:room', 'player:respawn']) bus.on(ev, () => setTimeout(refreshGuide, 0));
+  for (const ev of ['game:start', 'task:start', 'task:abort', 'task:done', 'stage:up', 'door:open', 'item:pickup', 'item:given', 'player:room', 'player:respawn']) bus.on(ev, () => setTimeout(refreshGuide, 0));
   // 1.21.0 (札の家 ドット版: a test scene / a story change that sets items or flags after game:start left the card on an optional task
   // while a required one could start): the guide is also re-checked once a second (refreshGuide does nothing when the task is the same)
   if (typeof setInterval === 'function') setInterval(() => { if (state.started && !state.ended) refreshGuide(); }, 1000);

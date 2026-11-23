@@ -301,7 +301,7 @@
   "post_done": [
     {
       "who": "私",
-      "text": "水が戻った。……あれは、すっと水に沈んで消えた。",
+      "text": "水が戻った。……あれは水から跳ね起きて、一歩こっちへ来て――奥の暗がりへ戻っていった。",
       "id": "post_done-1",
       "voice": "assets/voice/post_done-1.mp3"
     },
@@ -500,6 +500,32 @@
       "text": "逆止弁、ここ！　私が押さえてる。湊、早く……あの人が何をしたいのか、分かれば……！",
       "id": "ledger_done-6",
       "voice": "assets/voice/ledger_done-6.mp3"
+    }
+  ],
+  "hold_urge": [
+    {
+      "who": "ひなた",
+      "text": "……っ、下から、押してくる……！　湊、机！　早く！",
+      "id": "hold_urge-1",
+      "voice": "assets/voice/hold_urge-1.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "手が……弁の下から、指が出てくる……！",
+      "id": "hold_urge-2",
+      "voice": "assets/voice/hold_urge-2.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "まだ大丈夫……まだ……っ！　答え、見つけて……！",
+      "id": "hold_urge-3",
+      "voice": "assets/voice/hold_urge-3.mp3"
+    },
+    {
+      "who": "ひなた",
+      "text": "ふたが、浮いてくる……！　もう、そんなに、もたない……！",
+      "id": "hold_urge-4",
+      "voice": "assets/voice/hold_urge-4.mp3"
     }
   ],
   "think_urge": [

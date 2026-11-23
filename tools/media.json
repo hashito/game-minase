@@ -42,7 +42,7 @@
     { "key": "th-mo-door", "size": "768x768", "prompt": "a heavy steel watertight door with a red wheel handle and a small round window, water streaks on the inside of the glass, darkness behind" },
     { "key": "th-p1-leak", "size": "768x768", "prompt": "water spraying from a leaking joint of a rusty pipe on the ceiling of a narrow concrete tunnel, flashlight beam" },
     { "key": "th-p1-hair", "size": "768x768", "prompt": "long black hair tangled around a wet rusty pipe on a concrete tunnel wall, many strands, flashlight close view" },
-    { "key": "th-p2-hands", "size": "768x768", "prompt": "a trail of wet handprints on a dark concrete floor of a low tunnel, too many hands, crawling marks, flashlight from above" },
+    { "key": "th-p2-hands", "size": "768x768", "prompt": "a row of dark wet handprints on a rusty concrete wall of a low flooded tunnel, just above the black water line, many hands of different sizes in a line along the wall, the water below, flashlight from the side" },
     { "key": "th-p3-karte", "size": "768x768", "prompt": "a single paper medical chart floating on dark knee-deep water in a tunnel, part of it blacked out with ink, long hair in the water nearby" },
     { "key": "th-p4-window", "size": "768x768", "prompt": "the small round window of a steel watertight door seen close, many handprints of different sizes smeared on the glass from the other side, darkness beyond" },
     { "key": "th-p4-labels", "size": "768x768", "prompt": "dozens of small old yellowed paper labels peeled off specimen jars and pasted in rows on a cracked white tiled wall, each label with a thin red line struck through one blank line, damp stains, a flashlight beam, close-up" },
@@ -65,7 +65,17 @@
     {"key": "end-e1-c", "size": "1344x768", "prompt": "a street storm drain grate overflowing with cloudy yellowish water on a dark wet residential street at night, a single streetlight, rain, horror"},
     { "key": "th-kd-stairs", "size": "768x768", "prompt": "the top of a concrete hospital staircase that has collapsed halfway, the lower flight broken off and fallen into a dark flooded pit, broken slabs hanging on bent rusty rebar, a twisted steel railing, rubble, black water far below, plain bare walls, no signs, no writing, flashlight from above" },
     { "key": "th-kd-lift", "size": "768x768", "prompt": "an old hospital elevator with its steel doors stuck a hand width apart, pitch black shaft behind the gap, a dead call button panel, water stains on the doors, flashlight" },
-    { "key": "tk-kuroki-door", "size": "768x768", "prompt": "view from inside a dark hospital entrance through a glass double door, a heavy iron chain and padlock wrapped around the inner door handles in the foreground, outside in the night rain a young Japanese man with short black hair in a black rain jacket looks in through the gap, holding a flashlight, rain streaks on the glass, angry and sad" }
+    { "key": "tk-kuroki-door", "size": "768x768", "prompt": "view from inside a dark hospital entrance through a glass double door, a heavy iron chain and padlock wrapped around the inner door handles in the foreground, outside in the night rain a young Japanese man with short black hair in a black rain jacket looks in through the gap, holding a flashlight, rain streaks on the glass, angry and sad" },
+    { "key":  "th-hy-tape", "size":  "768x768", "prompt":  "an old portable cassette tape recorder lying on a wet white tiled floor, its plastic cracked, water around it, flashlight beam, close-up" },
+    { "key":  "th-re-board", "size":  "768x768", "prompt":  "a white whiteboard mounted flat against a white tiled wall of a hospital mortuary, faint ruled grid lines, smeared grey marks, completely blank, flashlight beam, close-up" },
+    { "key":  "th-re-tags", "size":  "768x768", "prompt":  "a small grey cardboard box on a steel table holding bundles of blank paper toe tags tied with thin white string, damp, flashlight beam, close-up" },
+    { "key":  "th-re-incense", "size":  "768x768", "prompt":  "a small ceramic incense burner with grey ash and short burnt incense sticks and a short white candle on a wet tiled floor beside a steel gurney wheel, flashlight beam, close-up" },
+    { "key":  "th-re-coat", "size":  "768x768", "prompt":  "a single white doctor coat hanging from a metal hook on a white tiled wall, a blank name tag on the chest pocket, damp stains, flashlight beam" },
+    { "key":  "th-re-sheet", "size":  "768x768", "prompt":  "a steel hospital gurney covered by a white sheet that bulges in the shape of a lying person, nothing visible under it, white tiled mortuary, cold dim light" },
+    { "key":  "th-re-sign", "size":  "768x768", "prompt":  "a wide rusty steel double loading door of a hospital mortuary at night, above it a small plain rusty metal plate with nothing on it, rust streaks down the tiles, cold dim light" },
+    { "key":  "doc-nurse", "size":  "768x768", "prompt":  "a small blank memo sheet of lined paper taped with yellowed tape on a wet white tiled wall in a concrete corridor, completely blank, water drops, flashlight beam, close-up" },
+    { "key":  "doc-katsu", "size":  "768x768", "prompt":  "a single blank page of thick old paper in a clear plastic sleeve lying on a rusty steel shelf, completely blank, ink stains only, dim light, close-up" },
+    { "key":  "doc-flood", "size":  "768x768", "prompt":  "a metal clipboard hanging from a pipe in a flooded basement corridor, holding a blank grid paper sheet with water stains, completely blank, flashlight beam, close-up" }
   ],
-  "seeds": {"th-kd-stairs": 11, "tk-kuroki-door": 5}
+  "seeds": {"th-kd-stairs": 11, "tk-kuroki-door": 5, "th-re-sign": 7}
 }

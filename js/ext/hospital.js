@@ -104,7 +104,8 @@ function markTex(kind, seed = 1) {
   if (kind === 'gouge') {
     for (let s = 0; s < 2; s++) for (let f = 0; f < 4; f++) { const x = 40 + s * 110 + f * 14; g.strokeStyle = 'rgba(20,18,16,0.9)'; g.lineWidth = 5; g.beginPath(); g.moveTo(x, 20 + f * 4); g.bezierCurveTo(x + 6, 90, x + 14, 160, x + 22 + rnd() * 6, 236); g.stroke(); g.strokeStyle = 'rgba(190,185,170,0.5)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x + 3, 22 + f * 4); g.bezierCurveTo(x + 9, 90, x + 17, 160, x + 25, 230); g.stroke(); }
   } else if (kind === 'hands') {
-    for (let i = 0; i < 7; i++) { const x = 30 + rnd() * 190, y = 30 + rnd() * 190, s = 0.6 + rnd() * 0.7, a = rnd() * 1.4 - 0.7; g.save(); g.translate(x, y); g.rotate(a); g.scale(s, s); g.fillStyle = `rgba(40,30,22,${0.55 + rnd() * 0.3})`; g.beginPath(); g.ellipse(0, 10, 16, 20, 0, 0, 7); g.fill(); for (let f = 0; f < 5; f++) { g.beginPath(); g.ellipse(-14 + f * 7, -16 - (f === 2 ? 6 : f % 4 ? 3 : -4), 3.4, 11, (f - 2) * 0.15, 0, 7); g.fill(); } g.restore(); }
+    // 1.6.2 (5th play test #5 「床全体が濡れているのでおかしい」): on the wall above the water line, a row that crawls toward the way in (fingers to -u = east on the north wall)
+    for (let i = 0; i < 7; i++) { const x = 228 - i * 32 - rnd() * 8, y = 60 + (i % 2) * 34 + rnd() * 16, s = 0.6 + rnd() * 0.7, a = -Math.PI / 2 + rnd() * 0.5 - 0.25; g.save(); g.translate(x, y); g.rotate(a); g.scale(s, s); g.fillStyle = `rgba(40,30,22,${0.55 + rnd() * 0.3})`; g.beginPath(); g.ellipse(0, 10, 16, 20, 0, 0, 7); g.fill(); for (let f = 0; f < 5; f++) { g.beginPath(); g.ellipse(-14 + f * 7, -16 - (f === 2 ? 6 : f % 4 ? 3 : -4), 3.4, 11, (f - 2) * 0.15, 0, 7); g.fill(); } g.restore(); }
   } else if (kind === 'stain') {
     for (let i = 0; i < 9; i++) { const x = 30 + i * 24 + rnd() * 10; const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(90,60,30,0.7)'); gr.addColorStop(1, 'rgba(90,60,30,0)'); g.fillStyle = gr; g.fillRect(x, 0, 3 + rnd() * 6, 120 + rnd() * 136); }
     g.fillStyle = 'rgba(70,50,30,0.55)'; g.fillRect(0, 0, 256, 18);
@@ -282,13 +283,13 @@ export function installHospital(ext, G) {
     // 1.6.0 (4th play test #9 「防水扉は少しゆっくり開けしめ」): the slab slides over 3.4 s with the grind of steel on its track and a clank at the
     // end; the way is open (to you and to her) only once it is more than 60 % open
     G.gateShut = () => !W.doors.get('D_GATE').isOpen || (G.wt.D_GATE && G.wt.D_GATE.open < 0.6);
-    G.WT_SEC = 3.4;
+    G.WT_SEC = 3.4; G.WT_CLOSE = 4.2;   // 1.7.0 (5th #10): closing is slower than opening - the weight of the slab coming home
     G.doorSound = (D, want) => {
-      const A = ctx.audio; if (!A || !A.ctx) return; const pos = { x: D.d.def.x, y: fy(D.d.def.a) + 1.0, z: D.d.def.z };
+      const A = ctx.audio; if (!A || !A.ctx) return; const pos = { x: D.d.def.x, y: fy(D.d.def.a) + 1.0, z: D.d.def.z }, sec = want ? G.WT_SEC : G.WT_CLOSE;
       A.noise && A.noise('scrape', { pos, gain: 1.4 });
-      A.noiseBurst && A.noiseBurst({ dur: G.WT_SEC - 0.2, freq: 150, q: 1.4, gain: 0.55, type: 'lowpass', wet: 0.5, pos });   // the grind on the track
-      A.noiseBurst && A.noiseBurst({ at: 0.2, dur: G.WT_SEC - 0.6, freq: 900, q: 6, gain: 0.08, wet: 0.5, sweep: want ? 0.8 : 1.2, pos });   // the squeal of the rollers
-      A.noise && setTimeout(() => { A.noise('thud', { pos, gain: 1.5 }); A.noise('rattle', { pos }); }, G.WT_SEC * 1000);
+      A.noiseBurst && A.noiseBurst({ dur: sec - 0.2, freq: want ? 150 : 110, q: 1.4, gain: want ? 0.55 : 0.75, type: 'lowpass', wet: 0.5, pos });   // the grind on the track
+      A.noiseBurst && A.noiseBurst({ at: 0.2, dur: sec - 0.6, freq: 900, q: 6, gain: 0.08, wet: 0.5, sweep: want ? 0.8 : 1.2, pos });   // the squeal of the rollers
+      A.noise && setTimeout(() => { A.noise('thud', { pos, gain: want ? 1.5 : 2.2 }); A.noise('rattle', { pos }); if (!want) { A.noise('thud', { pos, gain: 1.2 }); const c = ctx.camera.position; if (Math.hypot(c.x - pos.x, c.z - pos.z) < 8 && ctx.fx && ctx.fx.shake) ctx.fx.shake(0.25); } }, sec * 1000);
     };
 
     // ---------------- 1.6.0 (4th play test #1 「水の断面が見える作りはやめてください」, #11): sills ----------------
@@ -378,7 +379,16 @@ export function installHospital(ext, G) {
       const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.04, 20), M.steel); rim.position.y = 0.02; G.drain.add(rim);
       const gr = new THREE.Mesh(new THREE.CircleGeometry(0.3, 20), G.grateM || M.dark); gr.rotation.x = -Math.PI / 2; gr.position.y = 0.042; G.drain.add(gr);
       G.drainWater = new THREE.Mesh(new THREE.CircleGeometry(0.5, 20), M.formalin); G.drainWater.rotation.x = -Math.PI / 2; G.drainWater.position.y = 0.05; G.drainWater.visible = false; G.drain.add(G.drainWater);
-      // hands out of the drain (the return scene)
+      // 1.7.0 (5th play test #11 「抑えているシーンが緊迫感が欲しい」): what she holds down kicks back - G.drainKick lifts the grate and
+      // sprays round it (story.js hold beats); binders and a box come off the filing cabinets (G.dropThing)
+      G.drainGrate = gr; G.drainRim = rim; G.drainKick = 0;
+      const drops = []; G.drops = drops;
+      G.dropThing = (i) => {
+        const spots = [[6.42, 10.0, 1.32], [6.42, 10.6, 1.32], [6.5, 10.3, 1.32]], [x, z, y] = spots[i % spots.length];
+        const m = new THREE.Mesh(new THREE.BoxGeometry(i % 3 === 2 ? 0.3 : 0.06, i % 3 === 2 ? 0.2 : 0.3, i % 3 === 2 ? 0.24 : 0.24), i % 3 === 2 ? M.cardboard || std(0x8a6a44, { roughness: 0.9 }) : std([0x2a3a5a, 0x5a2a2a, 0x2a4a3a][i % 3], { roughness: 0.7 }));
+        m.position.set(x + 0.25, fy('JIMU') + y, z); m.name = 'jimu-drop'; m.raycast = () => {}; grp.add(m);
+        drops.push({ m, vy: 0, vx: 0.9 + (i % 2) * 0.3, rx: 3 + i, landed: false });
+      };
       G.drainHands = new THREE.Group(); G.drain.add(G.drainHands); G.drainHands.visible = false;
       for (let i = 0; i < 5; i++) { const a = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.6, 8), [M.organ, M.white, M.cream][i % 3]); const ang = i * 1.25; a.position.set(Math.cos(ang) * 0.12, 0.25, Math.sin(ang) * 0.12); a.rotation.set(Math.sin(ang) * 0.4, 0, Math.cos(ang) * 0.4); G.drainHands.add(a); }
       box('JIMU', 7.3, 9.07, 0.7, 0.5, 0.03, M.dark, 1.3, false); plane('JIMU', 7.3, 9.09, 0.62, 0.42, M.cream, 1.55);
@@ -426,11 +436,11 @@ export function installHospital(ext, G) {
     G.dressFloatDocs = dressFloatDocs;
     // (#2) the low passage P2: claw gouges, hand prints, rust runs and a gap in the wall with something in it, low on both walls (seen crouching)
     {
-      const marks = [['gouge', -2.5, 1], ['stain', -4.6, -1], ['hands', -7.2, 1], ['gap', -9.4, -1], ['gouge', -11.6, -1], ['hands', -13.4, 1], ['stain', 0.0, -1], ['gap', -15.2, 1]];
+      const marks = [['gouge', -2.5, 1], ['hands', -4.1, 1], ['stain', -4.6, -1], ['hands', -7.2, 1], ['gap', -9.4, -1], ['hands', -10.3, 1], ['gouge', -11.6, -1], ['hands', -13.4, 1], ['stain', 0.0, -1], ['gap', -15.2, 1]];
       marks.forEach(([k, x, side], i) => {
         const m = std(0xffffff, { map: markTex(k, i + 3), transparent: true, depthWrite: false, roughness: 0.9 }); m.name = `p2-mark-${k}`;
-        const z = side > 0 ? -41.0 - 0.012 : -42.6 + 0.012, w = k === 'gap' ? 0.9 : 1.1;
-        const pl = plane('P2', x, z, w, k === 'gap' ? 0.45 : 1.0, m, k === 'gap' ? 0.62 : 0.55, side > 0 ? Math.PI : 0); pl.renderOrder = 2; pl.raycast = () => {}; pl.name = `p2-mark:${k}`;
+        const z = side > 0 ? -41.08 - 0.006 : -42.52 + 0.006, w = k === 'gap' ? 0.9 : 1.1;   // 1.7.0: on the plaster face (the wall is 0.16 thick round the room edge; at the edge the marks were inside it)
+        const pl = plane('P2', x, z, w, k === 'gap' ? 0.45 : k === 'hands' ? 0.62 : 1.0, m, k === 'gap' ? 0.62 : k === 'hands' ? 0.74 : 0.55, side > 0 ? Math.PI : 0); pl.renderOrder = 2; pl.raycast = () => {}; pl.name = `p2-mark:${k}`;
       });
       // a burst pipe dribbling down the north wall, a vent with a pale finger through the slats
       const pp = cyl('P2', -6.0, -42.45, 0.05, 0.05, 1.1, M.rust, 0.05, false, 8); void pp;
@@ -465,7 +475,7 @@ export function installHospital(ext, G) {
       // fingers - as fine dot models (game-kit js/specimen-parts.js, 5 mm voxels), never two of a kind side by side; large jars on the floor
       // under the shelves hold whole forearms and feet. Each faces the room, its label out.
       const K = SPECIMEN_KINDS, spots = rows.map(([x, y, z, face], i) => { const kind = K[(i * 3 + Math.round(y * 2)) % K.length]; return { x, y: fy('HYOHON') + y, z, yaw: face > 0 ? Math.PI / 2 : -Math.PI / 2, kind, press: kind === 'hand' && i % 2 === 0 }; });   // 1.6.1: every other hand pressed flat to the glass
-      for (const [x, z, kind, face] of [[12.62, -106.55, 'arm', -1], [12.62, -105.2, 'foot', -1], [12.62, -103.5, 'brain', -1], [12.62, -101.6, 'arm', -1], [5.4, -106.55, 'foot', 1], [5.4, -101.5, 'arm', 1]])
+      for (const [x, z, kind, face] of [[12.3, -106.55, 'arm', -1], [12.3, -105.2, 'foot', -1], [12.3, -103.5, 'brain', -1], [12.3, -101.6, 'arm', -1], [5.7, -106.55, 'foot', 1], [5.7, -101.5, 'arm', 1]])   // 1.7.0: out from under the bottom shelf (each is looked at on its own)
         spots.push({ x, y: fy('HYOHON') + 0.005, z, yaw: face > 0 ? Math.PI / 2 : -Math.PI / 2, kind, big: true });
       const jars = buildSpecimenJars(THREE, spots, { lid: M.dark, label: M.cream });   // 1.6.1: the kit's murky formalin and thin glass (JAR_LOOK)
       grp.add(jars); G.jars = jars;
@@ -612,6 +622,8 @@ export function installHospital(ext, G) {
     ctx.systems.push({ id: 'mn-hospital', def: { update: (dt) => {
       t += dt;
       // the drips fall, the tap runs, the torch outside sways
+      if (G.drainGrate) { const k = G.drainKick = Math.max(0, G.drainKick - dt * 2.2); G.drainGrate.position.y = 0.042 + k * 0.09 * (0.6 + Math.abs(Math.sin(t * 50))); G.drainGrate.rotation.y = k * Math.sin(t * 40) * 0.2; G.drainRim.rotation.z = k * Math.sin(t * 33) * 0.05; if (G.drainWater.visible) G.drainWater.scale.setScalar(1 + k * 0.6); }
+      for (const d of G.drops || []) { if (d.landed) continue; d.vy -= 9.8 * dt; d.m.position.y += d.vy * dt; d.m.position.x += d.vx * dt; d.vx *= 0.98; d.m.rotation.z -= d.rx * dt; const f = fy('JIMU') + 0.04; if (d.m.position.y < f) { d.m.position.y = f; d.landed = true; d.m.rotation.z = Math.round(d.m.rotation.z / (Math.PI / 2)) * (Math.PI / 2); ctx.audio && ctx.audio.noise && ctx.audio.noise('thud', { pos: { x: d.m.position.x, y: f, z: d.m.position.z }, gain: 0.9 }); } }
       dv.forEach((d, i) => { d.t = (d.t + dt * 0.9) % 1; dp[i * 3] = d.x; dp[i * 3 + 1] = d.y0 + (d.y1 - d.y0) * d.t * d.t; dp[i * 3 + 2] = d.z; });
       dg.attributes.position.needsUpdate = true;
       for (const [room, D] of Object.entries(G.draining)) {
@@ -646,9 +658,9 @@ export function installHospital(ext, G) {
       // the watertight doors slide; their wheels spin while worked
       for (const D of Object.values(G.wt)) {
         const want = D.d.isOpen ? 1 : 0; if (want !== D.want) { D.want = want; G.doorSound(D, want); }
-        D.open += Math.sign(want - D.open) * Math.min(Math.abs(want - D.open), dt / G.WT_SEC);
+        D.open += Math.sign(want - D.open) * Math.min(Math.abs(want - D.open), dt / (want ? G.WT_SEC : G.WT_CLOSE));
         if (D.d.col) D.d.col.off = want === 1 && D.open > 0.6;   // 1.6.0 (#9): the way opens with the slab, not at the press of [E]
-        D.slab.position.x = -D.open * (D.w + 0.05);
+        const e = D.open * D.open * (3 - 2 * D.open); D.slab.position.x = -e * (D.w + 0.05);   // eased: a heavy start and a slow home
         if (D.spin > 0) { D.spin -= dt; for (const w of D.wheels) w.rotation.z += dt * 6; }
       }
       // 1.3.0 (2nd play test #8 「発電機の唸る音がありません」): the generator hums where it stands while it runs (a positional loop: the mains

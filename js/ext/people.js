@@ -67,10 +67,16 @@ export function buildChimera() {
   const tube = (pts, r, mat, parent = body, seg = 16) => add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, y, z]) => new THREE.Vector3(x, y, z))), seg, r, 7), mat, 0, 0, 0, parent);
   // the mass: three torsos fused, leaning forward and to one side (never symmetric)
   body.rotation.x = 0.28;
-  blob(0.36, w.skin[1], 0.05, 0.55, 0, 1.25, 1.1, 0.9, body, 1);
-  blob(0.3, w.skin[3], -0.3, 0.85, -0.08, 1.0, 1.25, 0.85, body, 2).rotation.z = 0.4;
-  blob(0.27, w.skin[0], 0.32, 1.02, 0.02, 1.1, 1.0, 0.9, body, 3).rotation.z = -0.3;
-  blob(0.2, w.skin[2], 0.0, 0.25, 0.18, 1.4, 0.8, 0.9, body, 4);
+  // 1.7.0 (5th play test #7 「脈打つ感じとか、動く感じを怖い感じに」): the torsos breathe out of step, sacs under the skin throb with a
+  // heartbeat (lub-dub), veins run over them; js/ext/chimera.js pulse() drives `pulse` every frame
+  const pulse = [], P = (k, amp, ph, beat = false) => { pulse.push({ k, s: k.scale.clone(), amp, ph, beat }); return k; };
+  P(blob(0.36, w.skin[1], 0.05, 0.55, 0, 1.25, 1.1, 0.9, body, 1), 0.05, 0);
+  P(blob(0.3, w.skin[3], -0.3, 0.85, -0.08, 1.0, 1.25, 0.85, body, 2), 0.06, 1.9).rotation.z = 0.4;
+  P(blob(0.27, w.skin[0], 0.32, 1.02, 0.02, 1.1, 1.0, 0.9, body, 3), 0.05, 3.7).rotation.z = -0.3;
+  P(blob(0.2, w.skin[2], 0.0, 0.25, 0.18, 1.4, 0.8, 0.9, body, 4), 0.04, 5.1);
+  const sacM = new THREE.MeshStandardMaterial({ color: 0x6e2626, roughness: 0.35, metalness: 0, emissive: 0x2a0606, emissiveIntensity: 0.6 }), veinM = new THREE.MeshStandardMaterial({ color: 0x3a1430, roughness: 0.5, emissive: 0x400818, emissiveIntensity: 0 });
+  for (const [x, y, z, r2, ph] of [[0.18, 0.62, 0.3, 0.07, 0], [-0.22, 0.9, 0.22, 0.06, 0.7], [0.36, 1.0, 0.2, 0.05, 1.3], [-0.05, 0.38, 0.3, 0.055, 0.4], [-0.38, 0.7, 0.12, 0.045, 1.0]]) P(blob(r2, sacM, x, y, z, 1, 0.85, 0.7, body, 9 + ph * 10), 0.22, ph, true);
+  for (const pts of [[[0.18, 0.62, 0.33], [0.05, 0.75, 0.34], [-0.1, 0.95, 0.27], [-0.22, 1.05, 0.18]], [[0.18, 0.62, 0.33], [0.28, 0.48, 0.3], [0.22, 0.3, 0.27]], [[-0.22, 0.9, 0.25], [-0.35, 0.75, 0.2], [-0.4, 0.55, 0.1]], [[0.36, 1.0, 0.23], [0.25, 1.2, 0.18], [0.14, 1.32, 0.17]]]) tube(pts, 0.009, veinM, body, 14);
   // ribs showing through the thinnest skin
   for (let i = 0; i < 4; i++) tube([[-0.18, 0.78 - i * 0.07, 0.25], [-0.05, 0.75 - i * 0.07, 0.33], [0.1, 0.77 - i * 0.07, 0.3]], 0.012, w.skin[0]);
   // seams: curved, puckered, cross-stitched
@@ -145,7 +151,7 @@ export function buildChimera() {
   const mist = [];
   for (let i = 0; i < 3; i++) { const s3 = new THREE.Sprite(m.mist); s3.scale.setScalar(1.5 + i * 0.3); s3.position.set(i % 2 ? 0.3 : -0.3, 0.3 + i * 0.4, 0.1); root.add(s3); mist.push(s3); }
   root.scale.setScalar(1.12);
-  return { root, body, head, arms, strands, mist };
+  return { root, body, head, arms, strands, mist, pulse, veinM, sacM };
 }
 
 /** ひなた: the kit's person; poses: 'idle', 'scared', 'crouch' (holding the valve / the ankle) */

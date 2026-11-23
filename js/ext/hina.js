@@ -11,7 +11,7 @@ export const HINA = {
   genkan: [1.0, 21.2, 1, [3, 21.6], 'idle'],
   roka: [4.6, 17.56, 1, [4.6, 15], 'lean'],
   kaidan: [15.0, 17.56, 1, [15.0, 15], 'lean'],
-  bstair: [15.6, 11.3, 0, [15.4, 13], 'crouch'],
+  bstair: [19.56, 11.3, 0, [16, 11.3], 'lean'],   // 1.7.0 (5th #12): after the slip she leans on the wall, the weight off her ankle
   pump: [5.56, 12.55, 0, [3, 12.55], 'lean'],
   rescue: [3.6, 14.55, 0, [3, 10], 'scared', 0.76],
   jimu: [6.44, 12.4, 0, [9, 12.4], 'lean'],
@@ -65,7 +65,7 @@ export function installHina(ext, G) {
     // walk keeps her feet on the floor (step() lowers her to it); before, she walked off at desk height
     const fy = ctx.world.floorY(f);
     if (r.y > fy + 0.05) { const n0 = pts[0], d0 = Math.hypot(n0.x - r.x, n0.z - r.z) || 1; pts.unshift({ x: r.x + ((n0.x - r.x) / d0) * 0.7, z: r.z + ((n0.z - r.z) / d0) * 0.7, down: true }); H.set('crouch'); }
-    walk = { key, pts, i: 0, speed: f === 0 ? 0.95 : 1.15, fy };   // in the basement she limps (the ankle)
+    walk = { key, pts, i: 0, speed: f === 0 ? 0.95 : 1.15, fy, limp: f === 0 };   // in the basement she limps (the ankle)
     G.hinaAt = null; H.root.rotation.x = 0; if (!(pts[0] && pts[0].down)) H.set('walk');
     const line = GOING[key] && (ctx.data.talk[GOING[key]] || [])[0];
     if (line && !said[key]) { said[key] = true; if (line.voice && ctx.voiceLine) ctx.voiceLine(line.voice, null, { prio: 'hint' }); ctx.ui.say(`<span class="who">ひなた</span>${line.text}`, 5); }   // 1.3.0 (#3): one voice at a time (js/kit/voice-queue.js)
@@ -75,8 +75,18 @@ export function installHina(ext, G) {
     const P = walk.pts[walk.i], r = H.root.position, dx = P.x - r.x, dz = P.z - r.z, d = Math.hypot(dx, dz);
     if (P.door && d < 1.3) { const D = ctx.world.doors.get(P.door); if (D && !D.isOpen && !(D.locked && D.locked())) D.open(); }
     if (r.y > walk.fy) { r.y = Math.max(walk.fy, r.y - dt * 1.5); if (r.y <= walk.fy) { H.root.userData.perch = false; H.set('walk'); } }   // down off the desk, onto the floor
-    if (d < 0.08) { walk.i++; if (walk.i >= walk.pts.length) { const k = walk.key; walk = null; place(k); } return; }
-    const v = Math.min(d, walk.speed * dt); r.x += (dx / d) * v; r.z += (dz / d) * v;
+    if (d < 0.08) { walk.i++; if (walk.i >= walk.pts.length) { const k = walk.key; walk = null; H.root.rotation.z = 0; place(k); } return; }
+    // 1.7.0 (5th play test #12 「怪我をさせるなら…歩かせるアニメーション」): in the basement she limps on the ankle she twisted on the
+    // ladder - a short quick step on the bad foot and a long careful one, the body dipping and rolling onto the good side, a hitch
+    // between; she is slower for it (the hitch cuts the speed to a crawl for a moment each stride)
+    let sp = walk.speed;
+    if (walk.limp && r.y <= walk.fy + 0.001) {
+      walk.ph = (walk.ph || 0) + dt * 3.2; const ph = walk.ph % (Math.PI * 2), bad = ph < Math.PI;
+      sp *= bad ? 0.35 + 0.4 * Math.sin(ph) : 1.05;
+      H.root.rotation.z = (bad ? 0.11 : 0.03) * Math.sin(ph);
+      r.y = walk.fy - (bad ? 0.045 * Math.sin(ph) : 0);
+    }
+    const v = Math.min(d, sp * dt); r.x += (dx / d) * v; r.z += (dz / d) * v;
     const yaw = Math.atan2(dx, dz); let dy = yaw - H.root.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); H.root.rotation.y += dy * Math.min(1, dt * 6);
   }
   // [E] on her: her task, or a line for this moment

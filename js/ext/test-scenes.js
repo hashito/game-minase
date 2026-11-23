@@ -40,7 +40,7 @@ export function installTests(ext, G) {
       for (const f of sc.flags || []) if (!ctx.state.flags.includes(f)) ctx.state.flags.push(f);
       if (sc.at.floor === 0) { const ps = G.project(sc.at.x, sc.at.z).s; for (const e of G.evS || []) if (e.s >= ps - 0.5 && !G.ev.includes(e.id)) G.ev.push(e.id); }
       if (ctx.state.tasks.includes('T_JAR')) G.lightOut = false;
-      if (G.applyStory) G.applyStory();
+      if (G.applyStory) G.applyStory(true);
       for (const id of ['D_P1', 'D_GATE']) { const d = ctx.world.doors.get(id); if (d && d.snap) d.snap(); }
       if (sc.chase != null) { const ps = G.project(sc.at.x, sc.at.z).s; G.chaseFrom(Math.max(0, ps - sc.chase), 5); }
       if (sc.seal) G.chaseFrom(G.mouthS - 14, 1.5);

@@ -21,6 +21,8 @@ for (const seq of Object.values(talk)) for (const L of seq) { add(L); for (const
 // the protagonist's thoughts and answers (js/ext/words.js): assets/voice/t-<key>.mp3, listed in assets/voice/thoughts.json (game.json "thoughtVoices")
 const { W } = await import(new URL('../js/ext/words.js', import.meta.url).href);
 for (const [k, text] of Object.entries(W)) if (text.length > 6) lines.set(`t-${k}`, { id: `t-${k}`, who: '私', text });
+// 1.7.0 (5th play test #13 「最後も音声をつけてあげてください」): the ending cards (data/endings.json pages), read by 私
+for (const e of JSON.parse(fs.readFileSync(path.join(ROOT, 'data/endings.json'), 'utf8'))) for (const pg of e.pages || []) if (pg.voice && pg.text) { const id = path.basename(pg.voice, '.mp3'); lines.set(id, { id, who: '私', text: pg.text }); }
 const out = path.join(ROOT, 'assets/voice'); fs.mkdirSync(out, { recursive: true });
 const todo = [...lines.values()].filter((L) => (!only || only.has(L.id)) && (force || !fs.existsSync(path.join(out, `${L.id}.mp3`))));
 console.log(`${lines.size} spoken lines, ${todo.length} to make`);

@@ -56,6 +56,11 @@ export default async function dotLayer(ext, { manifest, data }) {
     fetch(at('data/props.json')).then((r) => r.json()).catch(() => ({ props: [] })),
   ]);
   const stackPx = Object.fromEntries(await Promise.all(Object.keys(stackIndex).map(async (k) => [k, await loadPixels(at(`assets/stacks/${k}.png`))])));
+  // 1.7.0 (5th play test #7 「モンスターを高解像度版に」; the user named it - no other part of the game goes HD): あれ at res 4
+  // (assets/figures/are-hd.*, 6 mm voxels) beside the res-2 set, which stays as it is; the HD one is drawn when she is within 7 m
+  // It is loaded after the game has started (never behind the title: P52) and not on a phone or a small-memory device (its frames are
+  // ~1 GB of pixels to mesh); the atlas is dropped once the frames are built.
+  const hdOk = !(typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches) && !(navigator.deviceMemory && navigator.deviceMemory < 8) && !/[?&]nohd\b/.test(location.search);
   D.timings.load = Math.round(performance.now() - t0);
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true });
   mat.name = 'dot-stack';
@@ -209,7 +214,7 @@ export default async function dotLayer(ext, { manifest, data }) {
         const m = natural(k, flat ? 'floor' : 'wall');
         const p = pk.getWorldPosition(new THREE.Vector3());
         if (flat) { m.rotation.y = 0; m.position.copy(pk.worldToLocal(new THREE.Vector3(p.x, p.y - (pk.geometry && pk.geometry.parameters ? pk.geometry.parameters.height / 2 : 0), p.z))); }
-        else { const dir = new THREE.Vector3(Math.sin(face), 0, Math.cos(face)); ray.set(p.clone().addScaledVector(dir, 0.5), dir.clone().negate()); const hit = ray.intersectObjects(surfaces, false)[0]; const w = hit ? hit.point.clone().addScaledVector(dir, 0.02) : p; w.y = p.y - (stackIndex[k].n * stackIndex[k].mpp) / 2; m.position.copy(pk.worldToLocal(w)); m.rotation.y = face - pk.rotation.y; }
+        else { const dir = new THREE.Vector3(Math.sin(face), 0, Math.cos(face)); ray.set(p.clone().addScaledVector(dir, 0.5), dir.clone().negate()); const hit = ray.intersectObjects(surfaces, false)[0]; const w = hit ? hit.point.clone().addScaledVector(dir, 0.008) : p; w.y = p.y - (stackIndex[k].n * stackIndex[k].mpp) / 2; m.position.copy(pk.worldToLocal(w)); m.rotation.y = face - pk.rotation.y; }
         pk.add(m);
         D.swapped.push([id, k, flat ? 'flat' : 'wall']);
       }
@@ -279,10 +284,13 @@ export default async function dotLayer(ext, { manifest, data }) {
       D.items.push(ia.id);
     }
     // ---- the mood props (dot/data/props.json: { props: [{ room, k, x, z, face, s, solid, y, mount, light }] }) ----
-    // mount "wall": the part's back (its -z) against the wall behind the point (a ray from x / z away from where it faces), 3 cm proud of it -
+    // mount "wall": the part's back (its -z) against the wall behind the point (a ray from x / z away from where it faces), 8 mm proud of it (1.7.0; 3 cm read as floating) -
     //   never on the plaster's own plane (the flicker of 札の家 #wall papers) and never a backing larger than the part;
     // mount "ceiling": hung from the ceiling above the point (its top 1 cm under it); light: [colour, intensity, distance] for a part that glows
-    const surfaces = []; W.group.traverse((o) => { if (o.isMesh && o.visible !== false && !String(o.name).startsWith('dot-') && !String(o.name).startsWith('prop:')) surfaces.push(o); });
+    // 1.7.0 (5th play test #1 「記録版が壁から離れて見える」): an invisible [E] box (a thing's marker, the pick box of a paper) is not a wall -
+    // the record board of the mortuary stood 35 cm off the tiles on the marker of the thing it is
+    const seen = (o) => [].concat(o.material || []).some((mt) => mt && mt.visible !== false && mt.colorWrite !== false && !(mt.transparent && mt.opacity === 0));
+    const surfaces = []; W.group.traverse((o) => { if (o.isMesh && o.visible !== false && seen(o) && !(o.userData && o.userData.interact) && !String(o.name).startsWith('dot-') && !String(o.name).startsWith('prop:')) surfaces.push(o); });
     const ray = new THREE.Raycaster(); ray.far = 2.5;
     const glowMat = new THREE.MeshBasicMaterial({ vertexColors: true });   // glow: true - reads in the dark (no light of its own)
     const mountGeo = new Map();
@@ -320,7 +328,7 @@ export default async function dotLayer(ext, { manifest, data }) {
       if (mount === 'wall') {
         ray.set(new THREE.Vector3(p.x, y0 + (p.y || 0) + 0.3, p.z).addScaledVector(dir, 0.6), dir.clone().negate());
         const hit = ray.intersectObjects(surfaces, false)[0];
-        if (hit) { wallAt = +hit.distance.toFixed(2); m.position.x = hit.point.x + dir.x * 0.03; m.position.z = hit.point.z + dir.z * 0.03; }
+        if (hit) { wallAt = +hit.distance.toFixed(2); m.position.x = hit.point.x + dir.x * 0.008; m.position.z = hit.point.z + dir.z * 0.008; }   // 1.7.0: 8 mm (was 3 cm: it read as floating)
       } else if (mount === 'ceiling') {
         // the ceiling itself (a lamp or a pipe under it is not where the board hangs: 1.4.2 「受付の雨漏り部分が少し浮いて見える」)
         ray.set(new THREE.Vector3(p.x, y0 + 1.2, p.z), new THREE.Vector3(0, 1, 0));
@@ -371,6 +379,16 @@ export default async function dotLayer(ext, { manifest, data }) {
       const C = G.chimera, k = C.root.scale.x || 1;
       are = createFigure(THREE, areSet, { height: 1.85 / k, material: figMat(0.1, 'dot-are', [0.64, 0.68, 0.7]), name: 'are', holdOk: ['attack', 'fear'] });
       are.root.position.y = -0.15 / k;   // the kit model stands 0.15 above the floor (its hips at the water line); the frames stand on the floor
+      if (hdOk) {
+        let asked = false;
+        const addHd = () => { if (asked) return; asked = true; D.areHd = 'loading';
+          loadFrameSet(THREE, at('assets/figures/are-hd.json')).then((set) => {
+            const hd = createFigure(THREE, set, { height: 1.85 / k, motions: ['idle', 'walk', 'attack', 'fear'], material: figMat(0.1, 'dot-are-hd', [0.64, 0.68, 0.7]), name: 'are-hd', holdOk: ['attack', 'fear'] });
+            hd.root.position.y = -0.15 / k; hd.root.visible = false; C.root.add(hd.root); set.px = null; are.hd = hd; D.areHd = 'ready';
+          }).catch(() => { D.areHd = 'none'; });
+        };
+        ext.on('game:start', () => setTimeout(addHd, 1500)); if (ctx.state && ctx.state.started) setTimeout(addHd, 1500);
+      }
       const keep = new Set(); are.root.traverse((x) => keep.add(x));
       hideOwn(C.root, keep);
       C.root.add(are.root);
@@ -486,8 +504,11 @@ export default async function dotLayer(ext, { manifest, data }) {
       if (af && H && G.chimera && G.chimera.root.visible) {
         const cam = ctx.camera.position, ps = G.project ? G.project(cam.x, cam.z).s : 0, gap = Math.abs(ps - (H.s || 0));
         const st = H.anim ? H.anim : H.pressing || (gap < 3 && H.mode === 'chase') ? 'attack' : H.sunk > 0 ? 'fear' : (H.mode !== 'off' && H.wait <= 0 && H.rise <= 0) ? 'walk' : 'idle';
-        af.anim.play(st);
-        af.update(dt, { moved: st === 'walk' ? (H.mode === 'chase' ? 2.4 : 1.3) * dt / af.scale : 0 });
+        const R = G.chimera.root.position, near = Math.hypot(cam.x - R.x, cam.z - R.z), hd = af.hd && near < 7, F = hd ? af.hd : af;
+        if (af.hd) { af.hd.root.visible = hd; af.root.visible = !hd; }
+        F.anim.play(st);
+        F.update(dt, { moved: st === 'walk' ? (H.mode === 'chase' ? 2.4 : 1.3) * dt / F.scale : 0 });
+        D.areTier = hd ? 'hd' : 'base';
       }
       // the light round the player
       if (D.lights) {

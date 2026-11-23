@@ -6,7 +6,7 @@
 //   gate    - the first sight (L3): she comes up to the second watertight door from the flooded far side and sinks back when it drains (safe)
 //   lesson  - the valve lesson (L3): she comes from the far end; a drained valve stops her (safe: she never kills here)
 //   peek    - a glimpse at the end of a passage (the way in)
-//   cross   - 1.5.0 (3rd play test #1): she wades across the far end with a broken gait, stops, turns to you, twitches and is dragged under
+//   cross   - 1.7.0 (5th #6): at the far end of P2 with her back to you; she turns, twitches and lurches away out of the frame (10 m off)
 //   chase, dir -1 - 1.5.0 (#18): once in P3 she goes under and comes up AHEAD of you, wading back toward you (a splash ahead warns
 //             first); a valve between you and her stops her from that side too
 //   chase   - the jar is in your hand (L4): she hunts you back to the watertight door. Catch = death (back to the last checkpoint)
@@ -80,11 +80,17 @@ export function installChimera(ext, G) {
     key.position.set(x - dx * 0.8, y0 + 0.55, z - dz * 0.8); key.intensity = k * (ctx.pixelStyle ? 7 : 3.4) * ripple;
   }
   G.herLights = () => ({ rim: glow && { i: glow.intensity, d: glow.distance, p: glow.position.toArray() }, key: key && { i: key.intensity, d: key.distance, p: key.position.toArray() } });
-  G.ghostStart = (mode, s, o = {}) => { H.dir = 1; H.ct = 0; H.bang = 0; H.anim = null; H.aheadDone = false; H.mode = mode; H.s = s; H.wait = o.wait || 0; H.lunge = 9; H.t = 0; H.pressT = 0; H.sunk = 0; H.sinkAnim = 0; H.hiddenT = 0; H.rise = o.rise || 0; H.fade = 0; H.speed = o.speed; H.onStop = o.onStop || null; H.onCatch = o.onCatch || null; H.stopAt = o.stopAt ?? null; };
-  G.ghostStop = () => { H.mode = 'off'; H.sunk = 0; H.sinkAnim = 0; if (fig) fig.root.visible = false; if (glow) lit(0); for (const P of G.posts.values()) P.press = false; };
+  G.ghostStart = (mode, s, o = {}) => { H.dir = 1; H.ct = 0; H.retreat = 0; H.lurched = false; H.bang = 0; H.anim = null; H.aheadDone = false; H.mode = mode; H.s = s; H.wait = o.wait || 0; H.lunge = 9; H.t = 0; H.pressT = 0; H.sunk = 0; H.sinkAnim = 0; H.hiddenT = 0; H.rise = o.rise || 0; H.fade = 0; H.speed = o.speed; H.onStop = o.onStop || null; H.onCatch = o.onCatch || null; H.stopAt = o.stopAt ?? null; };
+  G.ghostStop = () => { H.mode = 'off'; H.retreat = 0; H.sunk = 0; H.sinkAnim = 0; if (fig) fig.root.visible = false; if (glow) lit(0); for (const P of G.posts.values()) P.press = false; };
   G.ghostFade = () => { H.fade = 0.0001; };
   // she goes under (the figure sinks for 1 s, then nothing) and comes back up at s = back after sec seconds
-  function sinkFor(sec, back) { H.fade = 0; H.sinkAnim = 1; H.sunk = sec + 1; H.back = back; for (const P of G.posts.values()) P.press = false; ctx.sound('noise', 'splash'); }
+  // 1.7.0 (5th play test #8 「止水弁にハマると少しずつ下に消えていく感じが良い」): caught by a valve she goes under step by step over
+  // SINK s - six jerks down, the arms clawing up, the light going with her - not in one drop
+  const SINK = 3.2;
+  function sinkFor(sec, back) { H.fade = 0; H.sinkAnim = SINK; H.sunk = sec + SINK; H.back = back; for (const P of G.posts.values()) P.press = false; ctx.sound('noise', 'splash'); }
+  // 1.7.0 (#8 「止水弁が切れると下に消えていく感じは良くない」): when the water of the valve comes back in the lesson she is free - she
+  // bursts up, lurches at you, and wades back into the dark (out of the frame), not down through the floor
+  G.ghostRetreat = () => { if (H.mode === 'off') return; H.retreat = 0.0001; H.rise = 0.9; H.pressing = false; ctx.sound('noise', 'splash'); ctx.sound('stinger'); };
   G.ghostSink = sinkFor;
   // 1.2.0 (#21 「最初の止水弁しか効かない」): a valve turned while she is in its band or just past it (up to 5 m on your side) drains the
   // water under her: she goes down and comes back up behind the band. Further past it the dry band is behind her; story.js says so.
@@ -118,9 +124,39 @@ export function installChimera(ext, G) {
     ext.emit('minase:ghost-surge', { mode: H.mode, n: H.beats });
   }
   let T = 0;
+  // 1.7.0 (5th play test #7 「アニメーションも滑らかにして脈打つ感じとか、動く感じを怖い感じに（こだわるべき）」): she is alive all
+  // the time she is seen - the fused torsos breathe out of step, the sacs under the skin throb on a heartbeat (lub-dub, faster as she
+  // nears you and in the chase), the veins flush with each beat, the whole body swells on the beat (the dot frames too: the root's
+  // scale), and every 0.7-2.4 s a twitch runs through her (the trunk snaps, a head jerks, one arm spasms)
+  const TW = { t: 1.2, k: 0, arm: 0, dir: 1 };
+  let beatPh = 0;
+  const heart = (ph) => Math.exp(-((ph - 0.04) ** 2) / 0.0025) + 0.6 * Math.exp(-((ph - 0.24) ** 2) / 0.0025);
+  function pulse(dt) {
+    const cam = ctx.camera.position, near = Math.hypot(cam.x - fig.root.position.x, cam.z - fig.root.position.z);
+    const rate = (H.mode === 'chase' ? 1.7 : 1.1) + Math.max(0, 1 - near / 10) * 0.9;
+    beatPh = (beatPh + dt * rate) % 1; const b = heart(beatPh);
+    for (const q of fig.pulse || []) {
+      if (q.beat) q.k.scale.copy(q.s).multiplyScalar(1 + q.amp * b);
+      else { const v = Math.sin(T * 1.15 + q.ph); q.k.scale.set(q.s.x * (1 + q.amp * v), q.s.y * (1 - q.amp * 0.6 * v), q.s.z * (1 + q.amp * v)); }
+    }
+    if (fig.veinM) fig.veinM.emissiveIntensity = b * 1.4;
+    if (fig.sacM) fig.sacM.emissiveIntensity = 0.5 + b * 1.2;
+    const sc = 1.12 * (1 + 0.018 * b);
+    fig.root.scale.set(sc * (1 + 0.006 * Math.sin(T * 1.15)), 1.12 * (1 + 0.012 * Math.sin(T * 1.15 + 1.2)) * (1 + 0.01 * b), sc);
+    TW.t -= dt;
+    if (TW.t <= 0) { TW.t = 0.7 + Math.random() * 1.7; TW.k = 1; TW.arm = Math.floor(Math.random() * fig.arms.length); TW.dir = Math.random() < 0.5 ? -1 : 1; }
+    TW.k = Math.max(0, TW.k - dt * 5);
+    const j = TW.k * TW.k;
+    fig.body.rotation.x = 0.28 + j * 0.16 * TW.dir; fig.body.rotation.y = j * 0.22 * -TW.dir;
+    fig.head.rotation.x = j * 0.5 * TW.dir;
+    const A = fig.arms[TW.arm]; if (A) A.rotation.y = j * 0.9 * TW.dir;
+  }
+  /** the gait: uneven - a heave forward on the long arms, a hold while the short ones drag (mean 0.95 of the pace) */
+  const gait = () => 0.55 + 1.05 * Math.pow(Math.abs(Math.sin(T * 2.6)), 3) + (Math.sin(T * 2.6) > 0 ? 0.05 : 0);
   function update(dt, active) {
     if (!fig) return;
     T += dt;
+    if (fig.root.visible && active) pulse(dt);
     for (const P of G.posts.values()) P.press = false;
     if (H.mode === 'off' || ctx.floor !== 0) { fig.root.visible = false; lit(0); return; }
     if (!active) return;
@@ -131,12 +167,20 @@ export function installChimera(ext, G) {
     if (H.fade > 0) { H.fade += dt; if (H.fade > 1.4) { const m = H.mode; G.ghostStop(); ext.emit('minase:ghost-gone', { mode: m }); return; } }
     if (H.sunk > 0) {   // under the water after a dry band or a valve turned on her: nothing to see, she comes back up at H.back
       H.sunk -= dt;
-      if (H.sinkAnim > 0) { H.sinkAnim -= dt; const q = at(H.s); fig.root.visible = true; fig.root.position.set(q.x, ctx.world.floorY(0) + 0.15 - (1 - H.sinkAnim) * 1.8, q.z); lit(0.5 * H.sinkAnim, q.x, q.z); for (const a of fig.arms) a.rotation.x += (-1.6 - a.rotation.x) * Math.min(1, dt * 4); }
+      if (H.sinkAnim > 0) {
+        H.sinkAnim -= dt; const q = at(H.s), k = Math.min(1, 1 - H.sinkAnim / SINK), n = 6, st = (Math.floor(k * n) + Math.pow((k * n) % 1, 4)) / n;   // a jerk, a hold, a jerk
+        fig.root.visible = true; fig.root.position.set(q.x, ctx.world.floorY(0) + 0.15 - st * 1.9 + (Math.sin(T * 29) > 0.7 ? 0.04 : 0), q.z);
+        fig.root.rotation.y = q.yaw + Math.sin(T * 17) * 0.08; fig.body.rotation.z = Math.sin(T * 23) * 0.22;
+        lit(Math.max(0, 0.8 * (1 - st)), q.x, q.z);
+        for (const [i, a] of fig.arms.entries()) a.rotation.x += (-2.4 + Math.sin(T * 9 + i * 1.3) * 0.5 - a.rotation.x) * Math.min(1, dt * 6);
+        if (Math.floor(k * n) !== H.sinkStep) { H.sinkStep = Math.floor(k * n); if (H.sinkStep < n && ctx.audio && ctx.audio.noise) ctx.audio.noise('splash', { pos: { x: q.x, y: 0.3, z: q.z }, n: 1, gain: 0.8 }); }
+      }
       else { fig.root.visible = false; lit(0); }
       if (H.sunk <= 0) { H.s = Math.max(0, H.back); H.rise = 1.2; ctx.sound('noise', 'splash'); }
       return;
     }
     if (H.mode === 'cross') { crossStep(dt, cam); return; }
+    if (H.retreat > 0) { retreatStep(dt, ps); return; }
     if (H.dir === -1 && H.mode === 'chase') { aheadStep(dt, ps); if (H.wait <= 0) placeFig(dt, ps); else { fig.root.visible = false; lit(0); } return; }
     if (H.rise > 0) { H.rise -= dt; }
     else if (H.wait <= 0 && H.fade <= 0) {
@@ -149,7 +193,7 @@ export function installChimera(ext, G) {
         const bl = blockers(H.s, ps), stop = bl.length ? bl[0].s - 0.5 : H.stopAt != null ? H.stopAt : ps - 0.2;
         const walk = H.speed != null ? H.speed : chase && H.t < 15 ? SPEED.start : SPEED.walk;
         const base = walk * (ctx.calm ? 0.8 : 1) * (chase ? slowAt(H.s) : 1);
-        H.s = Math.min(Math.max(H.s, stop), H.s + base * dt);
+        H.s = Math.min(Math.max(H.s, stop), H.s + base * (chase ? gait() : 1) * dt);
         if (bl.length && H.s >= bl[0].s - 0.55) { if (bl[0].P) bl[0].P.press = true; if (!H.pressing) { H.pressing = true; H.pressT = 0; H.beatT = 0; H.nextBeat = BEAT.first; ext.emit('minase:ghost-press', { id: bl[0].P ? bl[0].P.def.id : bl[0].gate ? 'gate' : 'door' }); } } else H.pressing = false;
         if (H.pressing && bl[0].P) pressBeat(dt);
         // 1.2.0 (#21, #23 「止水弁で足止めしても敵が消えずに」): held at a dry band she claws at it for 3.5 s, then sinks under; she comes back
@@ -208,6 +252,15 @@ export function installChimera(ext, G) {
     if (H.mode === 'chase') for (const [id, e] of Object.entries(G.lampEntry || {})) if (e.i > 0 && G.lampS && Math.abs(G.lampS[id] - H.s) < 1.0) { G.lampOut(id); }
   }
 
+  function retreatStep(dt, ps) {
+    H.retreat += dt; const t = H.retreat;
+    if (H.rise > 0) H.rise = Math.max(0, H.rise - dt);
+    if (t < 1.4) { H.dir = 1; H.s = Math.min(ps - 1.6, H.s + (t > 0.6 ? 1.8 * dt : 0)); if (t > 0.6 && !H.lurched) { H.lurched = true; H.lurch = BEAT.lurch; H.flare = 0.9; ctx.audio && ctx.audio.noise && ctx.audio.noise('knock', { pos: { ...at(H.s), y: 1.1 }, n: 2, gap: 0.12, gain: 1.4 }); } }
+    else { H.dir = -1; H.s = Math.max(0, H.s - 1.5 * dt); }
+    H.anim = t < 1.4 ? 'attack' : 'walk';
+    placeFig(dt, ps);
+    if (t > 1.4 && (ps - H.s > 13 || t > 10)) { H.retreat = 0; H.lurched = false; const m = H.mode; G.ghostStop(); ext.emit('minase:ghost-gone', { mode: m }); }
+  }
   // ---- 1.5.0 (#18): she comes up ahead of you ----
   function goAhead(ps) {
     const s = Math.min(G.routeLen - 2, Math.max(ps + 8, (G.aheadValveS || 0) + 3.5)), q = at(s);
@@ -236,29 +289,31 @@ export function installChimera(ext, G) {
   // a broken wade (she lurches in steps, a shoulder dropping), a stop, her head (the whole body in the dot version) turned to you, a
   // twitch, and a drag down under the water with the arms up. No fade: she goes under the surface.
   // she comes out of the knee water of P3 into the dry end of P2 (in view from the low passage), stops, turns, and is yanked back into the water
-  const CROSS = { from: [-17.3, -44.2], to: [-17.95, -41.75], walk: 2.6, stop: 4.0, twitch: 4.5, pull: 5.3 };
+  // 1.7.0 (5th play test #6 「頑張れば間に合う感じなので、間に合わない程度のタイミングで」「画面外に消えていく感じ」): the crossing fires
+  // when you are 10 m off (story.js e7 at x -7.5, crouched under the pipes: under 6.5 m in its 5 s), she is already standing at the far end
+  // with her back to you, turns, twitches, and lurches away round the corner into P3 - out of the frame, never sinking where you can see
+  const CROSS = { from: [-17.7, -42.25], to: [-17.45, -47.8], still: 0.6, turn: 1.3, twitch: 2.4, gone: 5.2 };
   function crossStep(dt, cam) {
     H.ct += dt; const t = H.ct, C = CROSS, y0 = ctx.world.floorY(0) + 0.15;
     fig.root.visible = true;
-    let k = Math.min(1, t / C.walk);
-    k = Math.min(1, Math.floor(k * 5) / 5 + Math.pow((k * 5) % 1, 3) / 5);   // five lurches, each one a jerk at the end
-    let x = C.from[0] + (C.to[0] - C.from[0]) * k, z = C.from[1] + (C.to[1] - C.from[1]) * k;
-    let y = y0 - Math.abs(Math.sin(t * 6.5)) * 0.12;
+    let x = C.from[0], z = C.from[1], y = y0;
     const face = Math.atan2(cam.x - x, cam.z - z), along = Math.atan2(C.to[0] - C.from[0], C.to[1] - C.from[1]);
-    let yaw = along, roll = Math.sin(t * 6.5) * 0.18;
-    H.anim = 'walk';
-    if (t > C.walk) { H.anim = 'idle'; roll = 0.12; const q = Math.min(1, (t - C.walk) / 0.5); yaw = along + (face - along) * q * q; if (!H.turned) { H.turned = true; ctx.sound('noise', 'tap', { pos: { x, y: 1.4, z } }); } }
-    if (t > C.stop) { yaw = face + Math.sin(t * 40) * 0.12; roll = Math.sin(t * 37) * 0.25; H.anim = 'attack'; }
+    let yaw = along, roll = 0.08 + Math.sin(t * 2.1) * 0.03;
+    H.anim = 'idle';
+    if (t > C.still) { const q = Math.min(1, (t - C.still) / (C.turn - C.still)); yaw = along + (face - along) * q * q; if (!H.turned) { H.turned = true; ctx.sound('noise', 'tap', { pos: { x, y: 1.4, z } }); } }
+    if (t > C.turn) { yaw = face + Math.sin(t * 40) * 0.12; roll = Math.sin(t * 37) * 0.25; H.anim = 'attack'; }
     if (t > C.twitch) {
-      H.anim = 'fear'; const q = Math.min(1, (t - C.twitch) / (C.pull - C.twitch)), qq = q * q;
-      x = C.to[0] + (C.from[0] - C.to[0]) * qq; z = C.to[1] + (C.from[1] - C.to[1]) * qq;   // yanked backwards, feet first, into the water
-      y = y0 - qq * 1.6 - (Math.sin(t * 30) > 0 ? 0.06 : 0); roll = Math.sin(t * 25) * 0.3;
+      H.anim = 'walk'; let k = Math.min(1, (t - C.twitch) / (C.gone - C.twitch - 0.4));
+      k = Math.min(1, Math.floor(k * 5) / 5 + Math.pow((k * 5) % 1, 3) / 5);   // five lurches, each one a jerk at the end
+      x = C.from[0] + (C.to[0] - C.from[0]) * k; z = C.from[1] + (C.to[1] - C.from[1]) * k;
+      y = y0 - Math.abs(Math.sin(t * 6.5)) * 0.12;
+      const q = Math.min(1, (t - C.twitch) / 0.35); yaw = face + (along - face) * q; roll = Math.sin(t * 6.5) * 0.2;
       if (!H.pulled) { H.pulled = true; ctx.audio && ctx.audio.noise && ctx.audio.noise('splash', { pos: { x, y: 0.3, z }, n: 2 }); }
     }
     fig.root.position.set(x, y, z); fig.root.rotation.set(0, yaw, 0); fig.body.rotation.z = roll;
-    lit(t > C.twitch ? 0.85 * Math.max(0, 1 - (t - C.twitch) / 0.9) : 1, x, z);
-    for (const a of fig.arms) a.rotation.x += ((t > C.twitch ? -2.6 : -0.4) - a.rotation.x) * Math.min(1, dt * 5);
-    if (t > C.pull) { H.turned = H.pulled = false; G.ghostStop(); ext.emit('minase:ghost-gone', { mode: 'cross' }); }
+    lit(1, x, z);
+    for (const a of fig.arms) a.rotation.x += ((t > C.twitch ? -0.9 : -0.4) - a.rotation.x) * Math.min(1, dt * 5);
+    if (t > C.gone) { H.turned = H.pulled = false; G.ghostStop(); ext.emit('minase:ghost-gone', { mode: 'cross' }); }
   }
 
   ext.on('game:ready', (c) => {
