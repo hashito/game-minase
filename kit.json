@@ -1,5 +1,5 @@
 {
-  "kit": "d6d96bef",
+  "kit": "799ff6ce",
   "dest": "js/kit",
   "modules": [
     "game-core",
@@ -113,7 +113,8 @@
     "specimen-parts",
     "fp-voxel",
     "sprite-stack-mesh",
-    "sprite-stack-anim"
+    "sprite-stack-anim",
+    "kamishibai"
   ],
   "css": "css/kit.css",
   "cssExtra": [
@@ -161,7 +162,7 @@
     "rest-check.mjs"
   ],
   "hashes": {
-    "js\\kit\\game-core.js": "77557347eb7d",
+    "js\\kit\\game-core.js": "4e07eb370cf2",
     "js\\kit\\item-kinds.js": "9b67d808c2f3",
     "js\\kit\\item-models.js": "5cc334f5801e",
     "js\\kit\\prop-geo.js": "89b9dabf8cf4",
@@ -301,7 +302,7 @@
     "js\\kit\\control-help.js": "7694d66af73d",
     "js\\kit\\paper-doc.js": "07c5fee66315",
     "js\\kit\\low-zone.js": "7df668d66e88",
-    "tools/check-playtest.mjs": "352e3b46c872",
+    "tools/check-playtest.mjs": "64067c604c90",
     "js\\kit\\wall-paste.js": "261910056d54",
     "js\\kit\\timed-shot.js": "48aed0a40506",
     "js\\kit\\voice-queue.js": "a353c5a24022",
@@ -327,10 +328,12 @@
     "tools/cue-order.mjs": "793709d5ec96",
     "tools/stale-guide.mjs": "0558b8d49f91",
     "tools/water-edge.mjs": "299237876cc7",
-    "js\\kit\\specimen-parts.js": "1e7947e9e5a7",
+    "js\\kit\\specimen-parts.js": "a9a6607ccd6e",
     "js\\kit\\fp-voxel.js": "cd4912c18195",
     "js\\kit\\sprite-stack-mesh.js": "688c6ecd91e3",
-    "js\\kit\\sprite-stack-anim.js": "dadee15f2106"
+    "js\\kit\\sprite-stack-anim.js": "dadee15f2106",
+    "js\\kit\\kamishibai.js": "12a9a6de1018",
+    "tools/station-aim.mjs": "1ca39c341535"
   },
   "textures": [
     "tile_hospital_large",

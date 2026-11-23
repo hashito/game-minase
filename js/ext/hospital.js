@@ -142,10 +142,7 @@ export function installHospital(ext, G) {
       // 1.5.0 (3rd play test #17 「水をもう少し濁らせて」): murky green-brown water you cannot see the floor through, with a moving ripple
       water: std(0x323a2a, { roughness: 0.22, metalness: 0.35, transparent: true, opacity: 0.93, depthWrite: false, normalMap: rippleTex(), normalScale: new THREE.Vector2(0.55, 0.55) }),
       formalin: std(0x8a7b30, { roughness: 0.08, metalness: 0.2, transparent: true, opacity: 0.85, emissive: 0x2a2408, emissiveIntensity: 0.6 }),
-      jarLiquid: std(0xb3a148, { roughness: 0.1, transparent: true, opacity: 0.55, emissive: 0x2a2408, emissiveIntensity: 0.4, depthWrite: false }),
-      // 1.6.0 (#8): thin, darker glass and fluid - the pale double-sided glass and the glowing fluid washed every specimen to white in the torch
-      jarFluid: std(0x7d6e26, { roughness: 0.3, transparent: true, opacity: 0.2, depthWrite: false }),
-      jarGlass: std(0x8f9384, { roughness: 0.35, metalness: 0, transparent: true, opacity: 0.1, depthWrite: false }),
+      jarLiquid: new THREE.MeshBasicMaterial({ color: 0x3c2e08, transparent: true, opacity: 0.45, depthWrite: false }),   // 1.6.1: jar 7 in the same murky formalin as the rest
       organ: std(0x9b8a7a, { roughness: 0.6 }), heart: std(0x6b5550, { roughness: 0.55 }), chain: std(0x6a6c68, { metalness: 0.7, roughness: 0.4 }),
       hair: std(0x060606, { roughness: 0.5, side: THREE.DoubleSide }), torch: new THREE.MeshBasicMaterial({ color: 0xd8d2b0, transparent: true, opacity: 0.0 }),
       emerg: new THREE.MeshBasicMaterial({ color: 0x9ce8b8 }), emergOff: std(0x3a3f3c, { roughness: 0.6 }), black: std(0x050505, { roughness: 1 }),
@@ -459,16 +456,18 @@ export function installHospital(ext, G) {
       for (const [x, face] of [[12.75, -1], [5.25, 1]]) {
         for (const y of [0.5, 1.0, 1.5, 2.0]) box('HYOHON', x, -104, 0.45, 0.04, 6.4, shelfM, y, false);
         for (const zz of [-107.1, -100.9]) box('HYOHON', x, zz, 0.45, 2.2, 0.04, shelfM, 0, true);
+        // 1.6.1 (まとめ役「棚全体がライトで白く飛ぶ」): a dark back board behind the jars - the white tile behind them made the torch-lit row a white wall
+        box('HYOHON', x - face * 0.14, -104, 0.02, 2.45, 6.2, std(0x1f1d19, { roughness: 0.95 }), 0.02, false);
         for (const y of [0.54, 1.04, 1.54, 2.04]) for (let z = -106.8; z < -101; z += 0.3) if (Math.sin(z * 7.3 + y * 3.1 + x) > -0.6 && !(x < 6 && y < 0.6 && z > -105.2 && z < -102.8)) rows.push([x + face * 0.02, y, z, face]);
       }
       // 1.6.0 (4th play test #8 「標本室のホルマリンが改善されていないです。腕や臓器などいろいろな物をホルマリンにつけてください」): each jar holds
       // one thing you know at a glance - a hand, an arm, a heart with its vessels, a brain, a pair of kidneys, eyes, a foot on its heel, cut
       // fingers - as fine dot models (game-kit js/specimen-parts.js, 5 mm voxels), never two of a kind side by side; large jars on the floor
       // under the shelves hold whole forearms and feet. Each faces the room, its label out.
-      const K = SPECIMEN_KINDS, spots = rows.map(([x, y, z, face], i) => ({ x, y: fy('HYOHON') + y, z, yaw: face > 0 ? Math.PI / 2 : -Math.PI / 2, kind: K[(i * 3 + Math.round(y * 2)) % K.length] }));
+      const K = SPECIMEN_KINDS, spots = rows.map(([x, y, z, face], i) => { const kind = K[(i * 3 + Math.round(y * 2)) % K.length]; return { x, y: fy('HYOHON') + y, z, yaw: face > 0 ? Math.PI / 2 : -Math.PI / 2, kind, press: kind === 'hand' && i % 2 === 0 }; });   // 1.6.1: every other hand pressed flat to the glass
       for (const [x, z, kind, face] of [[12.62, -106.55, 'arm', -1], [12.62, -105.2, 'foot', -1], [12.62, -103.5, 'brain', -1], [12.62, -101.6, 'arm', -1], [5.4, -106.55, 'foot', 1], [5.4, -101.5, 'arm', 1]])
         spots.push({ x, y: fy('HYOHON') + 0.005, z, yaw: face > 0 ? Math.PI / 2 : -Math.PI / 2, kind, big: true });
-      const jars = buildSpecimenJars(THREE, spots, { glass: M.jarGlass, liquid: M.jarFluid, lid: M.dark, label: M.cream });
+      const jars = buildSpecimenJars(THREE, spots, { lid: M.dark, label: M.cream });   // 1.6.1: the kit's murky formalin and thin glass (JAR_LOOK)
       grp.add(jars); G.jars = jars;
       // the formalin tank sunk in the floor (west half): a rim and the yellow liquid; a white rag floats on it
       const tx = 6.9, tz = -104;
@@ -477,11 +476,11 @@ export function installHospital(ext, G) {
       flat('HYOHON', tx + 0.2, tz - 0.3, 0.4, 0.3, M.paper, 0.235, 0.6);
       // the glass cabinet on the north wall: jar 7 on its middle shelf, at the back
       const cx = 9, cz = -107.72;
-      box('HYOHON', cx, cz, 1.6, 2.0, 0.04, M.steel, 0, false, 0); box('HYOHON', cx, cz - 0.0, 1.6, 0.05, 0.5, M.steel, 0, false);
+      box('HYOHON', cx, cz, 1.6, 2.0, 0.04, M.dark, 0, false, 0);   // 1.6.1: a dark back, the jars read against it box('HYOHON', cx, cz - 0.0, 1.6, 0.05, 0.5, M.steel, 0, false);
       for (const s of [-1, 1]) box('HYOHON', cx + s * 0.78, cz + 0.2, 0.04, 2.0, 0.44, M.steel, 0, true);
       for (const y of [0.6, 1.1, 1.6, 1.98]) box('HYOHON', cx, cz + 0.2, 1.56, 0.03, 0.42, M.steel, y, false);
       box('HYOHON', cx, cz + 0.43, 1.56, 1.9, 0.02, M.glass, 0.05, false);
-      grp.add(buildSpecimenJars(THREE, [[-0.55, 0.62, 'eyes'], [-0.2, 0.62, 'hand'], [0.4, 0.62, 'kidney'], [-0.5, 1.62, 'fingers'], [0.15, 1.62, 'brain'], [0.5, 1.62, 'heart']].map(([x, y, kind]) => ({ x: cx + x, y: fy('HYOHON') + y, z: cz + 0.2, yaw: 0, kind })), { glass: M.jarGlass, liquid: M.jarFluid, lid: M.dark, label: M.cream }));   // 1.6.0 (#8): the cabinet's jars too
+      G.cabJars = buildSpecimenJars(THREE, [[-0.55, 0.62, 'eyes'], [-0.2, 0.62, 'hand'], [0.4, 0.62, 'kidney'], [-0.5, 1.62, 'fingers'], [0.15, 1.62, 'brain'], [0.5, 1.62, 'heart']].map(([x, y, kind]) => ({ x: cx + x, y: fy('HYOHON') + y, z: cz + 0.2, yaw: 0, kind, press: kind === 'hand' })), { lid: M.dark, label: M.cream }); grp.add(G.cabJars);   // 1.6.0 (#8): the cabinet's jars too
       G.jar7 = new THREE.Group(); G.jar7.position.set(cx + 0.05, fy('HYOHON') + 1.12, cz + 0.18); grp.add(G.jar7);
       const j = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.34, 14), M.jarLiquid); j.position.y = 0.17; G.jar7.add(j);
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), M.heart); h.position.y = 0.14; h.scale.set(1, 1.2, 0.9); G.jar7.add(h);
@@ -630,6 +629,8 @@ export function installHospital(ext, G) {
       if (G.tap) G.tap.scale.x = 1 + Math.sin(t * 30) * 0.2;
       // 1.5.0 (#17): the ripple drifts; wakes spread round your legs (and hers) as you wade
       // 1.6.0 (#2): the documents on the water ride its surface (it rises and falls), bob, turn slowly; a pale rim until read
+      // 1.6.1 (まとめ役「ライトで瓶が白く飛ぶ」): close to the specimen shelves the torch dims (kit ctx.flashScale) - 1 at 2.5 m, 0.3 at 0.5 m
+      if (ctx.state && ctx.state.room === 'HYOHON' && G.jars) { const c = ctx.camera.position; let d = 9; for (const J of [...G.jars.userData.jars, ...(G.cabJars ? G.cabJars.userData.jars : [])]) d = Math.min(d, Math.hypot(J.x - c.x, J.z - c.z)); ctx.flashScale = Math.max(0.3, Math.min(1, 0.3 + (d - 0.5) * 0.35)); } else ctx.flashScale = 1;
       for (const F of G.floatDocs) {
         const p = F.pk.position, wy = G.waterYAt(p.x, p.z), y = (wy ?? fy('P3') + 0.01) + 0.006 + Math.sin(t * 1.3 + F.bob) * 0.008;
         F.sheet.position.set(p.x, y, p.z); F.sheet.rotation.z += dt * 0.02 * (F.bob > 2 ? 1 : -1); p.y = y + 0.01;

@@ -4,6 +4,7 @@
 //   #15 hair in wet clumps that hang and curl                          #19 wet hand prints with fingers, smears and drips
 //   #3  what you can look at has something to look at (the leak, the drawer, the floating sandal)
 // Pictures are drawn on canvases here (no files): water, prints, grime, hazard tape.
+import { buildSpecimenJars } from '../kit/specimen-parts.js';
 import * as THREE from 'three';
 
 const rng = (seed) => { let s = (seed * 2654435761) >>> 0 || 1; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
@@ -289,7 +290,8 @@ export function installDress(ext, G) {
       const fl = mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.05, 14), std(0x5a3a26, { roughness: 0.85, metalness: 0.4 }), 3.42, fy('P1') + 2.6, -12); fl.rotation.z = Math.PI / 2; fl.name = 'p1-leak';
       for (let i = 0; i < 3; i++) mesh(new THREE.CylinderGeometry(0.005, 0.003, 0.4 + i * 0.3, 5), new THREE.MeshStandardMaterial({ color: 0xbfd3d0, roughness: 0.05, transparent: true, opacity: 0.5, depthWrite: false }), 3.38 - i * 0.03, fy('P1') + 2.45 - i * 0.15, -12 + i * 0.04);
       // HY_JARS: one jar pulled to the edge of the east shelf, its label turned out
-      const j = mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.32, 12), new THREE.MeshStandardMaterial({ color: 0xb3a148, roughness: 0.1, transparent: true, opacity: 0.6, emissive: 0x2a2408, emissiveIntensity: 0.4 }), 12.5, fy('HYOHON') + 1.18, -104); j.name = 'hy-jar';
+      // 1.6.1 (まとめ役「真ん中の瓶が白い塊」): the pulled jar was a plain glowing cylinder; now a specimen jar like the rest, a hand pressed to its glass
+      const j = buildSpecimenJars(THREE, [{ x: 12.5, y: fy('HYOHON') + 1.04, z: -104, yaw: -Math.PI / 2, kind: 'hand', press: true }]); j.name = 'hy-jar'; grp.add(j);
     }
 
     grp.updateMatrixWorld(true);

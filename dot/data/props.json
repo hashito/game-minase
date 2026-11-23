@@ -821,16 +821,6 @@
    "mount": "wall"
   },
   {
-   "room": "P4B",
-   "k": "nurse-board",
-   "x": 1.0,
-   "z": -82.55,
-   "y": 1.2,
-   "face": 0.0,
-   "mount": "wall",
-   "m2": true
-  },
-  {
    "room": "REIAN",
    "k": "candle-stub",
    "x": 9.75,

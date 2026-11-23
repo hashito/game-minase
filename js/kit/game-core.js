@@ -1,4 +1,4 @@
-/* game-kit d6d96bef: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
+/* game-kit 799ff6ce: js/game-core.js — edit in game-kit and run tools/kit-sync.js */
 // The standard bootstrap of a 3D first-person game (docs/standard-3d.md). Wires the standard modules from DATA (game.json + data/*.json):
 //   runtime base  render-presets (renderer, lights, fog, post, quality tiers; the preset may be a name or { base, ...overrides }),
 //                 frame-guard (?perf overlay, dynamic resolution, job queue), controller (walk / look / touch),
@@ -71,13 +71,14 @@ import { createExtensions } from './ext.js';
 import { installGuidance, stepRoom } from './guidance.js';
 import { buildProgressionDef, taskAtStation, pickEnding } from './game-data.js';
 import { showEndingScene, foundEndings } from './ending-scene.js';
+import { showKamishibai } from './kamishibai.js';
 import { mountShareBar } from './share-bar.js';
 import { pasteOn } from './wall-paste.js';
 import { installTimedShot } from './timed-shot.js';
 import { VoiceQueue } from './voice-queue.js';
 import { installNpcAudit } from './npc-audit.js';
 
-export const CORE_VERSION = '1.38.0';
+export const CORE_VERSION = '1.39.1';
 // the mini game library's types (js/mg-library.js LIBRARY; test/story-hooks.test.mjs keeps the two equal): game.json "minigames" naming one of these loads the library
 export const MG_LIB_TYPES = ['pour', 'turn-dials', 'match-mark', 'timing', 'code-drums', 'tune-radio', 'trace-path', 'slide-tiles', 'search-dark', 'rotate-pipes', 'sort-items', 'memory-pairs', 'lock-pick', 'photo-focus', 'rhythm-taps', 'connect-dots', 'balance-scale', 'echo-bells', 'switch-panel', 'rotate-pieces', 'count-shadows', 'spot-difference', 'maze-path', 'cipher-wheel', 'steady-hand', 'pump-gauge', 'order-steps', 'compass-bearing', 'mirror-beam', 'kana-word', 'jug-measure', 'hold-breath', 'layer-board', 'darkroom-develop', 'tape-splice', 'switchboard', 'steam-letter', 'puzzle-box', 'rubbing', 'knot-untangle', 'torn-paper', 'safe-listen', 'footprint-track'];
 const $ = (id) => document.getElementById(id);
@@ -574,7 +575,12 @@ export function createGame(cfg) {
     Store.write(`${manifest.id}.endings.v1`, [...new Set([...(Store.read(`${manifest.id}.endings.v1`) || []), e.id])]);
     if (screen) screen.open(ctx, e);   // the game's own presentation (sequence, result card, share buttons)
     // standard 1.8.2 (F10): with no screen of its own a game still ends on the scene - the picture, the lines, the endings found so far
-    else showEndingScene(ctx, { photo: e.photo, scenes: e.scenes, kicker: e.kicker, title: e.title, text: e.text, roll: e.roll, endings: { all: endings, current: e.id }, buttons: [{ label: '最初から', primary: true, fn: () => location.reload() }] });   // 1.36.0: endings.json "roll": [{ photo, title, text }] - the end roll after the ending's own lines (札の家 2026-11-22 #12)
+    else {
+      const card = () => showEndingScene(ctx, { photo: e.photo, scenes: e.scenes, kicker: e.kicker, title: e.title, text: e.pages ? '' : e.text, roll: e.pages ? [] : e.roll, endings: { all: endings, current: e.id }, buttons: [{ label: '最初から', primary: true, fn: () => location.reload() }] });
+      // 1.39.0 (札の家 2026-11-23 #7): endings.json "pages" - the ending told as a kamishibai first (js/kamishibai.js: one picture card and its
+      // words at a time, read aloud, turned by the player), then the ending card (title, endings found, buttons) without the lines told already
+      if (Array.isArray(e.pages) && e.pages.length) showKamishibai(ctx, { pages: e.pages, label: manifest.title }).then(card); else card();
+    }   // 1.36.0: endings.json "roll": [{ photo, title, text }] - the end roll after the ending's own lines (札の家 2026-11-22 #12)
     bus.emit('ending:reach', { id: e.id });
   }
   ctx.checkEndings = checkEndings;
@@ -962,7 +968,10 @@ export function createGame(cfg) {
     const lit = light.intensity; light.intensity = 0; scene.add(light, light.target);
     ctx.setLight = (on) => { ctx.lightOn = !!on; light.intensity = ctx.lightOn ? lit : 0; bus.emit('player:light', { on: ctx.lightOn }); };
     const dir = new THREE.Vector3();
-    systems.push({ id: 'flashlight', def: { update: () => { if (!ctx.lightOn) return; light.position.copy(camera.position); camera.getWorldDirection(dir); light.target.position.copy(camera.position).addScaledVector(dir, 6); } }, inst: null });
+    // 1.39.1 (水無瀬病院 1.6.1): ctx.flashScale (0..1, default 1) dims the beam for a game that knows a near pale surface would blow out
+    // (the specimen shelves); set it every frame or leave it
+    ctx.flashScale = 1;
+    systems.push({ id: 'flashlight', def: { update: () => { if (!ctx.lightOn) return; light.intensity = lit * Math.max(0, Math.min(1, ctx.flashScale ?? 1)); light.position.copy(camera.position); camera.getWorldDirection(dir); light.target.position.copy(camera.position).addScaledVector(dir, 6); } }, inst: null });
     if (fl.on) ctx.setLight(true);
   } else ctx.setLight = () => {};
   ctx.visibility = () => (fp.crouching ? controls.crouchVisibility ?? 0.6 : 1) * (ctx.lightOn ? controls.lightVisibility ?? 1.3 : 1);

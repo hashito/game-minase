@@ -77,13 +77,15 @@
 //       two panels overlap (errors), the portrait notice is missing (tools/phone-layout.mjs: 「メッセージや通知で領域を使いすぎている」)
 //   1.36.0 (札の家 play test 2026-11-22): P53 a loud guide mark (over 30 px at 3 m, or nearly opaque: a warning); P54 a closed door or a story
 //   gate a body walks through (an error); P55 an [E] spot with nothing visible within 0.45 m of its centre (a warning)
+//   P64 (1.39.0, 札の家 2.5.0 #7) an ending's kamishibai cards (endings.json pages): picture and voice files exist, words fit a phone card (js/kamishibai.js)
+//   P63 (1.39.0, 札の家 2.5.0 #2) a station that another [E] takes when aimed at from 1.2 / 1.8 m (over a quarter of the poses a warning, over half an error) (tools/station-aim.mjs)
 //   P59 (1.37.8, 札の家 2.4.0) on the shortest route to an end task (the walk out), the guide shows another task (an error) or a task of the branch
 //       not taken still starts (a warning) (tools/stale-guide.mjs: 「作業台で、考えをまとめる」 on the way to the front door)
 //   1.31.0: P49 a document read keeps its emphasis (glow, marks) or cannot be read again (「読んだら強調表示をやめるようにしてください」)
 //   1.38.0 (水無瀬病院 4th play test 2026-11-23; tools/water-edge.mjs): P60 a water surface whose side stands open over a lower or dry floor
 //   (a cut face: 「水の断面が見える」) (an error); P61 a figure reaching through a shut door (「モンスターが扉を少し貫通」) (an error); P62 a
 //   hiding place's look standing in a wall of its room (「ロッカーが壁に埋まっています」) (an error)
-// Exit 1 on an error (P54, P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P44, P46, P49, P56, P57, P58, P59, P60, P61, P62, P47 / P48 with checks.rest = "error", P52 over 600 MB) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
+// Exit 1 on an error (P54, P4, P7, P9, P19, P24, P25 overlap, P26, P30, P31, P32, P33, P34, P35, P36, P37, P38, P39, P40, P41, P42, P43, P44, P46, P49, P56, P57, P58, P59, P60, P61, P62, P63 (over half), P64, P47 / P48 with checks.rest = "error", P52 over 600 MB) or, with --strict, on a warning. The play scripts of a game check the rest (contact, speed, softlocks).
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,6 +107,8 @@ import { restSource, sizeSource } from './rest-check.mjs';
 import { cueOrderSource } from './cue-order.mjs';
 import { staleGuideSource } from './stale-guide.mjs';
 import { waterEdgeSource, doorClipSource, hideRoomSource } from './water-edge.mjs';
+import { KS_MAX_CHARS } from '../js/kit/kamishibai.js';
+import { stationAimSource } from './station-aim.mjs';
 const MARK_MAX = 30;   // P53: the guide mark's height on screen at 3 m, px on a 720 px view (js/guidance.js MARK_MAX_PX)
 // P26: in ctx.readLog order, a 'say' / 'talk' after an 'open' and before its 'close'
 const docOpenSay = (lg) => { let open = 0; for (const k of lg) { if (k === 'open') open++; else if (k === 'close') open = Math.max(0, open - 1); else if ((k === 'say' || k === 'talk') && open) return true; } return false; };
@@ -143,6 +147,17 @@ if (game.deaths) {
 {
   const walk = (d) => { for (const f of fs.existsSync(d) ? fs.readdirSync(d, { withFileTypes: true }) : []) { const q = path.join(d, f.name); if (f.isDirectory()) { if (!['kit', 'vendor', 'node_modules'].includes(f.name)) walk(q); } else if (/\.m?js$/.test(f.name)) { const src = fs.readFileSync(q, 'utf8'); if (/new Audio\([^)]*voice|voice[^\n]{0,80}decodeAudioData|createBufferSource\(\)[^\n]{0,200}voice/i.test(src)) Wn('P22', `${path.relative(dir, q)} plays a voice by itself: use ctx.voiceLine(src, null, { prio }) so two voices never overlap`); } } };
   walk(path.join(dir, 'js'));
+}
+// P64 (1.39.0, 札の家 2.5.0 #7 「最後は紙芝居風に各場面と言葉を見せて…ここも喋るように」): an ending told as a kamishibai (endings.json "pages",
+// js/kamishibai.js) has every card's picture and voice on disk and words that fit a phone card (KS_MAX_CHARS); a card without a voice is a warning
+{
+  const ends = data.endings ? readJson(data.endings) : null;
+  for (const e of Array.isArray(ends) ? ends : []) for (const [i, pg] of (Array.isArray(e.pages) ? e.pages : []).entries()) {
+    const at = `ending "${e.id}" card ${i + 1}`;
+    if (!pg.photo) E('P64', `${at} has no picture`); else if (!fs.existsSync(path.join(dir, pg.photo))) E('P64', `${at}: picture ${pg.photo} is missing`);
+    if (!pg.voice) Wn('P64', `${at} is not voiced (the kamishibai reads every card aloud)`); else if (!fs.existsSync(path.join(dir, pg.voice))) E('P64', `${at}: voice ${pg.voice} is missing`);
+    if ([...String(pg.text || '')].length > KS_MAX_CHARS) E('P64', `${at}: ${[...String(pg.text)].length} characters (over ${KS_MAX_CHARS}: split the card)`);
+  }
 }
 // P16: room names that do not fit their room on the map
 {
@@ -739,6 +754,8 @@ try {
   { const Wt = await G(waterEdgeSource()); for (const x of (Array.isArray(Wt) ? Wt : []).slice(0, 8)) E('P60', `the side of ${x.water} (y ${x.y}) stands open at ${x.open} points, e.g. ${x.at.map((p) => p.join(',')).join(' / ')}: a sill higher than the water in the doorway, or one level for rooms an open door joins`); }
   { const Dc = await G(doorClipSource()); for (const x of (Array.isArray(Dc) ? Dc : []).slice(0, 8)) E('P61', `${x.figure} reaches ${x.depth} m through the shut door ${x.door}: stop it 1 m before the door`); }
   { const Hr = await G(hideRoomSource()); for (const x of (Array.isArray(Hr) ? Hr : []).slice(0, 8)) E('P62', `the hiding place ${x.id} stands ${x.over} m into a wall of ${x.room} (js/hide-looks.js clampInRoom; move its x / z)`); }
+  // P63 (1.39.0, 札の家 2.5.0 #2 「黒電話をクリックするのに取れない」): aimed at a station from 1.2 / 1.8 m, the station is what the pick gives (tools/station-aim.mjs)
+  { const S = await G(stationAimSource()); if (S && S.missing) Wn('P63', 'ctx.pickNow is missing: station aim unchecked'); else for (const x of (Array.isArray(S) ? S : [])) (x.lost / x.poses > 0.5 ? E : Wn)('P63', `station "${x.id}": aimed at its middle, another [E] wins in ${x.lost} of ${x.poses} poses (${Object.entries(x.by).map(([k, n]) => k + ' ' + n).join(', ')}): one [E] per thing`); }
   if (p.errors.length) for (const e of [...new Set(p.errors)].filter((x) => !/favicon/.test(x)).slice(0, 5)) Wn('P0', `page error: ${e.slice(0, 200)}`);
 } catch (e) { E('P0', `the check could not run: ${e.message}`); }
 finally { await p.close(); server.kill(); }
