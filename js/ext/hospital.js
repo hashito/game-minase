@@ -104,8 +104,20 @@ function markTex(kind, seed = 1) {
   if (kind === 'gouge') {
     for (let s = 0; s < 2; s++) for (let f = 0; f < 4; f++) { const x = 40 + s * 110 + f * 14; g.strokeStyle = 'rgba(20,18,16,0.9)'; g.lineWidth = 5; g.beginPath(); g.moveTo(x, 20 + f * 4); g.bezierCurveTo(x + 6, 90, x + 14, 160, x + 22 + rnd() * 6, 236); g.stroke(); g.strokeStyle = 'rgba(190,185,170,0.5)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x + 3, 22 + f * 4); g.bezierCurveTo(x + 9, 90, x + 17, 160, x + 25, 230); g.stroke(); }
   } else if (kind === 'hands') {
-    // 1.6.2 (5th play test #5 「床全体が濡れているのでおかしい」): on the wall above the water line, a row that crawls toward the way in (fingers to -u = east on the north wall)
-    for (let i = 0; i < 7; i++) { const x = 228 - i * 32 - rnd() * 8, y = 60 + (i % 2) * 34 + rnd() * 16, s = 0.6 + rnd() * 0.7, a = -Math.PI / 2 + rnd() * 0.5 - 0.25; g.save(); g.translate(x, y); g.rotate(a); g.scale(s, s); g.fillStyle = `rgba(40,30,22,${0.55 + rnd() * 0.3})`; g.beginPath(); g.ellipse(0, 10, 16, 20, 0, 0, 7); g.fill(); for (let f = 0; f < 5; f++) { g.beginPath(); g.ellipse(-14 + f * 7, -16 - (f === 2 ? 6 : f % 4 ? 3 : -4), 3.4, 11, (f - 2) * 0.15, 0, 7); g.fill(); } g.restore(); }
+    // 1.6.2 (5th play test #5 「床全体が濡れているのでおかしい」): on the wall above the water line, a row that crawls toward the way in.
+    // 1.7.1 (the coordinator: 「手に見えない」): dark wet prints with a sheen on their edge, the fingers spread, each with a run of water
+    // under it, climbing from the water line up the wall toward the way in (east on the north wall = -u)
+    const hand = (x, y, s, a) => {
+      const shape = () => { g.beginPath(); g.ellipse(0, 12, 15, 18, 0, 0, 7); g.fill();
+        for (let f = 0; f < 4; f++) { const fa = -0.5 + f * 0.33; g.save(); g.rotate(fa); g.beginPath(); g.ellipse(0, -28 - (f === 1 || f === 2 ? 5 : 0), 4, 15 + (f === 1 || f === 2 ? 2 : -1), 0, 0, 7); g.fill(); g.restore(); }
+        g.save(); g.translate(-14, 8); g.rotate(-1.15); g.beginPath(); g.ellipse(0, -12, 4.2, 12, 0, 0, 7); g.fill(); g.restore(); };
+      g.save(); g.translate(x, y); g.rotate(a); g.scale(s, s);
+      g.fillStyle = 'rgba(12,9,7,0.82)'; shape();                                   // the wet print
+      g.globalCompositeOperation = 'source-atop'; g.translate(2.2, -2.2); g.fillStyle = 'rgba(190,200,205,0.22)'; shape(); g.translate(-4.4, 4.4); g.fillStyle = 'rgba(12,9,7,0.9)'; shape();   // a thin light edge on one side: the sheen
+      g.restore();
+      g.fillStyle = 'rgba(14,11,8,0.6)'; for (let r = 0; r < 3; r++) { const dx = x + (rnd() - 0.5) * 18 * s, len = 14 + rnd() * 30; g.fillRect(dx, y + 26 * s, 2.2, len); }   // water running down
+    };
+    for (let i = 0; i < 5; i++) { const t = i / 4; hand(212 - t * 160 + (rnd() - 0.5) * 8, 210 - t * 120 + (i % 2) * 14, 1.15 + rnd() * 0.25, -Math.PI / 2 + 0.35 + (rnd() - 0.5) * 0.4); }
   } else if (kind === 'stain') {
     for (let i = 0; i < 9; i++) { const x = 30 + i * 24 + rnd() * 10; const gr = g.createLinearGradient(0, 0, 0, 256); gr.addColorStop(0, 'rgba(90,60,30,0.7)'); gr.addColorStop(1, 'rgba(90,60,30,0)'); g.fillStyle = gr; g.fillRect(x, 0, 3 + rnd() * 6, 120 + rnd() * 136); }
     g.fillStyle = 'rgba(70,50,30,0.55)'; g.fillRect(0, 0, 256, 18);
@@ -438,9 +450,9 @@ export function installHospital(ext, G) {
     {
       const marks = [['gouge', -2.5, 1], ['hands', -4.1, 1], ['stain', -4.6, -1], ['hands', -7.2, 1], ['gap', -9.4, -1], ['hands', -10.3, 1], ['gouge', -11.6, -1], ['hands', -13.4, 1], ['stain', 0.0, -1], ['gap', -15.2, 1]];
       marks.forEach(([k, x, side], i) => {
-        const m = std(0xffffff, { map: markTex(k, i + 3), transparent: true, depthWrite: false, roughness: 0.9 }); m.name = `p2-mark-${k}`;
+        const m = std(0xffffff, { map: markTex(k, i + 3), transparent: true, depthWrite: false, roughness: k === 'hands' ? 0.35 : 0.9 }); m.name = `p2-mark-${k}`;   // 1.7.1: the wet prints shine a little in the torch
         const z = side > 0 ? -41.08 - 0.006 : -42.52 + 0.006, w = k === 'gap' ? 0.9 : 1.1;   // 1.7.0: on the plaster face (the wall is 0.16 thick round the room edge; at the edge the marks were inside it)
-        const pl = plane('P2', x, z, w, k === 'gap' ? 0.45 : k === 'hands' ? 0.62 : 1.0, m, k === 'gap' ? 0.62 : k === 'hands' ? 0.74 : 0.55, side > 0 ? Math.PI : 0); pl.renderOrder = 2; pl.raycast = () => {}; pl.name = `p2-mark:${k}`;
+        const pl = plane('P2', x, z, w, k === 'gap' ? 0.45 : 1.0, m, k === 'gap' ? 0.62 : k === 'hands' ? 0.92 : 0.55, side > 0 ? Math.PI : 0); pl.renderOrder = 2; pl.raycast = () => {}; pl.name = `p2-mark:${k}`;
       });
       // a burst pipe dribbling down the north wall, a vent with a pale finger through the slats
       const pp = cyl('P2', -6.0, -42.45, 0.05, 0.05, 1.1, M.rust, 0.05, false, 8); void pp;

@@ -379,10 +379,10 @@ export function installStory(ext, G) {
   // check valve of the drain (after the ledger, until the questions are answered) it kicks back from below: a blow under the grate, the
   // grate jumping and spray round her hands, her body thrown, the flashlight stuttering, binders off the cabinets. The blows come faster
   // the longer you take (3.6 s -> 1.3 s over 70 s): the time limit you can hear; she says so between them (hold_urge)
-  const HOLD = { t: 2, n: 0, since: 0, line: 6 };
+  const HOLD = { t: 0.6, n: 0, since: 0, line: 6 };   // 1.7.1: the first blow comes at once
   function holdBeat(dt, c) {
     const on = done('T_LEDGER') && !done('T_THINK') && G.hinaAt === 'drain' && ctx.floor === 0;
-    if (!on) { HOLD.since = 0; HOLD.n = 0; HOLD.t = 2; return; }
+    if (!on) { HOLD.since = 0; HOLD.n = 0; HOLD.t = 0.6; return; }
     HOLD.since += dt; HOLD.t -= dt; HOLD.line -= dt;
     const hr = G.hina && G.hina.root, k = G.hinaJolt = Math.max(0, (G.hinaJolt || 0) - dt * 3);
     if (hr && k > 0) { hr.position.y = ctx.world.floorY(0) + Math.sin(k * 30) * 0.03 * k; hr.rotation.x = -0.12 * k; } else if (hr && hr.rotation.x) { hr.rotation.x = 0; hr.position.y = ctx.world.floorY(0); }
