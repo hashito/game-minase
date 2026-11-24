@@ -29,7 +29,7 @@ export default async (api) => {
 
   // #1: the crossing, from the low passage
   await scene('p2');
-  await G(`(g.fp.crouching = true, 1)`); await tp(-13.4, -41.8);   // just past the moment's point (e7 at -12.5) await H.face(-17.6, -42.2, 0.9);
+  await G(`(g.fp.crouching = true, 1)`); await tp(-8.4, -41.8);   // just past the moment's point (e7 at -7.5 since 1.7.0, 5th #6: the crossing 10 m before the end) await H.face(-17.6, -42.2, 0.9);
   const modes = []; let fadeSeen = false;
   for (let i = 0; i < 16; i++) { const s = await gh(); modes.push(s.mode); if (s.fade > 0) fadeSeen = true; if (i === 5) await shot('cross-mid'); await sleep(450); }
   ok(modes.includes('cross') && modes[modes.length - 1] === 'off' && !fadeSeen, '#1 crossing: lurch, turn, dragged under, no fade', modes.join(','));
@@ -55,10 +55,11 @@ export default async (api) => {
   const R = await G(`(__mn.routeDoors || []).map((r) => ({ id: r.d.def.id, s: +r.s.toFixed(2) }))`);
   const dEnd = (R || []).find((r) => r.id === 'D_END');
   ok(!!dEnd, '#9 D_END is a door on her way', JSON.stringify(R));
+  // 1.7.2: 'near' from 1.6 m before the door - since 1.6.0 (4th #6, P61) she stops 0.8 m off the leaf, 1.3 m before the door's s
   let near = 0, held = 0, forced = false, maxS = 0;
   for (let i = 0; i < 80; i++) {
     const s = await gh(); const open = await G(`g.world.doors.get('D_END').isOpen`);
-    if (!open) { maxS = Math.max(maxS, s.s); if (!near && dEnd && s.s >= dEnd.s - 1.2) near = Date.now(); }
+    if (!open) { maxS = Math.max(maxS, s.s); if (!near && dEnd && s.s >= dEnd.s - 1.6) near = Date.now(); }
     else { forced = true; if (near) held = (Date.now() - near) / 1000; break; }
     await sleep(150);
   }

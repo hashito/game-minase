@@ -1,8 +1,7 @@
-/* game-kit 799ff6ce: js/specimen-parts.js — edit in game-kit and run tools/kit-sync.js */
 // Specimens in formalin jars as fine dot models (1.38.0, 水無瀬病院 2026-11-23 #8 「標本室のホルマリンが改善されていないです。腕や臓器など
 // いろいろな物をホルマリンにつけてください」). Before: every jar held the same round lump, so a wall of jars read as jam jars. Now each jar
 // holds one thing you know at a glance - a hand, an arm with its hand, a heart with its vessels, a brain with its folds, a pair of
-// kidneys, eyes looking out, a foot standing on its heel, cut fingers - made of the shapes of js/fp-voxel.js (boxes, capsules,
+// kidneys, eyes looking out, a foot seen from its side, cut fingers - made of the shapes of js/fp-voxel.js (boxes, capsules,
 // ellipsoids; cut: true carves) and filled into a 5 mm voxel grid (the dot taste; a dot game grades it to its palette, js/dot-world.js
 // keeps vertex colours). No unborn shapes (the brief of 水無瀬病院: nothing that reads as a foetus).
 //
@@ -85,14 +84,23 @@ const SPECS = {
     ], at: [x, u, f], ry, rx });
     return [eye(-0.03, 0.05, 0.01, '#3e5f72', 0.2, 0.1), eye(0.028, 0.09, 0.0, '#5a3d22', -0.25, -0.1), eye(-0.006, 0.145, 0.012, '#4a5a3a', 0.05, 0.2)];
   },
-  foot: () => [
-    // a foot stood on its heel, the toes up: the sole to the viewer, the cut ankle with its bone at the back
-    { ell: [0, 0.03, -0.01], r: [0.026, 0.03, 0.03], c: SKIN2, n: 0.2 },
-    { cap: [[0, 0.03, 0], [0, 0.15, 0.008]], r: 0.03, r1: 0.034, c: SKIN, n: 0.2 },
-    { cap: [[0, 0.04, -0.03], [0, 0.07, -0.05]], r: 0.026, c: SKIN2, n: 0.2 },
-    { ell: [0, 0.075, -0.052], r: [0.022, 0.006, 0.022], c: CUT, n: 0.3 }, { ell: [0.004, 0.08, -0.054], r: [0.008, 0.004, 0.008], c: BONE },
-    ...[[-0.026, 0.026], [-0.012, 0.03], [0.002, 0.028], [0.015, 0.024], [0.026, 0.02]].flatMap(([x, l], i) => finger(x, 0.17, 0.008, x * 1.05, 0.17 + l * 0.7, 0.012, i ? 0.0075 : 0.0105)),
-  ],
+  foot: () => {
+    // 1.39.14 (水無瀬病院 第 5 回 #9 の再確認): a left foot seen from its inner side, the heel low, the toes up to the right, the leg cut
+    // above the ankle. Stood on its heel with the sole to the viewer (before) it read as a pale slab in the jar and on its card.
+    // (a, n): a from the heel to the toes, n up from the sole; the toes tipped up 25 degrees, so they stand clear of the label; f: the inner side
+    // (the big toe) towards the viewer
+    const T = 70 * Math.PI / 180, P = (a, n, f = 0) => [a * Math.cos(T) - n * Math.sin(T), a * Math.sin(T) + n * Math.cos(T), f];
+    return [
+      { ell: P(0.032, 0.03), r: [0.03, 0.03, 0.028], c: SKIN2, n: 0.2 },   // the heel
+      { cap: [P(0.035, 0.032), P(0.165, 0.022)], r: 0.028, r1: 0.022, c: SKIN, n: 0.2 },   // the sole and the side of the foot
+      { cap: [P(0.06, 0.058), P(0.15, 0.034)], r: 0.024, r1: 0.016, c: SKIN, n: 0.2 },   // the instep
+      { cap: [P(0.05, 0.05), P(0.04, 0.12)], r: 0.03, r1: 0.033, c: SKIN2, n: 0.2 },   // the leg above the ankle
+      { ell: P(0.04, 0.123), r: [0.032, 0.006, 0.032], c: CUT, n: 0.3 }, { ell: P(0.04, 0.126), r: [0.009, 0.005, 0.009], c: BONE },   // the cut, the bone
+      { ell: P(0.058, 0.07, 0.024), r: [0.008, 0.008, 0.006], c: SKIN2, n: 0.2 },   // the ankle bone on the inner side
+      // five toes, the big toe nearest, the little toe furthest back and shortest; the nails up
+      ...[[0.022, 0.05, 0.0105], [0.01, 0.042, 0.0085], [-0.002, 0.036, 0.008], [-0.013, 0.03, 0.0075], [-0.022, 0.024, 0.007]].flatMap(([f, l, r]) => finger(...P(0.165, 0.026, f), ...P(0.165 + l, 0.03, f), r)),
+    ];
+  },
   fingers: () => [
     ...finger(-0.03, 0.03, 0, -0.012, 0.085, 0.01, 0.009), ...finger(0.02, 0.06, -0.01, 0.045, 0.1, 0.008, 0.009),
     ...finger(-0.025, 0.13, 0.005, 0.015, 0.15, 0.012, 0.0085), ...finger(0.01, 0.17, -0.004, 0.03, 0.215, 0.01, 0.008),

@@ -156,7 +156,9 @@ export function buildChimera() {
 
 /** ひなた: the kit's person; poses: 'idle', 'scared', 'crouch' (holding the valve / the ankle) */
 export function buildHinata() {
-  const ch = makeCharacter({ female: true, hairStyle: 'ponytail', coat: 0x4c5a52, shirt: 0xd8d4c8, trousers: 0x2a2f3a, shoes: 0x2a2624, hair: 0x241a14, blob: true });
+  // 1.7.2 (re-check of the 5th play test #2 「机が他のオブジェクトに比べて小さく感じる（キャラの大きさに合わせてください）」): the kit person is
+  // 1.80 m, so beside a 0.76 m desk the top came to her crotch and every desk read small. She is 1.60 m now, as in the dot version.
+  const ch = makeCharacter({ female: true, hairStyle: 'ponytail', coat: 0x4c5a52, shirt: 0xd8d4c8, trousers: 0x2a2f3a, shoes: 0x2a2624, hair: 0x241a14, blob: true, scale: 0.89 });
   ch.root.name = 'person:hinata';
   return ch;
 }

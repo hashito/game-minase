@@ -204,6 +204,9 @@ export default async function dotLayer(ext, { manifest, data }) {
       if (GM.genBody) { const gp = new THREE.Vector3(); GM.genBody.getWorldPosition(gp); D.pump = machine('pump-unit', null, { x: 1.0, y: gp.y - 0.5, z: 9.9 }, 0.45); }
       void fyP;
       // the documents: their paper model -> the dot part, standing on the wall or lying on the desk
+      // 1.7.2 (re-check of the 5th play test #1 「記録版が壁から離れて見えます」): the ray toward the wall stopped on the document's own pick box
+      // (already 6 mm out) and the part went 8 mm in front of that - the notice 1.4 cm off its board, the hospital map 1.4 cm off the wall. The
+      // ray skips the document itself; the part's back goes 6 mm off the board or the wall.
       for (const pk of W.interactables || []) {
         const nm = String(pk.name || ''), id = nm.slice(4), k = nm.startsWith('doc:') && DOC_STACK[id];
         if (!k || !stackIndex[k] || pk.userData.dotDone) continue;
@@ -214,7 +217,7 @@ export default async function dotLayer(ext, { manifest, data }) {
         const m = natural(k, flat ? 'floor' : 'wall');
         const p = pk.getWorldPosition(new THREE.Vector3());
         if (flat) { m.rotation.y = 0; m.position.copy(pk.worldToLocal(new THREE.Vector3(p.x, p.y - (pk.geometry && pk.geometry.parameters ? pk.geometry.parameters.height / 2 : 0), p.z))); }
-        else { const dir = new THREE.Vector3(Math.sin(face), 0, Math.cos(face)); ray.set(p.clone().addScaledVector(dir, 0.5), dir.clone().negate()); const hit = ray.intersectObjects(surfaces, false)[0]; const w = hit ? hit.point.clone().addScaledVector(dir, 0.008) : p; w.y = p.y - (stackIndex[k].n * stackIndex[k].mpp) / 2; m.position.copy(pk.worldToLocal(w)); m.rotation.y = face - pk.rotation.y; }
+        else { const dir = new THREE.Vector3(Math.sin(face), 0, Math.cos(face)); ray.set(p.clone().addScaledVector(dir, 0.5), dir.clone().negate()); const own = (o) => { for (let q = o; q; q = q.parent) if (q === pk) return true; return false; }; const hit = ray.intersectObjects(surfaces, false).find((h) => !own(h.object)); const w = hit ? hit.point.clone().addScaledVector(dir, 0.006) : p; w.y = p.y - (stackIndex[k].n * stackIndex[k].mpp) / 2; m.position.copy(pk.worldToLocal(w)); m.rotation.y = face - pk.rotation.y; }
         pk.add(m);
         D.swapped.push([id, k, flat ? 'flat' : 'wall']);
       }
