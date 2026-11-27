@@ -27,4 +27,7 @@ export default function (ext, env = {}) {
   ext.on('bus:error', ({ name, error }) => console.error('[minase]', name, error && error.stack ? error.stack.split(String.fromCharCode(10)).slice(0, 3).join(' ') : String(error)));
   ext.on('player:dead', () => { G.deaths = (G.deaths || 0) + 1; });   // the playthrough tools count them
   ext.on('game:ready', () => { if (typeof window !== 'undefined') window.__mn = G; });
+  // 1.8.0: a document hung on a wall (1 m up and higher: the guide board at reception) is a wall thing - in the dot version its board is
+  // 17 cm deep, past the 15 cm the rest check takes as thin, and it read as floating 1.12 m over the floor (check-playtest P67)
+  ext.on('game:ready', (c) => { for (const d of c.data.docs || []) if ((d.y || 0) >= 1) { const o = c.world.group.getObjectByName(`doc:${d.id}`); if (o) o.userData.wall = true; } });
 }

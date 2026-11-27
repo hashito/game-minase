@@ -44,6 +44,9 @@ const LAYER = path.join(PUB, 'dot');
 fs.rmSync(LAYER, { recursive: true, force: true });
 for (const d of ['css', 'js', 'assets', 'data']) if (fs.existsSync(path.join(DOT, d))) fs.cpSync(path.join(DOT, d), path.join(LAYER, d), { recursive: true, filter: (s) => !path.basename(s).startsWith('_') });
 // the root's photos the dot layer redraws as pixel art at boot (dot/js/dot/photos.js): their names only
+// 1.8.0: each has a baked pixel copy in dot/assets/photos/<name>.png (tools/dot/bake-photos.py); a missing or older one is drawn in the browser
+{ const stale = fs.readdirSync(path.join(ROOT, 'assets/photos')).filter((f) => /\.(webp|png|jpe?g)$/.test(f)).filter((f) => { const b = path.join(DOT, 'assets/photos', f + '.png'); return !fs.existsSync(b) || fs.statSync(b).mtimeMs < fs.statSync(path.join(ROOT, 'assets/photos', f)).mtimeMs; });
+  if (stale.length) console.warn(`build-dot: WARNING ${stale.length} photo(s) not baked (run python tools/dot/bake-photos.py): ${stale.slice(0, 5).join(', ')}`); }
 fs.writeFileSync(path.join(LAYER, 'photos.json'), JSON.stringify(fs.readdirSync(path.join(ROOT, 'assets/photos')).filter((f) => /\.(webp|png|jpe?g)$/.test(f)).sort()) + '\n');
 
 const template = fs.readFileSync(path.join(DOT, 'index.html'), 'utf8');

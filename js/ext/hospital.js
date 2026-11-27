@@ -310,13 +310,16 @@ export function installHospital(ext, G) {
     // a step on each side, the specimen room a raised threshold, the doors of the basement rooms an ankle sill. Rooms an open doorway joins
     // share one level (story.js levels()). You step over a sill (the eye rises, G.sillLiftAt) and so does she (chimera.js).
     const SILLS = { D_P1: 0.5, D_GATE: 0.5, D_END: 0.5, D_PUMP: 0.22, D_JIMU: 0.22, D_REIAN: 0.22 };
-    const sillM = std(0x6b6c64, { roughness: 0.95 }); sillM.name = 'concrete-sill';
+    // 1.8.0 (2026-11-27 /dot-fps #4 「最後のホルマリンの部屋の入口の水のエフェクトがはみ出しています」): the sills were the opening + 14 cm
+    // wide, so their pale tops ran 7 cm into the jambs on each side, and in the dot version the pale mottled concrete read as foam - water
+    // spilling out of the doorway. They are the opening's own width now (inside the jambs) and darker, wet concrete with a dark edge.
+    const sillM = std(0x45463f, { roughness: 0.9 }); sillM.name = 'concrete-sill';
     G.sills = [];
     for (const [id, h] of Object.entries(SILLS)) {
       const d = W.doors.get(id); if (!d) continue;
       const def = d.def, R = W.rooms.get(def.a).room, y0 = fy(def.a);
       const alongX = Math.abs(def.z - R.z) < 0.2 || Math.abs(def.z - (R.z + R.d)) < 0.2;   // the door's plane runs along x (a north / south wall)
-      const w = (def.width || 1.1) + 0.14, dep = 0.26;
+      const w = (def.width || 1.1) - 0.02, dep = 0.26;   // 1.8.0: inside the opening (was + 0.14)
       const add = (hh, dd, off) => { const m = new THREE.Mesh(new THREE.BoxGeometry(alongX ? w : dd, hh, alongX ? dd : w), sillM); m.position.set(def.x + (alongX ? 0 : off), y0 + hh / 2, def.z + (alongX ? off : 0)); m.name = `sill:${id}`; m.castShadow = true; m.receiveShadow = true; grp.add(m); return m; };
       add(h, dep, 0);
       if (h > 0.3) for (const s of [-1, 1]) add(h / 2, 0.3, s * (dep / 2 + 0.15));   // a step up on each side

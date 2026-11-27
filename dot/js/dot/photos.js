@@ -1,5 +1,7 @@
-// The root's photos, drawn as pixel art at boot (no second copy on the server): each picture of /assets/photos/ is read once, shrunk
-// to about 120 px on its short side with an ordered dither to a small palette, and kept as a blob URL. Every way the kit and the game
+// The root's photos as pixel art. 1.8.0 (作者 2026-11-27 「細かい画像は荒くして保存して利用すればいい」): they are baked once
+// (tools/dot/bake-photos.py -> /dot/assets/photos/<name>.png, 120 px on the short side, the same dither) and the dot versions load
+// only those small files (792 KB for 97, not the 2.9 MB of full-size photos). A picture with no baked file is still drawn here at boot
+// from the full-size one: read once, shrunk to about 120 px on its short side with an ordered dither to a small palette, a blob URL. Every way the kit and the game
 // show a photo (img.src, setAttribute, <img> in innerHTML, style.backgroundImage) is mapped to the pixel picture, and the dot CSS
 // enlarges every picture with hard edges (image-rendering: pixelated). Text is never inside these photos (documents are HTML text).
 const RE = /(?:^|[^\w-])assets\/photos\/([\w.-]+\.(?:webp|png|jpe?g))/;   // after a /, a quote, url( or the start
@@ -37,20 +39,22 @@ async function pixelate(url) {
 
 /** pixel versions of every photo in the list (names under /assets/photos/); report(k) while it works */
 export async function preparePhotos(names, report = () => {}) {
-  let n = 0;
+  let n = 0, baked0 = 0;
   const t0 = performance.now();
   // a few at a time: decoding is off the main thread, the dither is short
   const queue = [...names];
   const worker = async () => {
     while (queue.length) {
       const f = queue.shift();
-      try { map.set(f, await pixelate(`/assets/photos/${f}`)); } catch (e) { console.warn('[dot] photo stays smooth:', f, e && e.message); }
+      const baked = `/dot/assets/photos/${f}.png`;
+      try { const img = new Image(); img.decoding = 'async'; img.src = baked; await img.decode(); map.set(f, baked); baked0++; }
+      catch { try { map.set(f, await pixelate(`/assets/photos/${f}`)); } catch (e) { console.warn('[dot] photo stays smooth:', f, e && e.message); } }
       report(++n / names.length);
     }
   };
   await Promise.all([worker(), worker(), worker()]);
   refresh(document.body);
-  return { photos: map.size, of: names.length, ms: Math.round(performance.now() - t0) };
+  return { photos: map.size, of: names.length, baked: baked0, ms: Math.round(performance.now() - t0) };
 }
 
 // whatever was already on screen (the title art)

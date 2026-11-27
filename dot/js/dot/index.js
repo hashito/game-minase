@@ -394,7 +394,7 @@ export default async function dotLayer(ext, { manifest, data }) {
       }
       const keep = new Set(); are.root.traverse((x) => keep.add(x));
       hideOwn(C.root, keep);
-      C.root.add(are.root);
+      C.root.add(are.root); C.dotFrames = true;   // 1.8.0: chimera.js leaves the root's height alone in the crawl (the frames crawl)
       warm.push(are.warm);
     }
     for (const w of warm) { w.visible = false; scene.add(w); }
@@ -498,7 +498,7 @@ export default async function dotLayer(ext, { manifest, data }) {
         const pose = D.hinaPose, moving = moved / Math.max(dt, 1e-3) > 0.15;
         // 1.4.2 「ひなたがずっと手をあげてます」: a lean is a short gesture (a hand to the wall for a moment), then she stands
         if (pose !== lastPose) { lastPose = pose; poseT = 0; } poseT += dt;
-        const st = pose === 'lean' && poseT < 1.0 && !moving ? 'reach' : pose === 'scared' ? 'fear' : pose === 'crouch' ? (moving ? 'crouch-walk' : 'crouch') : moving ? 'walk' : 'idle';
+        const st = pose === 'lean' && poseT < 1.0 && !moving ? 'reach' : pose === 'scared' ? 'fear' : pose === 'press' ? 'press' : pose === 'crouch' ? (moving ? 'crouch-walk' : 'crouch') : moving ? 'walk' : 'idle';
         hf.anim.play(st);
         hf.update(dt, { moved: moved / hf.scale });
       } else lastHina.ok = false;
@@ -506,11 +506,13 @@ export default async function dotLayer(ext, { manifest, data }) {
       const af = figures.are, H = G.gh;
       if (af && H && G.chimera && G.chimera.root.visible) {
         const cam = ctx.camera.position, ps = G.project ? G.project(cam.x, cam.z).s : 0, gap = Math.abs(ps - (H.s || 0));
-        const st = H.anim ? H.anim : H.pressing || (gap < 3 && H.mode === 'chase') ? 'attack' : H.sunk > 0 ? 'fear' : (H.mode !== 'off' && H.wait <= 0 && H.rise <= 0) ? 'walk' : 'idle';
-        const R = G.chimera.root.position, near = Math.hypot(cam.x - R.x, cam.z - R.z), hd = af.hd && near < 7, F = hd ? af.hd : af;
+        const walking = H.mode !== 'off' && H.wait <= 0 && H.rise <= 0;
+        // 1.8.0 (2026-11-27 #5): under the low pipes of P2 she crawls on all fours (crouch / crouch-walk frames of the base set: the HD set has none)
+        const st = H.anim ? H.anim : H.crawling ? (walking ? 'crouch-walk' : 'crouch') : H.pressing || (gap < 3 && H.mode === 'chase') ? 'attack' : H.sunk > 0 ? 'fear' : walking ? 'walk' : 'idle';
+        const R = G.chimera.root.position, near = Math.hypot(cam.x - R.x, cam.z - R.z), hd = af.hd && near < 7 && !/^crouch/.test(st), F = hd ? af.hd : af;
         if (af.hd) { af.hd.root.visible = hd; af.root.visible = !hd; }
         F.anim.play(st);
-        F.update(dt, { moved: st === 'walk' ? (H.mode === 'chase' ? 2.4 : 1.3) * dt / F.scale : 0 });
+        F.update(dt, { moved: st === 'walk' ? (H.mode === 'chase' ? 2.4 : 1.3) * dt / F.scale : st === 'crouch-walk' ? 0.75 * dt / F.scale : 0 });
         D.areTier = hd ? 'hd' : 'base';
       }
       // the light round the player

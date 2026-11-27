@@ -1,11 +1,11 @@
 {
  "id": "are",
  "w": 84,
- "d": 126,
+ "d": 128,
  "n": 200,
  "pivot": [
   40,
-  38
+  40
  ],
  "mpp": 0.0125,
  "res": 2,
@@ -28,7 +28,16 @@
   "reach.2",
   "reach.3",
   "fear.1",
-  "fear.2"
+  "fear.2",
+  "crouch.1",
+  "crouch-walk.1",
+  "crouch-walk.2",
+  "crouch-walk.3",
+  "crouch-walk.4",
+  "crouch-walk.5",
+  "crouch-walk.6",
+  "crouch-walk.7",
+  "crouch-walk.8"
  ],
  "motions": {
   "idle": {
@@ -84,6 +93,29 @@
     "fear.2"
    ],
    "fps": 2,
+   "loop": true,
+   "fallback": "crouch"
+  },
+  "crouch": {
+   "frames": [
+    "crouch.1"
+   ],
+   "loop": true,
+   "fallback": "idle"
+  },
+  "crouch-walk": {
+   "frames": [
+    "crouch-walk.1",
+    "crouch-walk.2",
+    "crouch-walk.3",
+    "crouch-walk.4",
+    "crouch-walk.5",
+    "crouch-walk.6",
+    "crouch-walk.7",
+    "crouch-walk.8"
+   ],
+   "fps": 6,
+   "stride": 0.8,
    "loop": true,
    "fallback": "crouch"
   }

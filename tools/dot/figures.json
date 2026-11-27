@@ -1,8 +1,8 @@
 [
  {"id": "hinata", "family": "character", "variant": "explorer-woman", "res": 2,
   "params": {},
-  "motions": ["idle", "walk", "crouch", "crouch-walk", "stand-up", "fear", "reach", "turn"]},
- {"id": "are", "family": "monster-chimera", "variant": "sickly", "res": 2,
+  "motions": ["idle", "walk", "crouch", "crouch-walk", "stand-up", "fear", "reach", "turn", "press"]},
+ {"id": "are", "family": "monster-specimen", "variant": "drowned", "res": 2,
   "params": {},
-  "motions": ["idle", "walk", "attack", "reach", "fear"]}
+  "motions": ["idle", "walk", "attack", "reach", "fear", "crouch", "crouch-walk"]}
 ]

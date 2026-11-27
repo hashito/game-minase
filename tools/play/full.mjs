@@ -149,5 +149,8 @@ export default async (api) => {
     await H.walkTo(12.6, 3.0); await use(13.9, 3.0, 1.1, 'T_END'); await sleep(800); await H.idle(3000); await H.idle();
   }
   await sleep(1500); await shot('ending');
+  // 1.8.0 (#2): every kamishibai card, each with its own picture (check-playtest P68)
+  { const seen = []; for (let i = 0; i < 12; i++) { const c = await G(`(() => { const w = document.querySelector('.gf-ks-window img, .gf-ks-window'); const n = document.querySelector('.gf-ks-next'); if (!n) return null; const im = document.querySelector('.gf-ks-window img'); return { src: im ? im.getAttribute('src') : getComputedStyle(document.querySelector('.gf-ks-window')).backgroundImage, count: (document.querySelector('.gf-ks-count') || {}).textContent }; })()`); if (!c) break; await sleep(900); await shot(`card-${String(i + 1).padStart(2, '0')}`); seen.push(c.src); log('  card', c.count, c.src); await G(`(document.querySelector('.gf-ks-next').click(), 1)`); await sleep(700); }
+    for (let i = 1; i < seen.length; i++) if (seen[i] === seen[i - 1]) log('  FAIL card', i + 1, 'repeats the picture of card', i); }
   await st('end'); log('ending', await G('g.state.ended'), await G('g.state.flags.filter((f) => /^end_/.test(f))'));
 };

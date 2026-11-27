@@ -28,12 +28,12 @@
         "voice": "assets/voice/ks-e3-01.mp3"
       },
       {
-        "photo": "assets/photos/end-e3.webp",
+        "photo": "assets/photos/end-e3-p2.webp",
         "text": "正面に回ると、黒木さんたちはまだ鎖の前にいた。黒木さんは、何も言わずに鎖を外した。",
         "voice": "assets/voice/ks-e3-02.mp3"
       },
       {
-        "photo": "assets/photos/end-e3.webp",
+        "photo": "assets/photos/end-e3-p3.webp",
         "text": "空の手を見せると、黒木さんは「そうか」とだけ言って、携帯を返してくれた。その手が、ふるえていた。",
         "voice": "assets/voice/ks-e3-03.mp3"
       },
@@ -43,12 +43,12 @@
         "voice": "assets/voice/ks-e3-04.mp3"
       },
       {
-        "photo": "assets/photos/end-e3-b.webp",
+        "photo": "assets/photos/end-e3-p5.webp",
         "text": "三十四人分の標本が、それぞれの家族に返された。葛城医師は十年前に亡くなっていて、罪に問われることはなかった。",
         "voice": "assets/voice/ks-e3-05.mp3"
       },
       {
-        "photo": "assets/photos/end-e3-b.webp",
+        "photo": "assets/photos/end-e3-p6.webp",
         "text": "伝言メモの宮下さんは、警察の人の前で泣いたそうだ。「あの夜、扉を開けてと言えなかった」と。",
         "voice": "assets/voice/ks-e3-06.mp3"
       },
@@ -58,12 +58,12 @@
         "voice": "assets/voice/ks-e3-07.mp3"
       },
       {
-        "photo": "assets/photos/end-e3-c.webp",
+        "photo": "assets/photos/end-e3-p8.webp",
         "text": "雨の夜、もう排水口は鳴らない。",
         "voice": "assets/voice/ks-e3-08.mp3"
       },
       {
-        "photo": "assets/photos/end-e3-c.webp",
+        "photo": "assets/photos/end-e3-p9.webp",
         "text": "……ただ、返された標本は三十四人分。台帳の番号は、三十五まであった。",
         "voice": "assets/voice/ks-e3-09.mp3"
       }
@@ -98,7 +98,7 @@
         "voice": "assets/voice/ks-e2-01.mp3"
       },
       {
-        "photo": "assets/photos/end-e2.webp",
+        "photo": "assets/photos/end-e2-p2.webp",
         "text": "夜明け前に正面へ回ると、黒木さんたちの車はもうなかった。鎖は取っ手に巻かれたまま。携帯は、石段に置いてあった。",
         "voice": "assets/voice/ks-e2-02.mp3"
       },
@@ -108,22 +108,22 @@
         "voice": "assets/voice/ks-e2-03.mp3"
       },
       {
-        "photo": "assets/photos/end-e2-b.webp",
+        "photo": "assets/photos/end-e2-p4.webp",
         "text": "槽の底は、何度さらっても空だった。七番の瓶だけは、地下のどこからも見つからなかった。",
         "voice": "assets/voice/ks-e2-04.mp3"
       },
       {
-        "photo": "assets/photos/end-e2-c.webp",
+        "photo": "assets/photos/end-e2-p5.webp",
         "text": "黒木さんからは一度だけ連絡があった。「蓮が、7と書くのをやめた」。それだけだった。",
         "voice": "assets/voice/ks-e2-05.mp3"
       },
       {
-        "photo": "assets/photos/end-e2-c.webp",
+        "photo": "assets/photos/end-e2-p6.webp",
         "text": "ひなたは、撮った動画を誰にも見せずに消した。……消す前に一度だけ、最後まで見ていた。",
         "voice": "assets/voice/ks-e2-06.mp3"
       },
       {
-        "photo": "assets/photos/end-e2-c.webp",
+        "photo": "assets/photos/end-e2-p7.webp",
         "text": "浅井早苗さんの行方は、今も分からないことになっている。",
         "voice": "assets/voice/ks-e2-07.mp3"
       },
@@ -158,42 +158,42 @@
     "text": "黒木さんは瓶を受け取ると、鎖を外し、携帯を投げて返した。「……悪かったな」。\n黒木さんは瓶を助手席に乗せて、一人で車を出した。仲間の二人は、瓶を見ようともしなかった。\n帰りのバスで一度だけ、ひなたが聞いた。「あの人、最後に何て言ってた？」「かえして」と答えると、窓の外を向いてしまった。\n一週間後、また雨が降った。黒木さんの家の排水口から、黄色く濁った水があふれたと聞いた。\n黒木さんとは、それから連絡がつかない。家の人は「瓶を持って、病院へ返しに行った」と言っている。\n蓮さんは、今も紙に「7」と書き続けている。数字の横に、手の形が増えたそうだ。\nひなたとは、あれから会っていない。\n雨の夜、私の部屋の流しの奥で、ごぼごぼと音がする。……数えると、いつも七回で止まる。",
     "pages": [
       {
-        "photo": "assets/photos/end-e1.webp",
+        "photo": "assets/photos/end-e1-p1.webp",
         "text": "黒木さんは瓶を受け取ると、鎖を外し、携帯を投げて返した。「……悪かったな」。",
         "voice": "assets/voice/ks-e1-01.mp3"
       },
       {
-        "photo": "assets/photos/end-e1.webp",
+        "photo": "assets/photos/end-e1-b.webp",
         "text": "黒木さんは瓶を助手席に乗せて、一人で車を出した。仲間の二人は、瓶を見ようともしなかった。",
         "voice": "assets/voice/ks-e1-02.mp3"
       },
       {
-        "photo": "assets/photos/end-e1-b.webp",
+        "photo": "assets/photos/end-e1-p3.webp",
         "text": "帰りのバスで一度だけ、ひなたが聞いた。「あの人、最後に何て言ってた？」「かえして」と答えると、窓の外を向いてしまった。",
         "voice": "assets/voice/ks-e1-03.mp3"
       },
       {
-        "photo": "assets/photos/end-e1-b.webp",
+        "photo": "assets/photos/end-e1-c.webp",
         "text": "一週間後、また雨が降った。黒木さんの家の排水口から、黄色く濁った水があふれたと聞いた。",
         "voice": "assets/voice/ks-e1-04.mp3"
       },
       {
-        "photo": "assets/photos/end-e1-c.webp",
+        "photo": "assets/photos/end-e1-p5.webp",
         "text": "黒木さんとは、それから連絡がつかない。家の人は「瓶を持って、病院へ返しに行った」と言っている。",
         "voice": "assets/voice/ks-e1-05.mp3"
       },
       {
-        "photo": "assets/photos/end-e1-c.webp",
+        "photo": "assets/photos/end-e1-p6.webp",
         "text": "蓮さんは、今も紙に「7」と書き続けている。数字の横に、手の形が増えたそうだ。",
         "voice": "assets/voice/ks-e1-06.mp3"
       },
       {
-        "photo": "assets/photos/end-e1-c.webp",
+        "photo": "assets/photos/end-e1-p7.webp",
         "text": "ひなたとは、あれから会っていない。",
         "voice": "assets/voice/ks-e1-07.mp3"
       },
       {
-        "photo": "assets/photos/end-e1-c.webp",
+        "photo": "assets/photos/end-e1.webp",
         "text": "雨の夜、私の部屋の流しの奥で、ごぼごぼと音がする。……数えると、いつも七回で止まる。",
         "voice": "assets/voice/ks-e1-08.mp3"
       }

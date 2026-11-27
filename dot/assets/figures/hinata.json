@@ -41,7 +41,9 @@
   "turn.1",
   "turn.2",
   "turn.3",
-  "turn.4"
+  "turn.4",
+  "press.1",
+  "press.2"
  ],
  "motions": {
   "idle": {
@@ -135,6 +137,15 @@
    "fps": 6,
    "loop": true,
    "fallback": "walk"
+  },
+  "press": {
+   "frames": [
+    "press.1",
+    "press.2"
+   ],
+   "fps": 2,
+   "loop": true,
+   "fallback": "kneel"
   }
  },
  "src": {

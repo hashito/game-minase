@@ -15,7 +15,7 @@ export const HINA = {
   pump: [5.56, 12.55, 0, [3, 12.55], 'lean'],
   rescue: [3.6, 14.55, 0, [3, 10], 'scared', 0.76],
   jimu: [6.44, 12.4, 0, [9, 12.4], 'lean'],
-  drain: [9.75, 12.1, 0, [9, 11.6], 'crouch'],
+  drain: [9.5, 11.93, 0, [9, 11.6], 'press'],   // 1.8.0 (2026-11-27 #6 「手が空中にある」): kneeling, both palms on the drain 0.6 m in front
   reian: [12.6, 5.56, 0, [12.6, 3], 'lean'],
 };
 // the corridors she walks: nodes [x, z] per floor and the edges between them (doors are nodes of their own: she opens them)
