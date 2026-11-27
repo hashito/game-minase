@@ -254,7 +254,15 @@ export function installChimera(ext, G) {
         } else H.bang = 0;
         // 1.5.0 (#18 「ダッシュで簡単に逃げられる」): in P3 she goes under and comes up ahead of you, once per run back; the water ahead
         // splashes 2 s before (the warning), and the next valve lies between you and her (the answer)
-        if (chase && !H.aheadDone && G.aheadAt && ps > G.aheadAt[0] && ps < G.aheadAt[1] && ps - H.s > 5) { H.aheadDone = true; diveOut(() => { const c2 = ctx.camera.position; goAhead(project(c2.x, c2.z).s); }); return; }
+        if (chase && !H.aheadDone && G.aheadAt && ps > G.aheadAt[0] && ps < G.aheadAt[1] && ps - H.s > 5) {
+          H.aheadDone = true;
+          // 1.8.0: out of sight (more than 14 m back) she goes ahead at once, as before; in sight she first goes down where she is (#1).
+          // You ran on during those 1.8 s: if that took you past the valve she would come up beyond, she comes up behind you instead -
+          // never ahead with no valve between (the full play died 14 times there)
+          if (ps - H.s > 14) { goAhead(ps); return; }
+          diveOut(() => { const c2 = ctx.camera.position, now = project(c2.x, c2.z).s; if (G.aheadValveS && now > G.aheadValveS - 1.5) { H.dir = 1; H.wait = 1.5; H.rise = 1.2; H.s = Math.max(0, now - 14); } else goAhead(now); });
+          return;
+        }
         // 1.8.0 (2026-11-27 /dot-fps #5 「しゃがみ通路の途中で背後から追いかけてくるように」): partway into the low passage she comes in after
         // you - the water at its mouth behind you splashes and knocks (the warning), she comes up 7 m behind you and crawls after you under the
         // pipes at 0.9 m/s (slowAt P2 x0.3). You crawl at 1.1 m/s, so keep going and she never reaches you; stop and she does

@@ -26,6 +26,7 @@ export function helpers({ p, G, sleep, log, shot }) {
       if (d < (o.near || 0.35)) return true;
       if (await G('g.state.ended')) return true;
       if (await G('g.blocked()')) { await closeWindows(); await sleep(250); continue; }
+      if (o.abort && (await o.abort())) return false;   // e.g. caught: the caller goes on from the checkpoint
       if (o.onStep && (await o.onStep())) continue;
       await face(x, z);
       const run = o.run && d > 1.5;

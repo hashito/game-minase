@@ -107,7 +107,8 @@ export default async (api) => {
     const [x, z, low, tag] = WAY[wi];
     if (wi === 2 && !pressedF) { pressedF = true; await shot('chase-dark'); await p.key('KeyF'); await sleep(200); }   // 「[F] で、叩いてつけ直せる」
     await crouch(!!low);
-    const ok = low ? await H.walkTo(x, z, { near: 0.5 }) : await runTo(x, z);
+    const abort = async () => (await G('mn.deaths || 0')) > deaths0;   // caught: stop walking the old line from the checkpoint
+    const ok = low ? await H.walkTo(x, z, { near: 0.5, abort }) : await runTo(x, z, { abort });
     const d = await G('mn.deaths || 0');
     if (d > deaths0) {   // caught: back at the checkpoint; go on from the nearest waypoint
       deaths0 = d; await H.idle(); const c = await H.pos();
@@ -140,7 +141,7 @@ export default async (api) => {
     await H.idle(1500); await H.idle(1500); log('  think answers left', await G('window.__gfQ.length'), 'wrong', await G('mn.wrong'));
     await H.idle(); await must('T_THINK'); await shot('think-done');
     if (PAGES) {
-      await H.route([[9.0, 10.4], [9.0, 7.5], [10.0, 7.5]]); await H.door(10, 6, 9.4, 4.9);
+      await H.walkTo(9.0, 10.4); await H.door(9, 9, 9.0, 7.5); await H.walkTo(10.0, 7.5); await H.door(10, 6, 9.4, 4.9);   // the office door shut on the questions' water (1.6.0)
       await H.walkTo(7.6, 3.2); await use(6.6, 3.2, 0.75, 'T_SQ1'); await H.idle(); log('  named', await G('g.state.flags.includes("named")'));
       await H.route([[9.4, 4.9], [10.0, 7.5], [9.0, 7.5], [9.0, 10.4]]);
     }
@@ -150,7 +151,7 @@ export default async (api) => {
   }
   await sleep(1500); await shot('ending');
   // 1.8.0 (#2): every kamishibai card, each with its own picture (check-playtest P68)
-  { const seen = []; for (let i = 0; i < 12; i++) { const c = await G(`(() => { const w = document.querySelector('.gf-ks-window img, .gf-ks-window'); const n = document.querySelector('.gf-ks-next'); if (!n) return null; const im = document.querySelector('.gf-ks-window img'); return { src: im ? im.getAttribute('src') : getComputedStyle(document.querySelector('.gf-ks-window')).backgroundImage, count: (document.querySelector('.gf-ks-count') || {}).textContent }; })()`); if (!c) break; await sleep(900); await shot(`card-${String(i + 1).padStart(2, '0')}`); seen.push(c.src); log('  card', c.count, c.src); await G(`(document.querySelector('.gf-ks-next').click(), 1)`); await sleep(700); }
+  { const seen = []; for (let i = 0; i < 12; i++) { const c = await G(`(() => { const w = document.querySelector('.gf-ks-window img, .gf-ks-window'); const n = document.querySelector('.gf-ks-next'); if (!n) return null; const cs = [...document.querySelectorAll('.gf-ks-card')].filter((e) => !e.classList.contains('out')), im = cs[cs.length - 1]; return { src: im ? im.style.backgroundImage : 'none', count: (document.querySelector('.gf-ks-count') || {}).textContent }; })()`); if (!c) break; await sleep(900); await shot(`card-${String(i + 1).padStart(2, '0')}`); seen.push(c.src); log('  card', c.count, c.src); await G(`(document.querySelector('.gf-ks-next').click(), 1)`); await sleep(700); }
     for (let i = 1; i < seen.length; i++) if (seen[i] === seen[i - 1]) log('  FAIL card', i + 1, 'repeats the picture of card', i); }
   await st('end'); log('ending', await G('g.state.ended'), await G('g.state.flags.filter((f) => /^end_/.test(f))'));
 };
